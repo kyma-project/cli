@@ -52,7 +52,7 @@ func runDashboardStart(cfg *dashboardStartConfig) clierror.Error {
 	}
 
 	if cfg.open {
-		err = dash.Open("")
+		err = dash.Open()
 	}
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to open kyma dashboard"))

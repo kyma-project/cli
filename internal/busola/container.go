@@ -53,8 +53,8 @@ func (c *Container) Start() error {
 }
 
 // Opens the kyma dashboard in a browser.
-func (c *Container) Open(path string) error {
-	url := fmt.Sprintf("http://localhost:%s%s/clusters", c.port, path)
+func (c *Container) Open() error {
+	url := fmt.Sprintf("http://localhost:%s/clusters", c.port)
 
 	err := browser.OpenURL(url)
 	if err != nil {
@@ -63,9 +63,9 @@ func (c *Container) Open(path string) error {
 	return nil
 }
 
-// Watch attaches to the running docker container and forwards its output.
-func (c *Container) Watch(ctx context.Context) error {
-	return c.docker.ContainerFollowRun(ctx, c.id, c.verbose)
+// Watch attaches to the running docker container, streams its output, and handles graceful shutdown on user interrupt.
+func (c *Container) Watch() error {
+	return c.docker.ContainerFollowRun(c.id, c.verbose)
 }
 
 // Stop stops the dashboard container.
