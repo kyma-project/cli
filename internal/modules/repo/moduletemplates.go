@@ -24,8 +24,9 @@ type ModuleTemplatesRepository interface {
 	CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	CommunityInstalledByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	RunningAssociatedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error)
+	RunningUserDefinedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error)
 	Resources(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]map[string]any, error)
-	DeleteResourceReturnWatcher(ctx context.Context, resource map[string]any) (watch.Interface, error)
+	DeleteResourceReturnWatcher(ctx context.Context, resource unstructured.Unstructured) (watch.Interface, error)
 	InstalledManager(ctx context.Context, moduleTemplate kyma.ModuleTemplate) (*unstructured.Unstructured, error)
 	ExternalCommunity(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	ExternalCommunityByNameAndVersion(ctx context.Context, moduleName, version string) ([]kyma.ModuleTemplate, error)
@@ -121,18 +122,33 @@ func (r *moduleTemplatesRepo) CommunityInstalledByName(ctx context.Context, modu
 	return installedModules, nil
 }
 
+func (r *moduleTemplatesRepo) RunningUserDefinedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error) {
+	associatedResources, err := r.RunningAssociatedResourcesOfModule(ctx, moduleTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get module %5s running resources: %v", moduleTemplate.Name, err)
+	}
+
+	operator := moduleTemplate.Spec.Data
+
+	var userDefinedResources []unstructured.Unstructured
+
+	for _, associatedResource := range associatedResources {
+		if associatedResource.GetKind() == operator.GetKind() && associatedResource.GetAPIVersion() == operator.GetAPIVersion() {
+			continue
+		}
+
+		userDefinedResources = append(userDefinedResources, associatedResource)
+	}
+
+	return userDefinedResources, nil
+}
+
 func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error) {
 	associatedResources := moduleTemplate.Spec.AssociatedResources
-	operator := moduleTemplate.Spec.Data
 
 	var runningResources []unstructured.Unstructured
 
 	for _, associatedResource := range associatedResources {
-		associatedResourceAPIVersion := associatedResource.Group + "/" + associatedResource.Version
-		if associatedResource.Kind == operator.GetKind() && associatedResourceAPIVersion == operator.GetAPIVersion() {
-			continue
-		}
-
 		list, err := r.client.RootlessDynamic().List(ctx, &unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": associatedResource.Group + "/" + associatedResource.Version,
@@ -186,16 +202,15 @@ func (r *moduleTemplatesRepo) Resources(ctx context.Context, moduleTemplate kyma
 	return parsedResources, nil
 }
 
-func (r *moduleTemplatesRepo) DeleteResourceReturnWatcher(ctx context.Context, resource map[string]any) (watch.Interface, error) {
-	u := &unstructured.Unstructured{Object: resource}
-	watcher, err := r.client.RootlessDynamic().WatchSingleResource(ctx, u)
+func (r *moduleTemplatesRepo) DeleteResourceReturnWatcher(ctx context.Context, resource unstructured.Unstructured) (watch.Interface, error) {
+	watcher, err := r.client.RootlessDynamic().WatchSingleResource(ctx, &resource)
 	if err != nil {
-		return nil, fmt.Errorf("failed to watch resource %s: %v", u.GetName(), err)
+		return nil, fmt.Errorf("failed to watch resource %s: %v", resource.GetName(), err)
 	}
 
-	err = r.client.RootlessDynamic().Remove(ctx, u, false)
+	err = r.client.RootlessDynamic().Remove(ctx, &resource, false)
 	if err != nil {
-		return nil, fmt.Errorf("failed to remove resource %s: %v", u.GetName(), err)
+		return nil, fmt.Errorf("failed to remove resource %s: %v", resource.GetName(), err)
 	}
 
 	return watcher, nil
