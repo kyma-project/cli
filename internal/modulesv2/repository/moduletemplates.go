@@ -10,7 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	"github.com/kyma-project/cli.v3/internal/out"
-	"github.com/stretchr/testify/assert/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 type ModuleTemplatesRepository interface {
