@@ -404,7 +404,7 @@ func TestModuleTemplatesRepo_RunningAssociatedResourcesOfModule(t *testing.T) {
 		require.Len(t, result, 0)
 	})
 
-	t.Run("excludes spec.data resource", func(t *testing.T) {
+	t.Run("includes spec.data resource", func(t *testing.T) {
 		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
 			ReturnListObjs: &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
@@ -442,8 +442,9 @@ func TestModuleTemplatesRepo_RunningAssociatedResourcesOfModule(t *testing.T) {
 		resources, err := repo.RunningAssociatedResourcesOfModule(context.Background(), mod)
 
 		require.NoError(t, err)
-		require.Len(t, resources, 1)
+		require.Len(t, resources, 2)
 		require.Equal(t, "res1", resources[0].GetName())
+		require.Equal(t, "res1", resources[1].GetName())
 	})
 
 	t.Run("running resources found", func(t *testing.T) {
@@ -480,6 +481,110 @@ func TestModuleTemplatesRepo_RunningAssociatedResourcesOfModule(t *testing.T) {
 	})
 }
 
+func TestModuleTemplatesRepo_RunningUserDefinedResourcesOfModule(t *testing.T) {
+	t.Run("fails to list running resources", func(t *testing.T) {
+		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
+			ReturnErr: errors.New("list-error"),
+		}
+		fakeKubeClient := fake.KubeClient{
+			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
+		}
+		repo := NewModuleTemplatesRepo(&fakeKubeClient)
+		mod := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{
+				AssociatedResources: []metav1.GroupVersionKind{{Group: "g", Version: "v1", Kind: "Kind"}},
+			},
+		}
+
+		result, err := repo.RunningUserDefinedResourcesOfModule(context.Background(), mod)
+
+		require.NoError(t, err)
+		require.Len(t, result, 0)
+	})
+
+	t.Run("excludes spec.data resource", func(t *testing.T) {
+		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
+			ReturnListObjs: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]any{
+							"apiVersion": "g/v1",
+							"kind":       "Operator",
+							"metadata": map[string]any{
+								"name": "res1",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		fakeKubeClient := fake.KubeClient{
+			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
+		}
+		repo := NewModuleTemplatesRepo(&fakeKubeClient)
+
+		mod := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{
+				AssociatedResources: []metav1.GroupVersionKind{
+					{Group: "g", Version: "v1", Kind: "Kind"},
+					{Group: "g", Version: "v1", Kind: "Operator"},
+				},
+				Data: unstructured.Unstructured{
+					Object: map[string]any{
+						"apiVersion": "g/v1",
+						"kind":       "Operator",
+					},
+				},
+			},
+		}
+
+		resources, err := repo.RunningUserDefinedResourcesOfModule(context.Background(), mod)
+
+		require.NoError(t, err)
+		require.Len(t, resources, 0)
+	})
+
+	t.Run("running resources found", func(t *testing.T) {
+		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
+			ReturnListObjs: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]any{
+							"metadata": map[string]any{
+								"name": "res1",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		fakeKubeClient := fake.KubeClient{
+			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
+		}
+		repo := NewModuleTemplatesRepo(&fakeKubeClient)
+
+		mod := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{
+				AssociatedResources: []metav1.GroupVersionKind{{Group: "g", Version: "v1", Kind: "Kind"}},
+				Data: unstructured.Unstructured{
+					Object: map[string]any{
+						"apiVersion": "g/v1",
+						"kind":       "Operator",
+					},
+				},
+			},
+		}
+
+		resources, err := repo.RunningUserDefinedResourcesOfModule(context.Background(), mod)
+
+		require.NoError(t, err)
+		require.Len(t, resources, 1)
+		require.Equal(t, "res1", resources[0].GetName())
+	})
+}
+
 func TestModuleTemplatesRepo_DeleteResourceReturnWatcher(t *testing.T) {
 	t.Run("fails to watch resource", func(t *testing.T) {
 		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
@@ -488,9 +593,11 @@ func TestModuleTemplatesRepo_DeleteResourceReturnWatcher(t *testing.T) {
 		fakeKubeClient := fake.KubeClient{
 			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
 		}
-		resource := map[string]any{
-			"metadata": map[string]any{
-				"name": "test-resource",
+		resource := unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "test-resource",
+				},
 			},
 		}
 		repo := NewModuleTemplatesRepo(&fakeKubeClient)
@@ -511,9 +618,11 @@ func TestModuleTemplatesRepo_DeleteResourceReturnWatcher(t *testing.T) {
 		fakeKubeClient := fake.KubeClient{
 			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
 		}
-		resource := map[string]any{
-			"metadata": map[string]any{
-				"name": "test-resoutce",
+		resource := unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "test-resoutce",
+				},
 			},
 		}
 		repo := NewModuleTemplatesRepo(&fakeKubeClient)
@@ -533,11 +642,14 @@ func TestModuleTemplatesRepo_DeleteResourceReturnWatcher(t *testing.T) {
 		fakeKubeClient := fake.KubeClient{
 			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
 		}
-		resource := map[string]any{
-			"metadata": map[string]any{
-				"name": "test-resource",
+		resource := unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "test-resource",
+				},
 			},
 		}
+
 		repo := NewModuleTemplatesRepo(&fakeKubeClient)
 
 		result, err := repo.DeleteResourceReturnWatcher(context.Background(), resource)
@@ -545,7 +657,7 @@ func TestModuleTemplatesRepo_DeleteResourceReturnWatcher(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, result, fakeWatcher)
-		require.Contains(t, fakeRootlessDynamicClient.RemovedObjs, unstructured.Unstructured{Object: resource})
+		require.Contains(t, fakeRootlessDynamicClient.RemovedObjs, resource)
 	})
 }
 
