@@ -1,10 +1,10 @@
 # kyma alpha authorize repository
 
-Configure trust between a Kyma cluster and a GitHub repository.
+Configures a trust between a Kyma cluster and a GitHub repository.
 
 ## Synopsis
 
-Configure trust between a Kyma cluster and a GitHub repository by creating an OpenIDConnect resource and RoleBinding or ClusterRoleBinding
+Configures a trust between a Kyma cluster and a GitHub repository by creating an OpenIDConnect resource and RoleBinding or ClusterRoleBinding
 
 ```bash
 kyma alpha authorize repository [flags]
@@ -36,7 +36,7 @@ kyma alpha authorize repository [flags]
 
 ```text
       --client-id string        OIDC client ID (audience) expected in the token (required)
-      --cluster-wide            If true, create a ClusterRoleBinding; otherwise, a RoleBinding
+      --cluster-wide            If true, creates a ClusterRoleBinding; otherwise, a RoleBinding
       --clusterrole string      ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)
       --dry-run                 Print resources without applying
       --issuer-url string       OIDC issuer (default "https://token.actions.githubusercontent.com")
@@ -50,9 +50,9 @@ kyma alpha authorize repository [flags]
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
-      --skip-extensions         Skip fetching extensions from the target Kyma environment
+      --skip-extensions         Skips fetching extensions from the target Kyma environment
 ```
 
 ## See also
 
-* [kyma alpha authorize](kyma_alpha_authorize.md) - Authorize a subject (user, group, or service account) with Kyma RBAC resources
+* [kyma alpha authorize](kyma_alpha_authorize.md) - Authorizes a subject (user, group, or service account) with Kyma RBAC resources

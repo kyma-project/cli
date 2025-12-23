@@ -36,8 +36,8 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 
 	cmd := &cobra.Command{
 		Use:   "repository [flags]",
-		Short: "Configure trust between a Kyma cluster and a GitHub repository",
-		Long:  "Configure trust between a Kyma cluster and a GitHub repository by creating an OpenIDConnect resource and RoleBinding or ClusterRoleBinding",
+		Short: "Configures a trust between a Kyma cluster and a GitHub repository",
+		Long:  "Configures a trust between a Kyma cluster and a GitHub repository by creating an OpenIDConnect resource and RoleBinding or ClusterRoleBinding",
 		Example: `  # Authorize a repository with a namespaced Role (RoleBinding)
   kyma alpha authorize repository --repository kyma-project/cli --client-id repo-ci-client --role view --namespace dev
 
@@ -77,7 +77,7 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 	cmd.Flags().StringVar(&cfg.issuerURL, "issuer-url", "https://token.actions.githubusercontent.com", "OIDC issuer")
 	cmd.Flags().StringVar(&cfg.prefix, "prefix", "", "Username prefix for the repository claim (e.g., gh-oidc:)")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required if not cluster-wide and binding a Role or namespaced ClusterRole)")
-	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, create a ClusterRoleBinding; otherwise, a RoleBinding")
+	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, creates a ClusterRoleBinding; otherwise, a RoleBinding")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (namespaced)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)")
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name for the OpenIDConnect resource (optional; default derives from clientId)")

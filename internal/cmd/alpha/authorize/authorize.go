@@ -2,6 +2,7 @@ package authorize
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/authorization"
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -34,7 +35,7 @@ type authorizeConfig struct {
 func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "authorize",
-		Short: "Authorize a subject (user, group, or service account) with Kyma RBAC resources",
+		Short: "Authorizes a subject (user, group, or service account) with Kyma RBAC resources",
 		Long:  "Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a user, group, or service account.",
 	}
 
@@ -82,7 +83,7 @@ func NewAuthorizeServiceAccountCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Comm
 
 	cmd := &cobra.Command{
 		Use:   "serviceaccount",
-		Short: "Authorize a ServiceAccount with Kyma RBAC resources",
+		Short: "Authorizes a service account with Kyma RBAC resources",
 		Long:  "Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a ServiceAccount.",
 		Example: `  # Bind a service account to a ClusterRole within a namespace (RoleBinding referencing a ClusterRole)
   kyma alpha authorize serviceaccount --name deployer-sa --clusterrole edit --namespace staging
@@ -112,11 +113,11 @@ func NewAuthorizeServiceAccountCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Comm
 
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required when binding a Role or binding a ClusterRole to a specific namespace)")
 
-	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Create a ClusterRoleBinding for cluster-wide access (requires --clusterrole)")
+	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Creates a ClusterRoleBinding for cluster-wide access (requires --clusterrole)")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (creates RoleBinding in specified namespace)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)")
 	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name(s) of the subject(s) to authorize (required)")
-	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Preview the YAML/JSON output without applying resources to the cluster")
+	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Previews the YAML/JSON output without applying resources to the cluster")
 	cmd.Flags().BoolVar(&cfg.force, "force", false, "Forces application of the binding, overwriting if it already exists")
 	cmd.Flags().StringVar(&cfg.bindingName, "binding-name", "", "Custom name for the RoleBinding or ClusterRoleBinding. If not specified, a name is auto-generated based on the role and subject")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format for dry-run (yaml or json)")
@@ -133,8 +134,8 @@ func newAuthorizeSubjectCMD(kymaConfig *cmdcommon.KymaConfig, authTarget, subjec
 
 	cmd := &cobra.Command{
 		Use:     authTarget,
-		Short:   fmt.Sprintf("Authorize a %s with Kyma RBAC resources", subjectType),
-		Long:    fmt.Sprintf("Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a %s.", subjectType),
+		Short:   fmt.Sprintf("Authorizes a %s with Kyma RBAC resources", strings.ToLower(subjectType)),
+		Long:    fmt.Sprintf("Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a %s.", strings.ToLower(subjectType)),
 		Example: examples,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
@@ -151,11 +152,11 @@ func newAuthorizeSubjectCMD(kymaConfig *cmdcommon.KymaConfig, authTarget, subjec
 	}
 
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required when binding a Role or binding a ClusterRole to a specific namespace)")
-	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Create a ClusterRoleBinding for cluster-wide access (requires --clusterrole)")
+	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Creates a ClusterRoleBinding for cluster-wide access (requires --clusterrole)")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (creates RoleBinding in specified namespace)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)")
 	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name(s) of the subject(s) to authorize (required)")
-	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Preview the YAML/JSON output without applying resources to the cluster")
+	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Previews the YAML/JSON output without applying resources to the cluster")
 	cmd.Flags().BoolVar(&cfg.force, "force", false, "Forces application of the binding, overwriting if it already exists")
 	cmd.Flags().StringVar(&cfg.bindingName, "binding-name", "", "Custom name for the RoleBinding or ClusterRoleBinding. If not specified, a name is auto-generated based on the role and subject")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format for dry-run (yaml or json)")
