@@ -13,6 +13,7 @@ kyma dashboard stop [flags]
 ## Flags
 
 ```text
+      --container-name string   Specifies the name of the local container to stop. (default "kyma-dashboard")
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file

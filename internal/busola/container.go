@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/pkg/browser"
@@ -66,11 +65,6 @@ func (c *Container) Open(path string) error {
 // Watch attaches to the running docker container and forwards its output.
 func (c *Container) Watch(ctx context.Context) error {
 	return c.docker.ContainerFollowRun(ctx, c.id, c.verbose)
-}
-
-// Stop stops the dashboard container.
-func (c *Container) Stop(ctx context.Context) error {
-	return c.docker.ContainerStop(ctx, c.id, container.StopOptions{})
 }
 
 func (c *Container) containerOpts(envs []string) docker.ContainerRunOpts {
