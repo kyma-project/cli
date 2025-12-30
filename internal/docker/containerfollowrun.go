@@ -5,12 +5,11 @@ import (
 	"io"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/kyma-project/cli.v3/internal/out"
 )
 
-func (c *Client) ContainerFollowRun(ctx context.Context, containerID string, forwardOutput bool) error {
-	buf, err := c.ContainerAttach(ctx, containerID, container.AttachOptions{
+func (c *Client) ContainerFollowRun(containerID string, forwardOutput bool) error {
+	buf, err := c.ContainerAttach(context.Background(), containerID, container.AttachOptions{
 		Stdout: true,
 		Stderr: true,
 		Stream: true,
@@ -26,7 +25,12 @@ func (c *Client) ContainerFollowRun(ctx context.Context, containerID string, for
 		dsterr = out.Default.ErrWriter()
 	}
 
-	_, err = stdcopy.StdCopy(dstout, dsterr, buf.Reader)
+	c.stopContainerOnSigInt(
+		containerID,
+		dstout,
+		dsterr,
+		buf.Reader,
+	)
 
-	return err
+	return nil
 }
