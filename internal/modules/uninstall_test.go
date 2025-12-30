@@ -52,7 +52,7 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 		ctx := context.Background()
 		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
 			ReturnCommunityInstalledByName: []kyma.ModuleTemplate{{}},
-			ReturnRunningAssociatedResourcesOfModule: []unstructured.Unstructured{
+			ReturnUserDefinedResourcesOfModule: []unstructured.Unstructured{
 				{
 					Object: map[string]any{
 						"metadata": map[string]any{
@@ -99,7 +99,7 @@ func TestDisableCommunity(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("ResourcesError"),
-			clierror.New("failed to get resources for the module test"),
+			clierror.New("failed to get resources for the module test: ResourcesError"),
 		)
 
 		require.NotNil(t, err)
