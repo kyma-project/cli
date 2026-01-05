@@ -23,25 +23,36 @@ func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTempla
 	moduleName := moduleTemplate.Spec.ModuleName
 	printer.Msgfln("removing %s community module from the target Kyma environment", moduleName)
 
+	associatedResources, err := repo.RunningAssociatedResourcesOfModule(ctx, *moduleTemplate)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for the module %v: %v", moduleName, err)))
+	}
+
 	moduleResources, err := repo.Resources(ctx, *moduleTemplate)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for the module %v", moduleName)))
+		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for the module %v: %v", moduleName, err)))
 	}
 
 	// We want to remove resources in the reversed order
 	slices.Reverse(moduleResources)
+	slices.Reverse(associatedResources)
+
+	moduleResourcesUnstruct := []unstructured.Unstructured{}
+	for _, mr := range moduleResources {
+		moduleResourcesUnstruct = append(moduleResourcesUnstruct, unstructured.Unstructured{Object: mr})
+	}
+
+	resourcesToDelete := slices.Concat(moduleResourcesUnstruct, associatedResources)
 
 	removedSuccessfully := true
-
-	for _, resource := range moduleResources {
+	for _, resource := range resourcesToDelete {
 		resourceWatcher, err := repo.DeleteResourceReturnWatcher(ctx, resource)
-		r := unstructured.Unstructured{Object: resource}
 		if err != nil {
 			removedSuccessfully = false
-			printer.Msgfln("failed to delete resource %s (%s): %v", r.GetName(), r.GetKind(), err)
+			printer.Msgfln("failed to delete resource %s (%s): %v", resource.GetName(), resource.GetKind(), err)
 			continue
 		}
-		printer.Msgfln("waiting for resource deletion: %s (%s)", r.GetName(), r.GetKind())
+		printer.Msgfln("waiting for resource deletion: %s (%s)", resource.GetName(), resource.GetKind())
 		timeoutCtx, cancel := context.WithTimeout(ctx, time.Second*100)
 		defer cancel()
 
@@ -61,7 +72,7 @@ func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTempla
 }
 
 func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleTemplatesRepository, moduleTemplate kyma.ModuleTemplate) ([]string, clierror.Error) {
-	runningResources, err := repo.RunningAssociatedResourcesOfModule(ctx, moduleTemplate)
+	runningResources, err := repo.RunningUserDefinedResourcesOfModule(ctx, moduleTemplate)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to retrieve running resources of the %s module", moduleTemplate.Spec.ModuleName)))
 	}
