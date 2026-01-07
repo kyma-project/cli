@@ -16,6 +16,7 @@ type ModuleTemplatesRepo struct {
 	ReturnCommunityByName                    []kyma.ModuleTemplate
 	ReturnCommunityInstalledByName           []kyma.ModuleTemplate
 	ReturnRunningAssociatedResourcesOfModule []unstructured.Unstructured
+	ReturnUserDefinedResourcesOfModule       []unstructured.Unstructured
 	ReturnResources                          []map[string]any
 	ReturnInstalledManager                   *unstructured.Unstructured
 	ReturnDeleteResourceReturnWatcher        watch.Interface
@@ -60,11 +61,15 @@ func (r *ModuleTemplatesRepo) RunningAssociatedResourcesOfModule(_ context.Conte
 	return r.ReturnRunningAssociatedResourcesOfModule, r.RunningAssociatedResourcesOfModuleErr
 }
 
+func (r *ModuleTemplatesRepo) RunningUserDefinedResourcesOfModule(_ context.Context, _ kyma.ModuleTemplate) ([]unstructured.Unstructured, error) {
+	return r.ReturnUserDefinedResourcesOfModule, r.RunningAssociatedResourcesOfModuleErr
+}
+
 func (r *ModuleTemplatesRepo) Resources(_ context.Context, _ kyma.ModuleTemplate) ([]map[string]any, error) {
 	return r.ReturnResources, r.ResourcesErr
 }
 
-func (r *ModuleTemplatesRepo) DeleteResourceReturnWatcher(_ context.Context, _ map[string]any) (watch.Interface, error) {
+func (r *ModuleTemplatesRepo) DeleteResourceReturnWatcher(_ context.Context, _ unstructured.Unstructured) (watch.Interface, error) {
 	return r.ReturnDeleteResourceReturnWatcher, r.DeleteResourceReturnWatcherErr
 }
 
