@@ -42,7 +42,7 @@ func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTempla
 		moduleResourcesUnstruct = append(moduleResourcesUnstruct, unstructured.Unstructured{Object: mr})
 	}
 
-	resourcesToDelete := slices.Concat(moduleResourcesUnstruct, associatedResources)
+	resourcesToDelete := slices.Concat(associatedResources, moduleResourcesUnstruct)
 
 	removedSuccessfully := true
 	for _, resource := range resourcesToDelete {
