@@ -18,8 +18,21 @@ func NewCatalogConfigFromRemote(remote flags.BoolOrStrings) *CatalogConfig {
 	}
 
 	if remote.Enabled && len(remote.Values) > 0 {
-		return &CatalogConfig{ExternalUrls: remote.Values}
+		return &CatalogConfig{ExternalUrls: uniqueValues(remote.Values)}
 	}
 
 	return &CatalogConfig{ListKyma: true, ListCluster: true}
+}
+
+func uniqueValues(urls []string) []string {
+	seen := make(map[string]bool)
+	dedupedUrls := make([]string, 0, len(urls))
+	for _, url := range urls {
+		if !seen[url] {
+			seen[url] = true
+			dedupedUrls = append(dedupedUrls, url)
+		}
+	}
+
+	return dedupedUrls
 }

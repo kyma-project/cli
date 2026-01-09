@@ -13,22 +13,22 @@ kyma alpha module catalog [flags]
 ## Examples
 
 ```bash
-  # List all available modules from the cluster
+  # List all modules available in the cluster (core and community)
   kyma module catalog
 
-  # List modules from remote catalog
+  # List available community modules from the official repository
   kyma module catalog --remote
 
-  # List modules from a specific remote URL
+  # List available community modules from a specific remote URL
   kyma module catalog --remote=https://example.com/modules.json
 
-  # List modules from multiple remote URLs
+  # List available community modules from multiple remote URLs
   kyma module catalog --remote=https://example.com/modules1.json,https://example.com/modules2.json
 
   # Output catalog as JSON
   kyma module catalog -o json
 
-  # List remote modules in YAML format
+  # List remote community modules in YAML format
   kyma module catalog --remote -o yaml
 ```
 
@@ -36,7 +36,7 @@ kyma alpha module catalog [flags]
 
 ```text
   -o, --output string             Output format (Possible values: table, json, yaml)
-      --remote bool or []string   Use remote catalog (optional: specify URL) (default "false")
+      --remote bool or []string   Fetch modules from the official repository or specify custom URL(s) (default "false")
       --context string            The name of the kubeconfig context to use
   -h, --help                      Help for the command
       --kubeconfig string         Path to the Kyma kubeconfig file

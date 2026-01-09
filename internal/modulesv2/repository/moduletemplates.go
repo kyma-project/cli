@@ -95,7 +95,7 @@ func (r *moduleTemplatesRepository) mapToCoreEntities(rawModuleTemplates []kyma.
 	entities := []*entities.CoreModuleTemplate{}
 
 	for _, rawModuleTemplate := range rawModuleTemplates {
-		assignments := getChannelVersionsAssignments(rawReleaseMetas, rawModuleTemplate.Spec.ModuleName)
+		assignments := getChannelVersionsAssignments(rawReleaseMetas, rawModuleTemplate.Spec.ModuleName, rawModuleTemplate.Spec.Version)
 		for _, assignment := range assignments {
 			entities = append(entities, r.mapToCoreEntity(&rawModuleTemplate, assignment.Channel))
 		}
@@ -170,10 +170,18 @@ func (r *moduleTemplatesRepository) mapToCoreEntityLegacy(coreModuleTemplates []
 	return nil, errors.New("failed to list module catalog from the target Kyma environment")
 }
 
-func getChannelVersionsAssignments(rawReleaseMetas []kyma.ModuleReleaseMeta, moduleName string) []kyma.ChannelVersionAssignment {
+func getChannelVersionsAssignments(rawReleaseMetas []kyma.ModuleReleaseMeta, moduleName, version string) []kyma.ChannelVersionAssignment {
 	for _, rawReleaseMeta := range rawReleaseMetas {
 		if rawReleaseMeta.Spec.ModuleName == moduleName {
-			return rawReleaseMeta.Spec.Channels
+			availableChannels := []kyma.ChannelVersionAssignment{}
+
+			for _, channelAndVersion := range rawReleaseMeta.Spec.Channels {
+				if channelAndVersion.Version == version {
+					availableChannels = append(availableChannels, channelAndVersion)
+				}
+			}
+
+			return availableChannels
 		}
 	}
 

@@ -33,6 +33,10 @@ func Test_NewCatalogConfigFromRemote(t *testing.T) {
 			remote:         flags.BoolOrStrings{Enabled: true, Values: []string{"https://external-repo.co.uk", "https://example.com"}},
 			expectedConfig: dtos.CatalogConfig{ExternalUrls: []string{"https://external-repo.co.uk", "https://example.com"}},
 		},
+		{
+			remote:         flags.BoolOrStrings{Enabled: true, Values: []string{"https://external-repo.co.uk", "https://example.com", "https://external-repo.co.uk", "https://external-repo.co.uk"}},
+			expectedConfig: dtos.CatalogConfig{ExternalUrls: []string{"https://external-repo.co.uk", "https://example.com"}},
+		},
 	}
 
 	for _, test := range tests {
