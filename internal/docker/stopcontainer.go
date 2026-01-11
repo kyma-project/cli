@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"os/signal"
@@ -44,5 +45,17 @@ func (c *Client) stopContainerOnSigInt(
 		}
 		<-done
 	case <-done:
+	}
+}
+
+func (c *Client) StopContainerOnSigInt(sigCh chan os.Signal) error {
+	select {
+	case <-sigCh:
+		_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		return nil
+	default:
+		return errors.New("no interrupt signal received")
 	}
 }
