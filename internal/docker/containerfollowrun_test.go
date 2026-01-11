@@ -1,42 +1,54 @@
 package docker
 
 import (
+	"bytes"
 	"io"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 )
 
 func TestContainerFollowRun(t *testing.T) {
-	t.Run("forwardOutput true writes to out.Default writers", func(t *testing.T) {
+	t.Run("function writes to provided writers", func(t *testing.T) {
+		outBuf, errBuf := &bytes.Buffer{}, &bytes.Buffer{}
 		cli := &mockClient{
 			outputMessage: "test-output",
+			dstOut:        outBuf,
+			dstErr:        errBuf,
 		}
 
 		err := cli.ContainerFollowRun(true)
 		require.NoError(t, err)
+
+		require.Equal(t, "test-output", outBuf.String())
+		require.Equal(t, "test-output", errBuf.String())
 	})
 
-	t.Run("forwardOutput false discards output", func(t *testing.T) {
+	t.Run("function discards expected output", func(t *testing.T) {
+		outBuf, errBuf := &bytes.Buffer{}, &bytes.Buffer{}
 		cli := &mockClient{
 			outputMessage: "test-output",
+			dstOut:        outBuf,
+			dstErr:        errBuf,
 		}
 
 		err := cli.ContainerFollowRun(false)
 		require.NoError(t, err)
+
+		require.Equal(t, "", outBuf.String())
+		require.Equal(t, "", errBuf.String())
 	})
 }
 
 type mockClient struct {
-	outputMessage string
+	outputMessage  string
+	dstOut, dstErr io.Writer
 }
 
 func (m *mockClient) ContainerFollowRun(forwardOutput bool) error {
 	var dstout, dsterr = io.Discard, io.Discard
-	if forwardOutput {
-		dstout = out.Default.MsgWriter()
-		dsterr = out.Default.ErrWriter()
+	if forwardOutput && m.dstOut != nil && m.dstErr != nil {
+		dstout, dsterr = m.dstOut, m.dstErr
 	}
 
 	_, _ = dstout.Write([]byte(m.outputMessage))
