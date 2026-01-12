@@ -15,9 +15,18 @@ fi
 echo "Running test in user context of: $(kubectl config view --minify --raw | yq '.users[0].name')"
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
-echo -e "Step2: List modules\n"
+echo -e "Step2: Manage modules \n"
+
+../../bin/kyma module catalog
+../../bin/kyma module add serverless --default-cr
+echo "..waiting for serverless module to be installed"
+kubectl wait --for condition=Installed serverlesses.operator.kyma-project.io/default -n kyma-system --timeout=360s
+
 ../../bin/kyma module list
 
+../../bin/kyma module delete serverless
+echo "..waiting for serverless module to be deleted"
+kubectl wait --for=delete deployment/serverless-operator -n kyma-system --timeout=360s
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step3: Connecting to a service manager from remote BTP subaccount\n"
