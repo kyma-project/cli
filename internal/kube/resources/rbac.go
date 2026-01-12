@@ -9,6 +9,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -79,6 +80,28 @@ func CreateRoleBindingToRole(ctx context.Context, client kube.Client, name, name
 		return err
 	}
 	return nil
+}
+
+func BindingExists(ctx context.Context, client kube.Client, binding *unstructured.Unstructured) bool {
+	name := binding.GetName()
+	kind := binding.GetKind()
+	namespace := binding.GetNamespace()
+
+	var err error
+
+	switch kind {
+	case "ClusterRoleBinding":
+		_, err = client.Static().RbacV1().ClusterRoleBindings().Get(ctx, name, metav1.GetOptions{})
+	case "RoleBinding":
+		if namespace == "" {
+			return false
+		}
+		_, err = client.Static().RbacV1().RoleBindings(namespace).Get(ctx, name, metav1.GetOptions{})
+	default:
+		return false
+	}
+
+	return err == nil
 }
 
 func buildServiceAccountToken(name, namespace string) *corev1.Secret {

@@ -45,7 +45,7 @@ func NewBuilder(kymaConfig *cmdcommon.KymaConfig) *Builder {
 
 func AddCmdPersistentFlags(cmd *cobra.Command) {
 	// these flags are not operational. it's only to print the help description, and the help cobra with validation
-	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skip fetching extensions from the target Kyma environment")
+	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skips fetching extensions from the target Kyma environment")
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Prints a possible error when fetching extensions fails")
 }
 
