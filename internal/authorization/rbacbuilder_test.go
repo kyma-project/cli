@@ -106,6 +106,102 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 			},
 			expectedError: "clusterrole is required for ClusterRoleBinding",
 		},
+		{
+			name: "error when binding name is too long (over 253 characters)",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				longName := ""
+				for i := 0; i < 254; i++ {
+					longName += "a"
+				}
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName(longName)
+			},
+			expectedError: "is too long (254 characters)",
+		},
+		{
+			name: "error when binding name starts with hyphen",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName("-invalid-binding")
+			},
+			expectedError: "must start with a lowercase alphanumeric character",
+		},
+		{
+			name: "error when binding name ends with hyphen",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName("invalid-binding-")
+			},
+			expectedError: "must end with a lowercase alphanumeric character",
+		},
+		{
+			name: "error when binding name contains uppercase letters",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName("invalid-Binding")
+			},
+			expectedError: "contains invalid character at position 8",
+		},
+		{
+			name: "error when binding name contains special characters",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName("invalid@binding")
+			},
+			expectedError: "contains invalid character at position 7",
+		},
+		{
+			name: "successful build with maximum length name (253 characters)",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				maxLengthName := ""
+				for i := 0; i < 253; i++ {
+					maxLengthName += "a"
+				}
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName(maxLengthName)
+			},
+			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
+				assert.Equal(t, 253, len(result.GetName()))
+			},
+		},
+		{
+			name: "successful build with valid dots and hyphens",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForClusterRole("cluster-admin").
+					ForBindingName("my-binding.name-with.dots-and-hyphens")
+			},
+			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
+				assert.Equal(t, "my-binding.name-with.dots-and-hyphens", result.GetName())
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -199,7 +295,8 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 					ForSubjectName("test/repo").
 					ForRole("editor").
 					ForNamespace("test-ns").
-					ForPrefix("system:")
+					ForPrefix("system:").
+					ForBindingName("test-repo-editor-binding")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
 				subjects, found, err := unstructured.NestedFieldNoCopy(result.Object, "subjects")
@@ -265,7 +362,8 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 					ForSubjectName("sa-test-binding").
 					ForRole("reader").
 					ForNamespace("default").
-					ForServiceAccountNamespace("sa-default")
+					ForServiceAccountNamespace("sa-default").
+					ForBindingName("sa-test-binding-reader")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
 				subjects, found, err := unstructured.NestedFieldNoCopy(result.Object, "subjects")
@@ -278,6 +376,109 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 				assert.Equal(t, "sa-test-binding", subject["name"])
 				assert.Equal(t, "ServiceAccount", subject["kind"])
 				assert.Equal(t, "sa-default", subject["namespace"])
+			},
+		},
+		{
+			name: "error when binding name is too long (over 253 characters)",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				longName := ""
+				for i := 0; i < 254; i++ {
+					longName += "a"
+				}
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName(longName)
+			},
+			expectedError: "is too long (254 characters)",
+		},
+		{
+			name: "error when binding name starts with hyphen",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName("-invalid-binding")
+			},
+			expectedError: "must start with a lowercase alphanumeric character",
+		},
+		{
+			name: "error when binding name ends with hyphen",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName("invalid-binding-")
+			},
+			expectedError: "must end with a lowercase alphanumeric character",
+		},
+		{
+			name: "error when binding name contains uppercase letters",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName("invalid-Binding")
+			},
+			expectedError: "contains invalid character at position 8",
+		},
+		{
+			name: "error when binding name contains special characters",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName("invalid@binding")
+			},
+			expectedError: "contains invalid character at position 7",
+		},
+		{
+			name: "successful build with maximum length name (253 characters)",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				maxLengthName := ""
+				for i := 0; i < 253; i++ {
+					maxLengthName += "a"
+				}
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName(maxLengthName)
+			},
+			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
+				assert.Equal(t, 253, len(result.GetName()))
+			},
+		},
+		{
+			name: "successful build with valid dots and hyphens",
+			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test-user").
+					ForRole("reader").
+					ForNamespace("default").
+					ForBindingName("my-binding.name-with.dots-and-hyphens")
+			},
+			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
+				assert.Equal(t, "my-binding.name-with.dots-and-hyphens", result.GetName())
 			},
 		},
 	}

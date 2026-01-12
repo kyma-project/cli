@@ -13,7 +13,7 @@ kyma alpha <command> [flags]
 ## Available Commands
 
 ```text
-  authorize          - Authorize a subject (user, group, or service account) with Kyma RBAC resources
+  authorize          - Authorizes a subject (user, group, or service account) with Kyma RBAC resources
   diagnose           - Runs diagnostic commands to troubleshoot your Kyma cluster
   hana               - Manages an SAP HANA instance in the Kyma cluster
   kubeconfig         - Manages access to the Kyma cluster
@@ -29,13 +29,13 @@ kyma alpha <command> [flags]
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
-      --skip-extensions         Skip fetching extensions from the target Kyma environment
+      --skip-extensions         Skips fetching extensions from the target Kyma environment
 ```
 
 ## See also
 
 * [kyma](kyma.md)                                                   - A simple set of commands to manage a Kyma cluster
-* [kyma alpha authorize](kyma_alpha_authorize.md)                   - Authorize a subject (user, group, or service account) with Kyma RBAC resources
+* [kyma alpha authorize](kyma_alpha_authorize.md)                   - Authorizes a subject (user, group, or service account) with Kyma RBAC resources
 * [kyma alpha diagnose](kyma_alpha_diagnose.md)                     - Runs diagnostic commands to troubleshoot your Kyma cluster
 * [kyma alpha hana](kyma_alpha_hana.md)                             - Manages an SAP HANA instance in the Kyma cluster
 * [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md)                 - Manages access to the Kyma cluster
