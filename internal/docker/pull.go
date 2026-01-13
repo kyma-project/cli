@@ -48,7 +48,7 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 	})
 }
 
-// pullImageAndStartContainer is the private function that can be tested with mocks
+// PullImageAndStartContainer is the private function that can be tested with mocks
 func pullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts, u utils) (string, error) {
 	config := &container.Config{
 		Env:          opts.Envs,
