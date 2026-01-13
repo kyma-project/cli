@@ -1,6 +1,9 @@
 package docker
 
 import (
+	"bytes"
+	"context"
+	"io"
 	"os"
 	"syscall"
 	"testing"
@@ -8,27 +11,56 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStopContainerOnSigInt(t *testing.T) {
-	t.Run("container stops on interrupt", func(t *testing.T) {
-		mock := &dockerClientMock{}
-		cli := NewTestClient(mock)
+func Test_stopContainerOnSigInt(t *testing.T) {
+	t.Run("container stops when signal is received", func(t *testing.T) {
+		c := &Client{}
 
-		sigCh := make(chan os.Signal, 1)
-		sigCh <- syscall.SIGINT
+		utils := stopUtils{
+			waitForSignal: func() <-chan os.Signal {
+				ch := make(chan os.Signal, 1)
+				ch <- syscall.SIGINT
+				return ch
+			},
+			stopContainer: func(ctx context.Context, containerID string) error {
+				require.Equal(t, "test-container", containerID)
+				return nil
+			},
+			stdCopy: func(dstout, dsterr io.Writer, src io.Reader) (int64, error) {
+				return 0, nil
+			},
+		}
 
-		err := cli.StopContainerOnSigInt(sigCh)
-
-		require.NoError(t, err)
+		c.stopContainerOnSigInt(
+			"test-container",
+			&bytes.Buffer{},
+			&bytes.Buffer{},
+			bytes.NewBuffer(nil),
+			utils,
+		)
 	})
 
-	t.Run("function finishes without interrupt", func(t *testing.T) {
-		mock := &dockerClientMock{}
-		cli := NewTestClient(mock)
+	t.Run("function finishes without receiving signal", func(t *testing.T) {
+		c := &Client{}
 
-		sigCh := make(chan os.Signal)
+		utils := stopUtils{
+			waitForSignal: func() <-chan os.Signal {
+				return make(chan os.Signal)
+			},
+			stopContainer: func(ctx context.Context, containerID string) error {
+				t.Fatalf("stopContainer must not be called")
+				return nil
+			},
+			stdCopy: func(dstout, dsterr io.Writer, src io.Reader) (int64, error) {
+				return 0, nil
+			},
+		}
 
-		err := cli.StopContainerOnSigInt(sigCh)
-
-		require.Error(t, err)
+		c.stopContainerOnSigInt(
+			"test-container",
+			&bytes.Buffer{},
+			&bytes.Buffer{},
+			bytes.NewBuffer(nil),
+			utils,
+		)
 	})
 }
