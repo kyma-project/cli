@@ -98,8 +98,10 @@ func validateModuleAvailability(ctx context.Context, client kube.Client, repo re
 	}
 
 	for _, v := range availableCoreVersions {
-		if v.Channel == channel || channel == "" {
-			return nil
+		for _, ch := range v.Channels {
+			if ch == channel || channel == "" {
+				return nil
+			}
 		}
 	}
 

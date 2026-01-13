@@ -17,10 +17,10 @@ func listOldModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList
 		version := ModuleVersion{
 			Version:    componentInfo.Version,
 			Repository: moduleTemplate.Spec.Info.Repository,
-			Channel:    moduleTemplate.Spec.Channel,
+			Channels:   []string{moduleTemplate.Spec.Channel},
 		}
 
-		if version.Version == "" || version.Channel == "" {
+		if version.Version == "" || version.Channels[0] == "" {
 			// ignore corrupted ModuleTemplates (without version or channel)
 			continue
 		}

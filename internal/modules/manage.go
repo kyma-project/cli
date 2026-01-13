@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
@@ -52,18 +53,18 @@ func ManageModuleMissingInKyma(ctx context.Context, client kube.Client, repo rep
 		return fmt.Errorf("failed to get module release metas: %v", err)
 	}
 
-	channelAssignedToModuleVersion := getAssignedChannel(*moduleReleaseMetas, moduleName, installedModuleTemplate.Spec.Version)
+	channelsAssignedToModuleVersion := getAssignedChannels(*moduleReleaseMetas, moduleName, installedModuleTemplate.Spec.Version)
 	kymaCR, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get kyma cr")
 	}
 	expectedChannel := kymaCR.Spec.Channel
 
-	if channelAssignedToModuleVersion != expectedChannel {
+	if !slices.Contains(channelsAssignedToModuleVersion, expectedChannel) {
 		return ErrModuleInstalledVersionNotInKymaChannel
 	}
 
-	clierr := Enable(ctx, client, repo, moduleName, channelAssignedToModuleVersion, enableDefaultCr(policy), []unstructured.Unstructured{}...)
+	clierr := Enable(ctx, client, repo, moduleName, expectedChannel, enableDefaultCr(policy), []unstructured.Unstructured{}...)
 	if clierr != nil {
 		return fmt.Errorf("failed to manage module: %v", clierr)
 	}
@@ -132,10 +133,12 @@ func GetAvailableChannelsAndVersions(ctx context.Context, client kube.Client, re
 			continue
 		}
 
-		assignedChannel := getAssignedChannel(*moduleReleaseMetas, moduleName, coreModuleTemplate.Spec.Version)
+		assignedChannels := getAssignedChannels(*moduleReleaseMetas, moduleName, coreModuleTemplate.Spec.Version)
 
-		if assignedChannel != "" {
-			channelsAndVersions[assignedChannel] = coreModuleTemplate.Spec.Version
+		if len(assignedChannels) > 0 {
+			for _, channel := range assignedChannels {
+				channelsAndVersions[channel] = coreModuleTemplate.Spec.Version
+			}
 		}
 	}
 

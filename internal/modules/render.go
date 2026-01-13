@@ -147,12 +147,16 @@ func convertInstall(details ModuleInstallDetails) string {
 func convertVersions(versions []ModuleVersion) string {
 	values := make([]string, len(versions))
 	for i, version := range versions {
-		value := version.Version
-		if version.Channel != "" {
-			value += fmt.Sprintf("(%s)", version.Channel)
-		}
+		if len(version.Channels) == 0 {
+			values[i] = version.Version
+		} else {
+			versionsWithChannels := []string{}
+			for _, channel := range version.Channels {
+				versionsWithChannels = append(versionsWithChannels, fmt.Sprintf("%s(%s)", version.Version, channel))
+			}
 
-		values[i] = value
+			values[i] = strings.Join(versionsWithChannels, ", ")
+		}
 	}
 
 	return strings.Join(values, ", ")
