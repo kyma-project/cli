@@ -17,6 +17,7 @@ require (
 	github.com/kyma-project/api-gateway v0.0.0-20250814120053-7d617def4106
 	github.com/moby/go-archive v0.1.0
 	github.com/moby/term v0.5.2
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
@@ -180,7 +181,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/selinux v1.13.0 // indirect
 	github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
