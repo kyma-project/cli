@@ -28,7 +28,7 @@ type ContainerRunOpts struct {
 	Ports         map[string]string
 }
 
-// utils struct allows injecting dependencies for testing
+// Utils struct allows injecting dependencies for testing
 type utils struct {
 	imagePull       func(ctx context.Context, imageName string, opts image.PullOptions) (io.ReadCloser, error)
 	containerCreate func(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, platform *v1.Platform, containerName string) (container.CreateResponse, error)
