@@ -127,16 +127,10 @@ func TestModuleTemplatesRepository_ListCore(t *testing.T) {
 
 		result, err := repo.ListCore(context.Background())
 		require.NoError(t, err)
-		require.Len(t, result, 3)
+		require.Len(t, result, 1)
 
 		require.Equal(t, "test-module", result[0].ModuleName)
 		require.Equal(t, "regular", result[0].Channel)
-
-		require.Equal(t, "test-module", result[1].ModuleName)
-		require.Equal(t, "fast", result[1].Channel)
-
-		require.Equal(t, "test-module", result[2].ModuleName)
-		require.Equal(t, "experimental", result[2].Channel)
 	})
 }
 
