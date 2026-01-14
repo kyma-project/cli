@@ -1,6 +1,8 @@
 package module
 
 import (
+	"strings"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
@@ -43,7 +45,18 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
   # List remote community modules in YAML format
   kyma module catalog --remote -o yaml`,
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(_ *cobra.Command, args []string) {
+			if cfg.remote.Enabled && len(args) > 0 {
+				for _, a := range args {
+					parts := strings.SplitSeq(a, ",")
+					for p := range parts {
+						v := strings.TrimSpace(p)
+						if v != "" {
+							cfg.remote.Values = append(cfg.remote.Values, v)
+						}
+					}
+				}
+			}
 			clierror.Check(catalogModules(&cfg))
 		},
 	}
