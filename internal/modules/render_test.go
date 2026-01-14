@@ -16,11 +16,11 @@ var testModules = []Module{
 			{
 				Repository: "url-3",
 				Version:    "0.1",
-				Channel:    "regular",
+				Channels:   []string{"regular"},
 			},
 			{
-				Version: "0.2",
-				Channel: "fast",
+				Version:  "0.2",
+				Channels: []string{"fast"},
 			},
 		},
 		CommunityModule: false,
@@ -32,7 +32,7 @@ var testModules = []Module{
 			{
 				Repository: "url-1",
 				Version:    "0.0.1",
-				Channel:    "fast",
+				Channels:   []string{"fast"},
 			},
 			{
 				Repository: "url-2",
@@ -48,7 +48,7 @@ var testModules = []Module{
 			{
 				Repository: "url-1",
 				Version:    "0.1.1",
-				Channel:    "",
+				Channels:   []string{},
 			},
 			{
 				Repository: "url-2",

@@ -3,6 +3,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -98,7 +99,7 @@ func validateModuleAvailability(ctx context.Context, client kube.Client, repo re
 	}
 
 	for _, v := range availableCoreVersions {
-		if v.Channel == channel || channel == "" {
+		if slices.Contains(v.Channels, channel) {
 			return nil
 		}
 	}
