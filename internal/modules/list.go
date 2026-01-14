@@ -50,7 +50,7 @@ type ModuleInstallDetails struct {
 type ModuleVersion struct {
 	Repository string
 	Version    string
-	Channel    string
+	Channels   []string
 }
 
 type ModulesList []Module
@@ -285,7 +285,7 @@ func listCoreModulesCatalog(ctx context.Context, client kube.Client) (ModulesLis
 		version := ModuleVersion{
 			Version:    moduleTemplate.Spec.Version,
 			Repository: moduleTemplate.Spec.Info.Repository,
-			Channel: getAssignedChannel(
+			Channels: getAssignedChannels(
 				*moduleReleaseMetas,
 				moduleName,
 				moduleTemplate.Spec.Version,
@@ -875,23 +875,25 @@ func getStateFromConditions(conditions []interface{}) string {
 }
 
 // look for channel assigned to version with specified moduleName
-func getAssignedChannel(releaseMetas kyma.ModuleReleaseMetaList, moduleName, version string) string {
+func getAssignedChannels(releaseMetas kyma.ModuleReleaseMetaList, moduleName, version string) []string {
 	for _, releaseMeta := range releaseMetas.Items {
 		if releaseMeta.Spec.ModuleName == moduleName {
-			return getChannelFromAssignments(releaseMeta.Spec.Channels, version)
+			return getChannelsFromAssignments(releaseMeta.Spec.Channels, version)
 		}
 	}
-	return ""
+	return []string{}
 }
 
-func getChannelFromAssignments(assignments []kyma.ChannelVersionAssignment, version string) string {
+func getChannelsFromAssignments(assignments []kyma.ChannelVersionAssignment, version string) []string {
+	channels := []string{}
+
 	for _, assignment := range assignments {
 		if assignment.Version == version {
-			return assignment.Channel
+			channels = append(channels, assignment.Channel)
 		}
 	}
 
-	return ""
+	return channels
 }
 
 // return index of module with given name. if not exists return -1
