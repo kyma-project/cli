@@ -135,10 +135,8 @@ func GetAvailableChannelsAndVersions(ctx context.Context, client kube.Client, re
 
 		assignedChannels := getAssignedChannels(*moduleReleaseMetas, moduleName, coreModuleTemplate.Spec.Version)
 
-		if len(assignedChannels) > 0 {
-			for _, channel := range assignedChannels {
-				channelsAndVersions[channel] = coreModuleTemplate.Spec.Version
-			}
+		for _, channel := range assignedChannels {
+			channelsAndVersions[channel] = coreModuleTemplate.Spec.Version
 		}
 	}
 

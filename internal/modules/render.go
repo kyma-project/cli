@@ -145,17 +145,17 @@ func convertInstall(details ModuleInstallDetails) string {
 // convert versions to string containing values separated with '\n'
 // and in format 'VERSION (CHANNEL)' or 'VERSION' if channel is empty
 func convertVersions(versions []ModuleVersion) string {
-	values := make([]string, len(versions))
-	for i, version := range versions {
+	values := make([]string, 0, len(versions))
+	for _, version := range versions {
 		if len(version.Channels) == 0 {
-			values[i] = version.Version
+			values = append(values, version.Version)
 		} else {
 			versionsWithChannels := []string{}
 			for _, channel := range version.Channels {
 				versionsWithChannels = append(versionsWithChannels, fmt.Sprintf("%s(%s)", version.Version, channel))
 			}
 
-			values[i] = strings.Join(versionsWithChannels, ", ")
+			values = append(values, strings.Join(versionsWithChannels, ", "))
 		}
 	}
 
