@@ -8,12 +8,13 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli.v3/internal/out"
+	"github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-// ErrorMessage is used to parse error messages coming from Docker
 type ErrorMessage struct {
 	Error string
 }
@@ -27,8 +28,28 @@ type ContainerRunOpts struct {
 	Ports         map[string]string
 }
 
-// PullImageAndStartContainer creates, pulls and starts a container
+// Utils struct allows injecting dependencies for testing
+type utils struct {
+	imagePull       func(ctx context.Context, imageName string, opts image.PullOptions) (io.ReadCloser, error)
+	containerCreate func(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, platform *v1.Platform, containerName string) (container.CreateResponse, error)
+	containerStart  func(ctx context.Context, containerID string, opts container.StartOptions) error
+	displayJSON     func(reader io.Reader, outStream *streams.Out) error
+}
+
+// PullImageAndStartContainer is the public function used in production
 func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts) (string, error) {
+	return pullImageAndStartContainer(ctx, opts, utils{
+		imagePull:       c.ImagePull,
+		containerCreate: c.ContainerCreate,
+		containerStart:  c.ContainerStart,
+		displayJSON: func(r io.Reader, outStream *streams.Out) error {
+			return jsonmessage.DisplayJSONMessagesToStream(r, outStream, nil)
+		},
+	})
+}
+
+// PullImageAndStartContainer is the private function that can be tested with mocks
+func pullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts, u utils) (string, error) {
 	config := &container.Config{
 		Env:          opts.Envs,
 		ExposedPorts: portSet(opts.Ports),
@@ -41,8 +62,7 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 		NetworkMode:  container.NetworkMode(opts.NetworkMode),
 	}
 
-	var r io.ReadCloser
-	r, err := c.ImagePull(ctx, config.Image, image.PullOptions{})
+	r, err := u.imagePull(ctx, config.Image, image.PullOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -53,13 +73,12 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 		return "", err
 	}
 
-	body, err := c.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
+	body, err := u.containerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
 	if err != nil {
 		return "", err
 	}
 
-	err = c.ContainerStart(ctx, body.ID, container.StartOptions{})
-	if err != nil {
+	if err := u.containerStart(ctx, body.ID, container.StartOptions{}); err != nil {
 		return "", err
 	}
 

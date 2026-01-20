@@ -12,7 +12,13 @@ import (
 	"github.com/kyma-project/cli.v3/internal/out"
 )
 
-func (c *Client) stopContainerOnSigInt(
+type stopUtils struct {
+	waitForSignal func() <-chan os.Signal
+	stopContainer func(ctx context.Context, containerID string) error
+	stdCopy       func(dstout, dsterr io.Writer, src io.Reader) (written int64, err error)
+}
+
+func (c *Client) StopContainerOnSigInt(
 	containerID string,
 	dstout io.Writer,
 	dsterr io.Writer,
@@ -22,19 +28,37 @@ func (c *Client) stopContainerOnSigInt(
 	signal.Notify(sigCh, os.Interrupt)
 	defer signal.Stop(sigCh)
 
+	c.stopContainerOnSigInt(containerID, dstout, dsterr, reader, stopUtils{
+		waitForSignal: func() <-chan os.Signal {
+			return sigCh
+		},
+		stopContainer: func(ctx context.Context, containerID string) error {
+			return c.ContainerStop(ctx, containerID, container.StopOptions{})
+		},
+		stdCopy: stdcopy.StdCopy,
+	})
+}
+
+func (c *Client) stopContainerOnSigInt(
+	containerID string,
+	dstout io.Writer,
+	dsterr io.Writer,
+	reader io.Reader,
+	utils stopUtils,
+) {
 	done := make(chan struct{})
 
 	go func() {
-		_, _ = stdcopy.StdCopy(dstout, dsterr, reader)
+		_, _ = utils.stdCopy(dstout, dsterr, reader)
 		close(done)
 	}()
 
 	select {
-	case <-sigCh:
+	case <-utils.waitForSignal():
 		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := c.ContainerStop(stopCtx, containerID, container.StopOptions{}); err != nil {
+		if err := utils.stopContainer(stopCtx, containerID); err != nil {
 			out.Default.Errfln(
 				"Failed to stop the running container. The container may still be running.\n"+
 					"You can try stopping it again using Kyma Dashboard.\n"+
@@ -43,6 +67,7 @@ func (c *Client) stopContainerOnSigInt(
 			)
 		}
 		<-done
+
 	case <-done:
 	}
 }

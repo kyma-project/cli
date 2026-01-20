@@ -1,6 +1,8 @@
 package module
 
 import (
+	"strings"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
@@ -26,31 +28,42 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "catalog [flags]",
 		Short: "Lists modules catalog",
 		Long:  `Use this command to list all available Kyma modules.`,
-		Example: `  # List all available modules from the cluster
+		Example: `  # List all modules available in the cluster (core and community)
   kyma module catalog
 
-  # List modules from remote catalog
+  # List available community modules from the official repository
   kyma module catalog --remote
 
-  # List modules from a specific remote URL
+  # List available community modules from a specific remote URL
   kyma module catalog --remote=https://example.com/modules.json
 
-  # List modules from multiple remote URLs
+  # List available community modules from multiple remote URLs
   kyma module catalog --remote=https://example.com/modules1.json,https://example.com/modules2.json
 
   # Output catalog as JSON
   kyma module catalog -o json
 
-  # List remote modules in YAML format
+  # List remote community modules in YAML format
   kyma module catalog --remote -o yaml`,
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(_ *cobra.Command, args []string) {
+			if cfg.remote.Enabled && len(args) > 0 {
+				for _, a := range args {
+					parts := strings.SplitSeq(a, ",")
+					for p := range parts {
+						v := strings.TrimSpace(p)
+						if v != "" {
+							cfg.remote.Values = append(cfg.remote.Values, v)
+						}
+					}
+				}
+			}
 			clierror.Check(catalogModules(&cfg))
 		},
 	}
 
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (Possible values: table, json, yaml)")
 
-	remoteFlag := cmd.Flags().VarPF(&cfg.remote, "remote", "", "Use remote catalog (optional: specify URL)")
+	remoteFlag := cmd.Flags().VarPF(&cfg.remote, "remote", "", "Fetch modules from the official repository or specify custom URL(s)")
 	remoteFlag.NoOptDefVal = "true"
 
 	return cmd
