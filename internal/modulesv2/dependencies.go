@@ -100,7 +100,12 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 	})
 
 	di.RegisterTyped(container, func(c *di.Container) (*PullService, error) {
-		return NewPullService(), nil
+		moduleRepo, err := di.GetTyped[repository.ModuleTemplatesRepository](c)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewPullService(moduleRepo), nil
 	})
 
 	return container

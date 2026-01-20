@@ -29,17 +29,17 @@ func Test_CatalogResultFromCoreModuleTemplates(t *testing.T) {
 func Test_CatalogResultFromCommunityModuleTemplates(t *testing.T) {
 	entities := []*entities.CommunityModuleTemplate{
 		entities.NewCommunityModuleTemplate(
-			entities.MapBaseModuleTemplateFromParams("local-template-0.0.1", "local-template", "0.0.1", "kyma-system"),
+			entities.BaseModuleTemplateFromParams("local-template-0.0.1", "local-template", "0.0.1", "kyma-system"),
 			"https://source.url",
 			map[string]string{},
 		),
 		entities.NewCommunityModuleTemplate(
-			entities.MapBaseModuleTemplateFromParams("local-template-0.0.2", "local-template", "0.0.2", "kyma-system"),
+			entities.BaseModuleTemplateFromParams("local-template-0.0.2", "local-template", "0.0.2", "kyma-system"),
 			"https://source.url",
 			map[string]string{},
 		),
 		entities.NewCommunityModuleTemplate(
-			entities.MapBaseModuleTemplateFromParams("community-template-0.0.1", "community-template", "0.0.1", ""),
+			entities.BaseModuleTemplateFromParams("community-template-0.0.1", "community-template", "0.0.1", ""),
 			"https://source.url",
 			map[string]string{},
 		),

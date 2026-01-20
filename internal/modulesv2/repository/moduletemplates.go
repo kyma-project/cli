@@ -17,6 +17,7 @@ type ModuleTemplatesRepository interface {
 	ListCore(ctx context.Context) ([]*entities.CoreModuleTemplate, error)
 	ListLocalCommunity(ctx context.Context) ([]*entities.CommunityModuleTemplate, error)
 	ListExternalCommunity(ctx context.Context, urls []string) ([]*entities.CommunityModuleTemplate, error)
+	CreateFromJSON(ctx context.Context, json, namespace string, additionalAnnotations []string) error
 }
 
 type moduleTemplatesRepository struct {
@@ -105,9 +106,7 @@ func (r *moduleTemplatesRepository) mapToCoreEntities(rawModuleTemplates []kyma.
 }
 
 func (r *moduleTemplatesRepository) mapToCoreEntity(rawModuleTemplate *kyma.ModuleTemplate, channel string) *entities.CoreModuleTemplate {
-	moduleTemplateEntity := entities.MapBaseModuleTemplateFromRaw(rawModuleTemplate)
-
-	return entities.NewCoreModuleTemplate(moduleTemplateEntity, channel)
+	return entities.NewCoreModuleTemplateFromRaw(rawModuleTemplate, channel)
 }
 
 func (r *moduleTemplatesRepository) mapToCommunityEntities(rawModuleTemplates []kyma.ModuleTemplate) []*entities.CommunityModuleTemplate {
@@ -121,18 +120,7 @@ func (r *moduleTemplatesRepository) mapToCommunityEntities(rawModuleTemplates []
 }
 
 func (r *moduleTemplatesRepository) mapToCommunityEntity(rawModuleTemplate *kyma.ModuleTemplate) *entities.CommunityModuleTemplate {
-	moduleTemplateEntity := entities.MapBaseModuleTemplateFromRaw(rawModuleTemplate)
-	sourceURL := rawModuleTemplate.Annotations["source"]
-	resources := map[string]string{}
-
-	for _, rawResource := range rawModuleTemplate.Spec.Resources {
-		key := rawResource.Name
-		value := rawResource.Link
-
-		resources[key] = value
-	}
-
-	return entities.NewCommunityModuleTemplate(moduleTemplateEntity, sourceURL, resources)
+	return entities.NewCommunityModuleTemplateFromRaw(rawModuleTemplate)
 }
 
 func (r *moduleTemplatesRepository) mapToCoreEntityLegacy(coreModuleTemplates []kyma.ModuleTemplate) ([]*entities.CoreModuleTemplate, error) {
