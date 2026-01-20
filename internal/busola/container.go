@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	dashboardImage = "europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
+	dashboardImage = "europe-docker.pkg.dev/kyma-project/prod/busola:latest"
 )
 
 // Container is a wrapper around the kyma dashboard docker container, providing an easy to use API to manage the kyam dashboard.
