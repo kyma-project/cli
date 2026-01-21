@@ -36,6 +36,7 @@ jobs:
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
+          btp_kyma_administrators : '["krzysztof.kwiatosz@sap.com"]'
       # - name: test gh oidc trust
       #   run: |
       #     echo -e "Testing access generated for github as trusted OIDC using alpha authorize repository command \n"
