@@ -97,17 +97,16 @@ echo -e "Step6: Map SAP Hana DB instance with Kyma runtime\n"
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step7: Pack & push hdi-deploy image\n"
 
+docker version
+
 # build hdi-deploy via pack and push it via docker CLI (external url)
 pack build hdi-deploy:latest -p sample-http-db-nodejs/hdi-deploy -B paketobuildpacks/builder:base
 docker tag hdi-deploy:latest $dr_external_url/hdi-deploy:latest
 
 # check HTTP reachability of registry v2 endpoint before pushing
-curl -v https://$dr_external_url/v2/ --max-time 20 || true
+curl -v https://$dr_external_url/v2/_catalog -u $dr_username:$dr_password --max-time 20 || true
 
 # for test push without docker config use:
-docker login -u $dr_username -p $dr_password $dr_external_url
-docker push $dr_external_url/hdi-deploy:latest
-
 docker --config . push $dr_external_url/hdi-deploy:latest
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
