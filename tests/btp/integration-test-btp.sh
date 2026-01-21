@@ -106,7 +106,6 @@ docker tag hdi-deploy:latest $dr_external_url/hdi-deploy:latest
 # check HTTP reachability of registry v2 endpoint before pushing
 curl -v https://$dr_external_url/v2/_catalog -u $dr_username:$dr_password --max-time 20 || true
 
-# for test push without docker config use:
 docker --config . push $dr_external_url/hdi-deploy:latest
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
