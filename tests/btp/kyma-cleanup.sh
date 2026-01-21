@@ -15,6 +15,7 @@ kubectl delete serviceinstances.services.cloud.sap.com -A --all
 kubectl delete secret -n kyma-system remote-service-manager-credentials
 
 rm tf/btp-access-credentials-secret.yaml || true
+rm config.json || true
 
 
 
