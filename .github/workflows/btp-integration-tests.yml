@@ -24,19 +24,23 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: build kyma CLI binary
         run: make build
-      - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@1.0.0
-        id: create-btp-resources
-        with:
-          btp_subaccount_name: cli-test-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
-          btp_backend_url: '${{ secrets.BTP_BACKEND_URL}}'
-          btp_user: '${{ secrets.BTP_BOT_USER}}'
-          btp_password: '${{ secrets.BTP_BOT_PASSWORD}}'
-          btp_global_account: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
-          btp_idp_tenant: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
-          btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
-          btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
-          btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
-          btp_kyma_administrators : '["krzysztof.kwiatosz@sap.com"]'
+      - name: connect to cluster
+        run : |
+          echo "${{ secrets.KYMA_CLUSTER_KUBECONFIG }}" | base64 --decode > kubeconfig.yaml
+          echo "KUBECONFIG=$PWD/kubeconfig.yaml" >> "$GITHUB_ENV"
+      # - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@1.0.0
+      #   id: create-btp-resources
+      #   with:
+      #     btp_subaccount_name: cli-test-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
+      #     btp_backend_url: '${{ secrets.BTP_BACKEND_URL}}'
+      #     btp_user: '${{ secrets.BTP_BOT_USER}}'
+      #     btp_password: '${{ secrets.BTP_BOT_PASSWORD}}'
+      #     btp_global_account: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
+      #     btp_idp_tenant: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
+      #     btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
+      #     btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
+      #     btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
+      #     btp_kyma_administrators : '["krzysztof.kwiatosz@sap.com"]'
       # - name: test gh oidc trust
       #   run: |
       #     echo -e "Testing access generated for github as trusted OIDC using alpha authorize repository command \n"
@@ -58,7 +62,7 @@ jobs:
           echo -e "BTP_BOT_PASSWORD = \"$BTP_BOT_PASSWORD\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_BACKEND_URL = \"$BTP_BACKEND_URL\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_CUSTOM_IAS_TENANT = \"$BTP_CUSTOM_IAS_TENANT\"" >> tests/btp/tf/.tfvars
-          echo -e "BTP_KYMA_SUBACCOUNT_ID = \"$BTP_KYMA_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
+          echo -e "BTP_KYMA_SUBACCOUNT_ID = \"1836eda2-203f-48f7-a6d7-d4634cf29561\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_OBJECTSTORE_SUBACCOUNT_ID = \"$BTP_OBJECTSTORE_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_HANA_SUBACCOUNT_ID = \"$BTP_HANA_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
           make -C tests/btp prerequisites
