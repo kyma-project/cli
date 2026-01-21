@@ -62,7 +62,7 @@ jobs:
           echo -e "BTP_BOT_PASSWORD = \"$BTP_BOT_PASSWORD\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_BACKEND_URL = \"$BTP_BACKEND_URL\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_CUSTOM_IAS_TENANT = \"$BTP_CUSTOM_IAS_TENANT\"" >> tests/btp/tf/.tfvars
-          echo -e "BTP_KYMA_SUBACCOUNT_ID = \"1836eda2-203f-48f7-a6d7-d4634cf29561\"" >> tests/btp/tf/.tfvars
+          echo -e "BTP_KYMA_SUBACCOUNT_ID = \"$BTP_KYMA_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_OBJECTSTORE_SUBACCOUNT_ID = \"$BTP_OBJECTSTORE_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_HANA_SUBACCOUNT_ID = \"$BTP_HANA_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
           make -C tests/btp prerequisites
@@ -72,7 +72,7 @@ jobs:
           BTP_BOT_PASSWORD: '${{ secrets.BTP_BOT_PASSWORD}}'
           BTP_CUSTOM_IAS_TENANT: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
           BTP_GLOBAL_ACCOUNT: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
-          BTP_KYMA_SUBACCOUNT_ID: '${{ steps.create-btp-resources.outputs.subaccount_id }}'
+          BTP_KYMA_SUBACCOUNT_ID: '1836eda2-203f-48f7-a6d7-d4634cf29561'
           BTP_OBJECTSTORE_SUBACCOUNT_ID: '${{ secrets.BTP_OBJECTSTORE_SUBACCOUNT_ID }}'
           BTP_HANA_SUBACCOUNT_ID: '${{ secrets.BTP_HANA_SUBACCOUNT_ID }}'
       - name: test 
