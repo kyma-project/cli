@@ -28,6 +28,10 @@ jobs:
         run : |
           echo "${{ secrets.KYMA_CLUSTER_KUBECONFIG }}" | base64 --decode > kubeconfig.yaml
           echo "KUBECONFIG=$PWD/kubeconfig.yaml" >> "$GITHUB_ENV"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
       # - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@1.0.0
       #   id: create-btp-resources
       #   with:
