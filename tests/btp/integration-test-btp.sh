@@ -15,6 +15,12 @@ if [[ $(kubectl config view --minify --raw | yq '.users[0].name') != 'test-sa' ]
 fi
 echo "Running test in user context of: $(kubectl config view --minify --raw | yq '.users[0].name')"
 
+echo "Waiting for KCP to propagate release metadata for kyma modules..."
+while ! kubectl get crd modulereleasemetas.operator.kyma-project.io; do echo "Waiting for CRD modulereleasemetas..."; sleep 1; done
+kubectl wait --for condition=established crd/modulereleasemetas.operator.kyma-project.io
+while ! kubectl get modulereleasemetas.operator.kyma-project.io serverless --namespace kyma-system; do echo "Waiting for serverless release metadata..."; sleep 1; done
+
+
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step2: Manage modules \n"
 
