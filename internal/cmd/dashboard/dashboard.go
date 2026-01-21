@@ -27,7 +27,7 @@ func NewDashboardCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			clierror.Check(runDashboard(&cfg))
 		}}
 
-	cmd.Flags().StringVarP(&cfg.port, "port", "p", "3001", `Specifies the port on which the local dashboard will be exposed.`)
+	cmd.Flags().StringVarP(&cfg.port, "port", "p", "8000", `Specifies the port on which the local dashboard will be exposed.`)
 	cmd.Flags().StringVar(&cfg.containerName, "container-name", "kyma-dashboard", `Specifies the name of the local container.`)
 	cmd.Flags().BoolVarP(&cfg.verbose, "verbose", "v", true, `Enables verbose output with detailed logs.`)
 
