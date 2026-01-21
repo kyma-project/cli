@@ -76,15 +76,18 @@ echo -e "Step5: Enable Docker Registry community module (with persistent BTP bas
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
 
-sleep 5
+while ! kubectl get secret dockerregistry-config-external --namespace kyma-system; do echo "Waiting for dockerregistry-config-external secret..."; sleep 5; done
 
 dr_external_url=$(../../bin/kyma registry config-external --push-reg-addr)
 dr_internal_pull_url=$(../../bin/kyma registry config-internal --pull-reg-addr)
+dr_username=$(kubectl get secrets -n kyma-system dockerregistry-config-external -o jsonpath={.data.username} | base64 -d)
+dr_password=$(kubectl get secrets -n kyma-system dockerregistry-config-external -o jsonpath={.data.password} | base64 -d)
 
 ../../bin/kyma registry config-external --output config.json
 
 echo "Docker Registry enabled (URLs: $dr_external_url, $dr_internal_pull_url)"
 echo "config.json for docker CLI access generated"
+cat config.json
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step6: Map SAP Hana DB instance with Kyma runtime\n"
@@ -97,6 +100,14 @@ echo -e "Step7: Pack & push hdi-deploy image\n"
 # build hdi-deploy via pack and push it via docker CLI (external url)
 pack build hdi-deploy:latest -p sample-http-db-nodejs/hdi-deploy -B paketobuildpacks/builder:base
 docker tag hdi-deploy:latest $dr_external_url/hdi-deploy:latest
+
+# check HTTP reachability of registry v2 endpoint before pushing
+curl -v https://$dr_external_url/v2/ --max-time 20 || true
+
+# for test push without docker config use:
+docker login -u $dr_username -p $dr_password $dr_external_url
+docker push $dr_external_url/hdi-deploy:latest
+
 docker --config . push $dr_external_url/hdi-deploy:latest
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
