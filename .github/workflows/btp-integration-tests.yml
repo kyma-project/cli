@@ -73,15 +73,15 @@ jobs:
       - name: test 
         run: |
           make -C tests/btp e2e-test
-      - name: cleanup
-        run: |
-          make -C tests/btp cleanup
-      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@1.0.0
-        if: always()
-        with:
-          btp_subaccount_id: ${{ steps.create-btp-resources.outputs.subaccount_id }}
-          btp_backend_url: ${{ secrets.BTP_BACKEND_URL}}
-          btp_user: ${{ secrets.BTP_BOT_USER}}
-          btp_password: ${{ secrets.BTP_BOT_PASSWORD}}
-          btp_global_account: ${{ secrets.BTP_GLOBAL_ACCOUNT }}
-          btp_idp_tenant: ${{ secrets.BTP_CUSTOM_IAS_TENANT }}
+      # - name: cleanup
+      #   run: |
+      #     make -C tests/btp cleanup
+      # - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@1.0.0
+      #   if: always()
+      #   with:
+      #     btp_subaccount_id: ${{ steps.create-btp-resources.outputs.subaccount_id }}
+      #     btp_backend_url: ${{ secrets.BTP_BACKEND_URL}}
+      #     btp_user: ${{ secrets.BTP_BOT_USER}}
+      #     btp_password: ${{ secrets.BTP_BOT_PASSWORD}}
+      #     btp_global_account: ${{ secrets.BTP_GLOBAL_ACCOUNT }}
+      #     btp_idp_tenant: ${{ secrets.BTP_CUSTOM_IAS_TENANT }}
