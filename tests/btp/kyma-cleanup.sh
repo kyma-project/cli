@@ -9,17 +9,13 @@ kubectl delete svc bookstore
 
 kubectl delete job hana-hdi-initjob
 
-kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
-../../bin/kyma module delete docker-registry --auto-approve
+../../bin/kyma module delete default/docker-registry-0.10.0 --auto-approve
 kubectl delete servicebindings.services.cloud.sap.com -A --all
 kubectl delete serviceinstances.services.cloud.sap.com -A --all
 kubectl delete secret -n kyma-system remote-service-manager-credentials
 
 rm tf/btp-access-credentials-secret.yaml || true
 
-rm tf/terraform.tfstate.backup || true
-rm tf/terraform.tfstate || true
-rm config.json || true
 
 
 # TODO new command ?

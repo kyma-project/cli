@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e -o pipefail
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo "Running kyma integration tests uing connected managed kyma runtime"
@@ -20,11 +21,14 @@ echo -e "Step2: Manage modules \n"
 ../../bin/kyma module catalog
 ../../bin/kyma module add serverless --default-cr
 echo "..waiting for serverless module to be installed"
+while ! kubectl get crd serverlesses.operator.kyma-project.io; do echo "Waiting for CRD serverless..."; sleep 1; done
+kubectl wait --for condition=established crd/serverlesses.operator.kyma-project.io
+while ! kubectl get serverlesses.operator.kyma-project.io default --namespace kyma-system; do echo "Waiting for serverless..."; sleep 1; done
 kubectl wait --for condition=Installed serverlesses.operator.kyma-project.io/default -n kyma-system --timeout=360s
 
 ../../bin/kyma module list
 
-../../bin/kyma module delete serverless
+../../bin/kyma module delete serverless --auto-approve
 echo "..waiting for serverless module to be deleted"
 kubectl wait --for=delete deployment/serverless-operator -n kyma-system --timeout=360s
 
