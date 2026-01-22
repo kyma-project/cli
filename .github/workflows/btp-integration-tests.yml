@@ -82,10 +82,10 @@ jobs:
       - name: test 
         run: |
           make -C tests/btp e2e-test
-      # - name: cleanup
-      #   run: |
-      #     make -C tests/btp cleanup
-      #   if: always()
+      - name: cleanup
+        run: |
+          make -C tests/btp cleanup
+        if: always()
             
       # - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@1.0.0
       #   if: always()
