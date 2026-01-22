@@ -1,10 +1,7 @@
 package entities
 
 import (
-	"encoding/json"
-
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
-	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 // BaseModuleTemplate is something like abstract class;
@@ -15,8 +12,6 @@ type BaseModuleTemplate struct {
 
 	name      string
 	namespace string
-
-	jsonSerializedTemplate string
 
 	// not needed right now but will be needed in the future
 	// data      *unstructured.Unstructured
@@ -32,8 +27,6 @@ func BaseModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *BaseModu
 	entity.name = rawModuleTemplate.GetName()
 	entity.namespace = rawModuleTemplate.GetNamespace()
 
-	entity.jsonSerializedTemplate = serialize(rawModuleTemplate)
-
 	return &entity
 }
 
@@ -44,16 +37,4 @@ func BaseModuleTemplateFromParams(templateName, moduleName, version, namespace s
 		name:       templateName,
 		namespace:  namespace,
 	}
-}
-
-func serialize(rawModuleTemplate *kyma.ModuleTemplate) string {
-	serialized, err := json.Marshal(rawModuleTemplate)
-	if err != nil {
-		out.Errfln("faield to serialize moduletemplate: %v", rawModuleTemplate.GetName())
-		out.Debugfln("moduletemplate: %v", rawModuleTemplate)
-
-		return ""
-	}
-
-	return string(serialized)
 }

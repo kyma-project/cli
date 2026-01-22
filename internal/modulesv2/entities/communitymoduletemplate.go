@@ -35,10 +35,6 @@ func NewCommunityModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *
 	return NewCommunityModuleTemplate(moduleTemplateEntity, sourceURL, resources)
 }
 
-func (m *CommunityModuleTemplate) IsExternal() bool {
-	return m.namespace == ""
-}
-
 func (m *CommunityModuleTemplate) GetNamespacedName() string {
 	return fmt.Sprintf("%s/%s", m.namespace, m.name)
 }
