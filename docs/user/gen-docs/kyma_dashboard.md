@@ -21,7 +21,7 @@ kyma dashboard <command> [flags]
 
 ```text
       --container-name string   Specifies the name of the local container. (default "kyma-dashboard")
-  -p, --port string             Specifies the port on which the local dashboard will be exposed. (default "3001")
+  -p, --port string             Specifies the port on which the local dashboard will be exposed. (default "8000")
   -v, --verbose                 Enables verbose output with detailed logs.
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
