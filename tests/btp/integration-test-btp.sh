@@ -20,6 +20,8 @@ while ! kubectl get crd modulereleasemetas.operator.kyma-project.io; do echo "Wa
 kubectl wait --for condition=established crd/modulereleasemetas.operator.kyma-project.io
 while ! kubectl get modulereleasemetas.operator.kyma-project.io serverless --namespace kyma-system; do echo "Waiting for serverless release metadata..."; sleep 1; done
 
+echo "Waiting for kyma gateway certificate to be ready..."
+kubectl wait --for condition=Ready certificates.cert.gardener.cloud/kyma-tls-cert -n istio-system --timeout=120s
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step2: Manage modules \n"
@@ -76,7 +78,7 @@ echo -e "Step5: Enable Docker Registry community module (with persistent BTP bas
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
 
-while ! kubectl get secret dockerregistry-config-external --namespace kyma-system; do echo "Waiting for dockerregistry-config-external secret..."; sleep 5; done
+while ! kubectl get secret dockerregistry-config-external --namespace kyma-system; do echo "Waiting for dockerregistry-config-external secret..."; sleep 1; done
 
 dr_external_url=$(../../bin/kyma registry config-external --push-reg-addr)
 dr_internal_pull_url=$(../../bin/kyma registry config-internal --pull-reg-addr)
@@ -133,7 +135,6 @@ kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-projec
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step10: Verify bookstore app\n"
-sleep 5
 
 DOMAIN=$(kubectl get configmaps -n kube-system shoot-info -o=jsonpath='{.data.domain}')
 response=$(curl https://bookstore.$DOMAIN/v1/books)
