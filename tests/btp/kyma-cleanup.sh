@@ -8,7 +8,7 @@ kubectl delete deployments.apps bookstore
 kubectl delete svc bookstore
 kubectl delete job hana-hdi-initjob
 
-# ../../bin/kyma module delete default/docker-registry-0.10.0 --auto-approve
+# ../../bin/kyma module delete default/docker-registry-0.11.0 --auto-approve
 kubectl delete servicebindings.services.cloud.sap.com -A --all
 kubectl delete serviceinstances.services.cloud.sap.com -A --all
 kubectl delete secret -n kyma-system remote-service-manager-credentials

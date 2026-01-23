@@ -73,7 +73,7 @@ while ! kubectl get secret object-store-reference-binding --namespace kyma-syste
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step5: Enable Docker Registry community module (with persistent BTP based storage)\n"
 ../../bin/kyma module pull docker-registry
-../../bin/kyma module add default/docker-registry-0.10.0 --cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
+../../bin/kyma module add default/docker-registry-0.11.0 --cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
 
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
@@ -147,6 +147,6 @@ fi
 # TODO enable after https://github.com/kyma-project/docker-registry/issues/447 is fixed
 # echo -e "\n--------------------------------------------------------------------------------------\n"
 # echo -e "Step11: Uninstalling community module \n"
-# ../../bin/kyma module delete default/docker-registry-0.10.0 
+# ../../bin/kyma module delete default/docker-registry-0.11.0 
 
 exit 0
