@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/fake"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,11 +39,6 @@ func Test_CatalogResultFromCommunityModuleTemplates(t *testing.T) {
 			"https://source.url",
 			map[string]string{},
 		),
-		entities.NewCommunityModuleTemplate(
-			entities.BaseModuleTemplateFromParams("community-template-0.0.1", "community-template", "0.0.1", ""),
-			"https://source.url",
-			map[string]string{},
-		),
 	}
 
 	expectedCatalogResult := []dtos.CatalogResult{
@@ -56,12 +52,23 @@ func Test_CatalogResultFromCommunityModuleTemplates(t *testing.T) {
 			AvailableVersions: []string{"0.0.2"},
 			Origin:            "kyma-system/local-template-0.0.2",
 		},
+	}
+
+	require.Equal(t, expectedCatalogResult, dtos.CatalogResultFromCommunityModuleTemplates(entities))
+}
+
+func Test_CatalogResultFromExternalModuleTemplates(t *testing.T) {
+	entities := []*entities.ExternalModuleTemplate{
+		fake.ExternalModuleTemplate(nil),
+	}
+
+	expectedCatalogResult := []dtos.CatalogResult{
 		{
-			Name:              "community-template",
+			Name:              "sample-external-community-module",
 			AvailableVersions: []string{"0.0.1"},
 			Origin:            "community",
 		},
 	}
 
-	require.Equal(t, expectedCatalogResult, dtos.CatalogResultFromCommunityModuleTemplates(entities))
+	require.Equal(t, expectedCatalogResult, dtos.CatalogResultFromExternalModuleTemplates(entities))
 }

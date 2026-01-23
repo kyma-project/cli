@@ -35,13 +35,13 @@ This command downloads module templates and resources from remote repositories,
 making them available locally for subsequent installation. Community modules
 must be pulled before they can be installed using the 'kyma module add' command.`,
 		Example: `  # Pull a specific community module
-  kyma module pull community-module-name
+  kyma alpha module pull community-module-name
 
   # Pull the latest version of a module into specific namespace
-  kyma module pull community-module-name --namespace module-namespace
+  kyma alpha module pull community-module-name --namespace module-namespace
 
   # Pull a module with a specific version into specific namespace
-  kyma module pull community-module-name --version v1.0.0 --namespace module-namespace`,
+  kyma alpha module pull community-module-name --version v1.0.0 --namespace module-namespace`,
 		Args: cobra.ExactArgs(1),
 		Run: func(_ *cobra.Command, args []string) {
 			cfg.moduleName = args[0]
