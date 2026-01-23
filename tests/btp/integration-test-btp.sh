@@ -99,8 +99,6 @@ echo -e "Step6: Map SAP Hana DB instance with Kyma runtime\n"
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step7: Pack & push hdi-deploy image\n"
 
-docker version
-
 # build hdi-deploy via pack and push it via docker CLI (external url)
 pack build hdi-deploy:latest -p sample-http-db-nodejs/hdi-deploy -B paketobuildpacks/builder:base
 docker tag hdi-deploy:latest $dr_external_url/hdi-deploy:latest
