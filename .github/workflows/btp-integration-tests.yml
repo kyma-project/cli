@@ -41,7 +41,7 @@ jobs:
           echo -e "Testing access generated for github as trusted OIDC using alpha authorize repository command \n"
 
           AUDIENCE="gh-oidc-test"
-          REPOSITORY="kwiatekus/cli"
+          REPOSITORY="kyma-project/cli"
 
           # WHEN - Use the new alpha authorize repository command to establish trust
           bin/kyma alpha authorize repository --repository $REPOSITORY --client-id $AUDIENCE --cluster-wide --clusterrole cluster-admin
