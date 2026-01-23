@@ -38,6 +38,7 @@ func runDashboardStop(cfg *dashboardStopConfig) clierror.Error {
 	}
 
 	err = cli.ContainerStop(cfg.Ctx, cfg.containerName, container.StopOptions{})
+
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to delete container "+cfg.containerName))
 	}
