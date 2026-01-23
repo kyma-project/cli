@@ -34,6 +34,9 @@ func (s *PullService) Run(ctx context.Context, pullConfig *dtos.PullConfig) erro
 	}
 
 	existingModule, err := s.moduleTemplatesRepository.GetLocalCommunity(ctx, externalModule.TemplateName, pullConfig.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get community module from the target kyma cluster: %v", err)
+	}
 	if existingModule != nil && !pullConfig.Force {
 		return fmt.Errorf("failed to apply module template, '%s' template already exists in the '%s' namespace. Use `--force` flag to override it", externalModule.TemplateName, pullConfig.Namespace)
 	}
