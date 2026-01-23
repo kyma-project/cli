@@ -24,10 +24,6 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: build kyma CLI binary
         run: make build
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
       - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@1.0.0
         id: create-btp-resources
         with:
@@ -40,13 +36,12 @@ jobs:
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
-          btp_kyma_administrators : '["krzysztof.kwiatosz@sap.com"]'
       - name: test gh oidc trust
         run: |
           echo -e "Testing access generated for github as trusted OIDC using alpha authorize repository command \n"
 
           AUDIENCE="gh-oidc-test"
-          REPOSITORY="kyma-project/cli"
+          REPOSITORY="kwiatekus/cli"
 
           # WHEN - Use the new alpha authorize repository command to establish trust
           bin/kyma alpha authorize repository --repository $REPOSITORY --client-id $AUDIENCE --cluster-wide --clusterrole cluster-admin
@@ -81,8 +76,7 @@ jobs:
       - name: cleanup
         run: |
           make -C tests/btp cleanup
-        if: always()
-            
+        if: always()            
       - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@1.0.0
         if: always()
         with:
