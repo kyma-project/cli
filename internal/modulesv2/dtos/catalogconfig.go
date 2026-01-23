@@ -1,9 +1,5 @@
 package dtos
 
-import (
-	"github.com/kyma-project/cli.v3/internal/flags"
-)
-
 const KYMA_COMMUNITY_MODULES_REPOSITORY_URL = "https://kyma-project.github.io/community-modules/all-modules.json"
 
 type CatalogConfig struct {
@@ -12,13 +8,19 @@ type CatalogConfig struct {
 	ExternalUrls []string
 }
 
-func NewCatalogConfigFromRemote(remote flags.BoolOrStrings) *CatalogConfig {
-	if remote.Enabled && len(remote.Values) == 0 {
-		return &CatalogConfig{ExternalUrls: []string{KYMA_COMMUNITY_MODULES_REPOSITORY_URL}}
+func NewCatalogConfigFromRemote(remote bool, remoteUrls []string) *CatalogConfig {
+	externalUrls := []string{}
+
+	if remote {
+		externalUrls = append(externalUrls, KYMA_COMMUNITY_MODULES_REPOSITORY_URL)
 	}
 
-	if remote.Enabled && len(remote.Values) > 0 {
-		return &CatalogConfig{ExternalUrls: uniqueValues(remote.Values)}
+	if len(remoteUrls) > 0 {
+		externalUrls = append(externalUrls, remoteUrls...)
+	}
+
+	if len(externalUrls) > 0 {
+		return &CatalogConfig{ExternalUrls: uniqueValues(externalUrls)}
 	}
 
 	return &CatalogConfig{ListKyma: true, ListCluster: true}

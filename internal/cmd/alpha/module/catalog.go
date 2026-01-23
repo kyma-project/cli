@@ -1,12 +1,9 @@
 package module
 
 import (
-	"strings"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
-	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/modulesv2"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
 	"github.com/spf13/cobra"
@@ -15,7 +12,8 @@ import (
 type catalogConfig struct {
 	*cmdcommon.KymaConfig
 
-	remote       flags.BoolOrStrings
+	remote       bool
+	remoteUrl    []string
 	outputFormat types.Format
 }
 
@@ -29,42 +27,30 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Lists modules catalog",
 		Long:  `Use this command to list all available Kyma modules.`,
 		Example: `  # List all modules available in the cluster (core and community)
-  kyma module catalog
+  kyma alpha module catalog
 
   # List available community modules from the official repository
-  kyma module catalog --remote
+  kyma alpha module catalog --remote
 
   # List available community modules from a specific remote URL
-  kyma module catalog --remote=https://example.com/modules.json
+  kyma alpha module catalog --remote-url=https://example.com/modules.json
 
   # List available community modules from multiple remote URLs
-  kyma module catalog --remote=https://example.com/modules1.json,https://example.com/modules2.json
+  kyma alpha module catalog --remote=https://example.com/modules1.json,https://example.com/modules2.json
 
   # Output catalog as JSON
-  kyma module catalog -o json
+  kyma alpha module catalog -o json
 
   # List remote community modules in YAML format
-  kyma module catalog --remote -o yaml`,
+  kyma alpha module catalog --remote -o yaml`,
 		Run: func(_ *cobra.Command, args []string) {
-			if cfg.remote.Enabled && len(args) > 0 {
-				for _, a := range args {
-					parts := strings.SplitSeq(a, ",")
-					for p := range parts {
-						v := strings.TrimSpace(p)
-						if v != "" {
-							cfg.remote.Values = append(cfg.remote.Values, v)
-						}
-					}
-				}
-			}
 			clierror.Check(catalogModules(&cfg))
 		},
 	}
 
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (Possible values: table, json, yaml)")
-
-	remoteFlag := cmd.Flags().VarPF(&cfg.remote, "remote", "", "Fetch modules from the official repository or specify custom URL(s)")
-	remoteFlag.NoOptDefVal = "true"
+	cmd.Flags().BoolVar(&cfg.remote, "remote", false, "Fetch modules from the official repository")
+	cmd.Flags().StringSliceVar(&cfg.remoteUrl, "remote-url", []string{}, "List of URLs to custom community module repositories")
 
 	return cmd
 }
@@ -76,8 +62,7 @@ func catalogModules(cfg *catalogConfig) clierror.Error {
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to execute the catalog command"))
 	}
-
-	catalogResult, err := catalogOperation.Run(cfg.Ctx, dtos.NewCatalogConfigFromRemote(cfg.remote))
+	catalogResult, err := catalogOperation.Run(cfg.Ctx, dtos.NewCatalogConfigFromRemote(cfg.remote, cfg.remoteUrl))
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list available modules from the target Kyma environment"))
 	}
