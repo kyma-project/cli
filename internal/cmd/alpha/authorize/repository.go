@@ -16,17 +16,18 @@ import (
 
 type authorizeRepositoryConfig struct {
 	*cmdcommon.KymaConfig
-	repository   string
-	clientId     string
-	issuerURL    string
-	prefix       string
-	namespace    string
-	clusterWide  bool
-	role         string
-	clusterrole  string
-	name         string
-	dryRun       bool
-	outputFormat types.Format
+	repository    string
+	clientId      string
+	issuerURL     string
+	prefix        string
+	namespace     string
+	clusterWide   bool
+	role          string
+	clusterrole   string
+	name          string
+	dryRun        bool
+	requiredClaim map[string]string
+	outputFormat  types.Format
 }
 
 func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -52,6 +53,9 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 
   # Provide a custom OpenIDConnect resource name and username prefix
   kyma alpha authorize repository --repository kyma-project/cli --client-id repo-ci-client --clusterrole kyma-admin --cluster-wide --name custom-oidc --prefix gh-oidc:
+
+  # Add additional required claims to the OIDC resource
+  kyma alpha authorize repository --repository kyma-project/cli --client-id repo-ci-client --role view --namespace dev --required-claim environment=dev --required-claim workflow=main
 
   # Use JSON output to inspect resources before apply
   kyma alpha authorize repository --repository kyma-project/cli --client-id repo-ci-client --role view --namespace dev --dry-run -o json`,
@@ -82,6 +86,7 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)")
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name for the OpenIDConnect resource (optional; default derives from clientId)")
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Print resources without applying")
+	cmd.Flags().StringToStringVar(&cfg.requiredClaim, "required-claim", nil, "Additional required claims (key=value) for the OpenIDConnect resource")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
 
 	return cmd
@@ -90,6 +95,7 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 func authorizeRepository(cfg *authorizeRepositoryConfig) clierror.Error {
 	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
 		ForRepository(cfg.repository).
+		ForRequiredClaims(cfg.requiredClaim).
 		ForName(cfg.name).
 		ForPrefix(cfg.prefix)
 	oidcResource, err := repositoryOIDCBuilder.Build()
