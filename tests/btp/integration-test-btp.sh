@@ -20,6 +20,8 @@ while ! kubectl get crd modulereleasemetas.operator.kyma-project.io; do echo "Wa
 kubectl wait --for condition=established crd/modulereleasemetas.operator.kyma-project.io
 while ! kubectl get modulereleasemetas.operator.kyma-project.io serverless --namespace kyma-system; do echo "Waiting for serverless release metadata..."; sleep 1; done
 
+echo "Waiting for kyma gateway certificate to be ready..."
+kubectl wait --for condition=Ready certificates.cert.gardener.cloud/kyma-tls-cert -n istio-system --timeout=120s
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step2: Manage modules \n"
@@ -71,12 +73,12 @@ while ! kubectl get secret object-store-reference-binding --namespace kyma-syste
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step5: Enable Docker Registry community module (with persistent BTP based storage)\n"
 ../../bin/kyma module pull docker-registry
-../../bin/kyma module add default/docker-registry-0.10.0 --cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
+../../bin/kyma module add default/docker-registry-0.11.0 --cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
 
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
 
-while ! kubectl get secret dockerregistry-config-external --namespace kyma-system; do echo "Waiting for dockerregistry-config-external secret..."; sleep 5; done
+while ! kubectl get secret dockerregistry-config-external --namespace kyma-system; do echo "Waiting for dockerregistry-config-external secret..."; sleep 1; done
 
 dr_external_url=$(../../bin/kyma registry config-external --push-reg-addr)
 dr_internal_pull_url=$(../../bin/kyma registry config-internal --pull-reg-addr)
@@ -102,11 +104,7 @@ pack build hdi-deploy:latest -p sample-http-db-nodejs/hdi-deploy -B paketobuildp
 docker tag hdi-deploy:latest $dr_external_url/hdi-deploy:latest
 
 # check HTTP reachability of registry v2 endpoint before pushing
-curl -v https://$dr_external_url/v2/ --max-time 20 || true
-
-# for test push without docker config use:
-docker login -u $dr_username -p $dr_password $dr_external_url
-docker push $dr_external_url/hdi-deploy:latest
+curl -v https://$dr_external_url/v2/_catalog -u $dr_username:$dr_password --max-time 20 || true
 
 docker --config . push $dr_external_url/hdi-deploy:latest
 
@@ -135,9 +133,8 @@ kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-projec
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step10: Verify bookstore app\n"
-sleep 5
 
-DOMAIN=$(kubectl get configmaps -n kube-system shoot-info -o=jsonpath='{.data.domain}')
+DOMAIN=$(kyma alpha diagnose cluster --format yaml | yq .metadata.clusterDomain)
 response=$(curl https://bookstore.$DOMAIN/v1/books)
 echo "HTTP response from sample app: $response"
 
@@ -148,6 +145,6 @@ fi
 # TODO enable after https://github.com/kyma-project/docker-registry/issues/447 is fixed
 # echo -e "\n--------------------------------------------------------------------------------------\n"
 # echo -e "Step11: Uninstalling community module \n"
-# ../../bin/kyma module delete default/docker-registry-0.10.0 
+# ../../bin/kyma module delete default/docker-registry-0.11.0 
 
 exit 0
