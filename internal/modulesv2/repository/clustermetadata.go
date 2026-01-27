@@ -20,10 +20,16 @@ func NewClusterMetadataRepository(client kube.Client) *clusterMetadataRepository
 }
 
 func (r *clusterMetadataRepository) Get(ctx context.Context) entities.ClusterMetadata {
+	return entities.ClusterMetadata{
+		IsManagedByKLM: r.getIsManagedByKLM(ctx),
+	}
+}
+
+func (r *clusterMetadataRepository) getIsManagedByKLM(ctx context.Context) bool {
 	_, err := r.client.Kyma().GetDefaultKyma(ctx)
 	if err != nil {
-		return entities.ClusterMetadata{IsManagedByKLM: false}
+		return false
 	}
 
-	return entities.ClusterMetadata{IsManagedByKLM: true}
+	return true
 }

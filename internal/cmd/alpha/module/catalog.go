@@ -43,6 +43,9 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
   # List remote community modules in YAML format
   kyma alpha module catalog --remote -o yaml`,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(modulesv2.RunPreCheck(cfg.Ctx, cfg.KymaConfig))
+		},
 		Run: func(_ *cobra.Command, args []string) {
 			clierror.Check(catalogModules(&cfg))
 		},

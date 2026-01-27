@@ -1,9 +1,10 @@
 package entities
 
 type ClusterMetadata struct {
-	IsManagedByKLM bool
+	IsManagedByKLM           bool
+	ModuleTemplateCRDVersion string
 }
 
-func NewClusterMetadata(isManagedByKLM bool) *ClusterMetadata {
-	return &ClusterMetadata{isManagedByKLM}
+func NewClusterMetadata(isManagedByKLM bool, moduleTemplateCRDVersion string) *ClusterMetadata {
+	return &ClusterMetadata{isManagedByKLM, moduleTemplateCRDVersion}
 }

@@ -23,6 +23,9 @@ func newCatalogCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "catalog [flags]",
 		Short: "Lists modules catalog",
 		Long:  `Use this command to list all available Kyma modules.`,
+		PreRun: func(cmd *cobra.Command, args []string) {
+
+		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(catalogModules(&cfg))
 		},
