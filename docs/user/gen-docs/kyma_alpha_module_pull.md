@@ -25,6 +25,9 @@ kyma alpha module pull <module-name> [flags]
 
   # Pull a module with a specific version into specific namespace
   kyma alpha module pull community-module-name --version v1.0.0 --namespace module-namespace
+
+  # Pull a module from a custom remote repository URL
+  kyma alpha module pull community-module-name --remote-url https://example.com/modules.json
 ```
 
 ## Flags
@@ -32,7 +35,7 @@ kyma alpha module pull <module-name> [flags]
 ```text
       --force                   Forces application of the module template, overwriting if it already exists
   -n, --namespace string        Destination namespace there the module is stored (default "default")
-      --remote string           Specifies the community modules repository URL (defaults to official repository)
+      --remote-url string       Specifies the community modules repository URL (defaults to official repository)
   -v, --version string          Specify version of the community module to pull
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
