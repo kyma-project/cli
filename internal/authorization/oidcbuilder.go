@@ -2,17 +2,19 @@ package authorization
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type OIDCBuilder struct {
-	repository string
-	clientID   string
-	issuerURL  string
-	name       string
-	prefix     string
+	repository     string
+	clientID       string
+	issuerURL      string
+	name           string
+	prefix         string
+	requiredClaims map[string]string
 }
 
 func NewOIDCBuilder(clientID, issuerURL string) *OIDCBuilder {
@@ -47,6 +49,11 @@ func (b *OIDCBuilder) ForName(name string) *OIDCBuilder {
 	return b
 }
 
+func (b *OIDCBuilder) ForRequiredClaims(requiredClaims map[string]string) *OIDCBuilder {
+	b.requiredClaims = requiredClaims
+	return b
+}
+
 func (b *OIDCBuilder) Build() (*unstructured.Unstructured, error) {
 	if err := b.validate(); err != nil {
 		return nil, err
@@ -60,12 +67,10 @@ func (b *OIDCBuilder) Build() (*unstructured.Unstructured, error) {
 				"name": b.getOpenIDConnectResourceName(),
 			},
 			"spec": map[string]any{
-				"issuerURL":     b.issuerURL,
-				"clientID":      b.clientID,
-				"usernameClaim": "repository",
-				"requiredClaims": map[string]any{
-					"repository": b.repository,
-				},
+				"issuerURL":      b.issuerURL,
+				"clientID":       b.clientID,
+				"usernameClaim":  "repository",
+				"requiredClaims": b.getRequiredClaims(),
 				"usernamePrefix": b.GetUsernamePrefix(),
 			},
 		},
@@ -110,4 +115,13 @@ func (b *OIDCBuilder) validate() error {
 func repositoryFormatValid(repository string) bool {
 	repoNameParts := strings.Split(repository, "/")
 	return len(repoNameParts) == 2
+}
+
+func (b *OIDCBuilder) getRequiredClaims() map[string]string {
+	merged := map[string]string{
+		"repository": b.repository,
+	}
+	maps.Copy(merged, b.requiredClaims)
+
+	return merged
 }
