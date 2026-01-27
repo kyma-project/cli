@@ -115,7 +115,7 @@ echo "Initialising db binding..."
 kubectl set image -f ./k8s-resources/db/books-hdi-initjob-template.yaml bookstore-db=$dr_internal_pull_url/hdi-deploy:latest --local -o yaml > ./k8s-resources/db/books-hdi-initjob.yaml
 kubectl apply -k ./k8s-resources/db
 echo "Waiting for hana-init-job to complete..."
-kubectl wait --for condition=Complete jobs/hana-hdi-initjob --timeout=360s 
+kubectl wait --for condition=Complete jobs/hana-hdi-initjob --timeout=420s 
 echo "Bookstore db initialised" 
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
@@ -134,7 +134,7 @@ kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-projec
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step10: Verify bookstore app\n"
 
-DOMAIN=$(kyma alpha diagnose cluster --format yaml | yq .metadata.clusterDomain)
+DOMAIN=$(../../bin/kyma alpha diagnose cluster --format yaml | yq .metadata.clusterDomain)
 response=$(curl https://bookstore.$DOMAIN/v1/books)
 echo "HTTP response from sample app: $response"
 
