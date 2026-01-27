@@ -80,12 +80,12 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 	// Optional flags with defaults
 	cmd.Flags().StringVar(&cfg.issuerURL, "issuer-url", "https://token.actions.githubusercontent.com", "OIDC issuer")
 	cmd.Flags().StringVar(&cfg.prefix, "prefix", "", "Username prefix for the repository claim (e.g., gh-oidc:)")
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required if not cluster-wide and binding a Role or namespaced ClusterRole)")
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace where the RoleBinding is created (required unless --cluster-wide is set)")
 	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, creates a ClusterRoleBinding; otherwise, a RoleBinding")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (namespaced)")
-	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)")
+	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding and ClusterRoleBinding)")
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name for the OpenIDConnect resource (optional; default derives from clientId)")
-	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Print resources without applying")
+	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Prints resources without applying")
 	cmd.Flags().StringToStringVar(&cfg.requiredClaim, "required-claim", nil, "Additional required claims (key=value) for the OpenIDConnect resource")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
 
