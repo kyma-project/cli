@@ -42,6 +42,8 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		return clierror.Wrap(err, clierror.New("failed to enable the module"))
 	}
 
+	printer.Msgln(handleCROutput(len(crs), defaultCR))
+
 	clierr := applyCustomCR(printer, ctx, client, module, crs...)
 	if clierr != nil {
 		return clierr
