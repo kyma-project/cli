@@ -36,7 +36,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 					"issuerURL":     "https://token.actions.githubusercontent.com",
 					"clientID":      "test-client",
 					"usernameClaim": "repository",
-					"requiredClaims": map[string]any{
+					"requiredClaims": map[string]string{
 						"repository": "kyma-project/cli",
 					},
 					"usernamePrefix": "test-client/",
@@ -60,7 +60,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 					"issuerURL":     "https://issuer.example.com",
 					"clientID":      "client-123",
 					"usernameClaim": "repository",
-					"requiredClaims": map[string]any{
+					"requiredClaims": map[string]string{
 						"repository": "owner/repo",
 					},
 					"usernamePrefix": "custom-oidc-name/",
@@ -85,8 +85,38 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 					"clientID":       "prefix-client",
 					"usernameClaim":  "repository",
 					"usernamePrefix": "gh-oidc:",
-					"requiredClaims": map[string]any{
+					"requiredClaims": map[string]string{
 						"repository": "test/project",
+					},
+				},
+			},
+		},
+		{
+			name: "with additional requiredClaims",
+			setup: func() *authorization.OIDCBuilder {
+				additionalRequiredClaims := map[string]string{
+					"ref":      "refs/heads/main",
+					"workflow": "push",
+				}
+				return authorization.NewOIDCBuilder("additional-claims", "https://auth.example.com").
+					ForRepository("test/project").
+					ForRequiredClaims(additionalRequiredClaims)
+			},
+			expected: map[string]any{
+				"apiVersion": "authentication.gardener.cloud/v1alpha1",
+				"kind":       "OpenIDConnect",
+				"metadata": map[string]any{
+					"name": "additional-claims",
+				},
+				"spec": map[string]any{
+					"issuerURL":      "https://auth.example.com",
+					"clientID":       "additional-claims",
+					"usernameClaim":  "repository",
+					"usernamePrefix": "additional-claims/",
+					"requiredClaims": map[string]string{
+						"repository": "test/project",
+						"ref":        "refs/heads/main",
+						"workflow":   "push",
 					},
 				},
 			},
@@ -110,7 +140,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 					"clientID":       "full-client-id",
 					"usernameClaim":  "repository",
 					"usernamePrefix": "full-prefix:",
-					"requiredClaims": map[string]any{
+					"requiredClaims": map[string]string{
 						"repository": "full/example",
 					},
 				},
