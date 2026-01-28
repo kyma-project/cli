@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/fake"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,17 +30,12 @@ func Test_CatalogResultFromCoreModuleTemplates(t *testing.T) {
 func Test_CatalogResultFromCommunityModuleTemplates(t *testing.T) {
 	entities := []*entities.CommunityModuleTemplate{
 		entities.NewCommunityModuleTemplate(
-			entities.MapBaseModuleTemplateFromParams("local-template-0.0.1", "local-template", "0.0.1", "kyma-system"),
+			entities.BaseModuleTemplateFromParams("local-template-0.0.1", "local-template", "0.0.1", "kyma-system"),
 			"https://source.url",
 			map[string]string{},
 		),
 		entities.NewCommunityModuleTemplate(
-			entities.MapBaseModuleTemplateFromParams("local-template-0.0.2", "local-template", "0.0.2", "kyma-system"),
-			"https://source.url",
-			map[string]string{},
-		),
-		entities.NewCommunityModuleTemplate(
-			entities.MapBaseModuleTemplateFromParams("community-template-0.0.1", "community-template", "0.0.1", ""),
+			entities.BaseModuleTemplateFromParams("local-template-0.0.2", "local-template", "0.0.2", "kyma-system"),
 			"https://source.url",
 			map[string]string{},
 		),
@@ -56,12 +52,23 @@ func Test_CatalogResultFromCommunityModuleTemplates(t *testing.T) {
 			AvailableVersions: []string{"0.0.2"},
 			Origin:            "kyma-system/local-template-0.0.2",
 		},
+	}
+
+	require.Equal(t, expectedCatalogResult, dtos.CatalogResultFromCommunityModuleTemplates(entities))
+}
+
+func Test_CatalogResultFromExternalModuleTemplates(t *testing.T) {
+	entities := []*entities.ExternalModuleTemplate{
+		fake.ExternalModuleTemplate(nil),
+	}
+
+	expectedCatalogResult := []dtos.CatalogResult{
 		{
-			Name:              "community-template",
+			Name:              "sample-external-community-module",
 			AvailableVersions: []string{"0.0.1"},
 			Origin:            "community",
 		},
 	}
 
-	require.Equal(t, expectedCatalogResult, dtos.CatalogResultFromCommunityModuleTemplates(entities))
+	require.Equal(t, expectedCatalogResult, dtos.CatalogResultFromExternalModuleTemplates(entities))
 }

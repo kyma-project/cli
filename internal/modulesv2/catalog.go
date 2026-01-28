@@ -42,11 +42,11 @@ func (c *CatalogService) Run(ctx context.Context, catalogConfig *dtos.CatalogCon
 		results = append(results, dtos.CatalogResultFromCommunityModuleTemplates(localCommunityModules)...)
 	}
 
-	externalCommunityModules, err := c.moduleTemplatesRepository.ListExternalCommunity(ctx, catalogConfig.ExternalUrls)
+	externalCommunityModules, err := c.moduleTemplatesRepository.ListExternalCommunity(ctx, catalogConfig.ExternalUrls, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list external community modules: %v", err)
 	}
-	results = append(results, dtos.CatalogResultFromCommunityModuleTemplates(externalCommunityModules)...)
+	results = append(results, dtos.CatalogResultFromExternalModuleTemplates(externalCommunityModules)...)
 
 	return results, nil
 }

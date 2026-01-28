@@ -21,7 +21,7 @@ func TestCatalogService_Run(t *testing.T) {
 		listCoreError               error
 		listLocalCommunityResult    []*entities.CommunityModuleTemplate
 		listLocalCommunityError     error
-		listExternalCommunityResult []*entities.CommunityModuleTemplate
+		listExternalCommunityResult []*entities.ExternalModuleTemplate
 		listExternalCommunityError  error
 		expectedResults             []dtos.CatalogResult
 		expectedError               bool
@@ -34,7 +34,7 @@ func TestCatalogService_Run(t *testing.T) {
 				ExternalUrls: []string{},
 			},
 			clusterManagedByKLM:         false,
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{},
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{},
 			expectedResults:             []dtos.CatalogResult{},
 			expectedError:               false,
 		},
@@ -46,7 +46,7 @@ func TestCatalogService_Run(t *testing.T) {
 				ExternalUrls: []string{},
 			},
 			clusterManagedByKLM:         true,
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{},
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{},
 			expectedResults:             []dtos.CatalogResult{},
 			expectedError:               false,
 		},
@@ -70,7 +70,7 @@ func TestCatalogService_Run(t *testing.T) {
 					Channel:    "regular",
 				}),
 			},
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{},
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{},
 			expectedResults: []dtos.CatalogResult{
 				{
 					Name:              "module1",
@@ -96,7 +96,7 @@ func TestCatalogService_Run(t *testing.T) {
 			listCoreResult: []*entities.CoreModuleTemplate{
 				modulesfake.CoreModuleTemplate(nil),
 			},
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{},
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{},
 			expectedResults:             []dtos.CatalogResult{},
 			expectedError:               false,
 		},
@@ -120,7 +120,7 @@ func TestCatalogService_Run(t *testing.T) {
 					Namespace:  "default",
 				}),
 			},
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{},
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{},
 			expectedResults: []dtos.CatalogResult{
 				{
 					Name:              "community-module1",
@@ -143,12 +143,12 @@ func TestCatalogService_Run(t *testing.T) {
 				ExternalUrls: []string{"https://example.com/modules.json"},
 			},
 			clusterManagedByKLM: false,
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{
-				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{
+				modulesfake.ExternalModuleTemplate(&modulesfake.ExternalParams{
 					ModuleName: "external-module1",
 					Version:    "1.0.0",
 				}),
-				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
+				modulesfake.ExternalModuleTemplate(&modulesfake.ExternalParams{
 					ModuleName: "external-module2",
 					Version:    "2.0.0",
 				}),
@@ -188,8 +188,8 @@ func TestCatalogService_Run(t *testing.T) {
 					Namespace:  "kyma-system",
 				}),
 			},
-			listExternalCommunityResult: []*entities.CommunityModuleTemplate{
-				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
+			listExternalCommunityResult: []*entities.ExternalModuleTemplate{
+				modulesfake.ExternalModuleTemplate(&modulesfake.ExternalParams{
 					ModuleName: "external-community",
 					Version:    "1.0.0",
 				}),

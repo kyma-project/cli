@@ -4,6 +4,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 )
 
+// BaseModuleTemplate is something like abstract class;
+// Should be created only in "child" entities (coremoduletemplate, communitymoduletemplate)
 type BaseModuleTemplate struct {
 	ModuleName string
 	Version    string
@@ -16,7 +18,7 @@ type BaseModuleTemplate struct {
 	// manager   *kyma.Manager
 }
 
-func MapBaseModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *BaseModuleTemplate {
+func BaseModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *BaseModuleTemplate {
 	entity := BaseModuleTemplate{}
 
 	entity.ModuleName = rawModuleTemplate.Spec.ModuleName
@@ -28,7 +30,7 @@ func MapBaseModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *BaseM
 	return &entity
 }
 
-func MapBaseModuleTemplateFromParams(templateName, moduleName, version, namespace string) *BaseModuleTemplate {
+func BaseModuleTemplateFromParams(templateName, moduleName, version, namespace string) *BaseModuleTemplate {
 	return &BaseModuleTemplate{
 		ModuleName: moduleName,
 		Version:    version,

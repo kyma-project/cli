@@ -18,7 +18,7 @@ func CommunityModuleTemplate(params *CommunityParams) *entities.CommunityModuleT
 		params = defaults
 	}
 
-	base := entities.MapBaseModuleTemplateFromParams(
+	base := entities.BaseModuleTemplateFromParams(
 		firstNonEmpty(params.TemplateName, defaults.TemplateName),
 		firstNonEmpty(params.ModuleName, defaults.ModuleName),
 		firstNonEmpty(params.Version, defaults.Version),

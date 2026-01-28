@@ -1,6 +1,10 @@
 package entities
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+)
 
 type CoreModuleTemplate struct {
 	BaseModuleTemplate
@@ -14,8 +18,14 @@ func NewCoreModuleTemplate(base *BaseModuleTemplate, channel string) *CoreModule
 	}
 }
 
+func NewCoreModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate, channel string) *CoreModuleTemplate {
+	moduleTemplateEntity := BaseModuleTemplateFromRaw(rawModuleTemplate)
+
+	return NewCoreModuleTemplate(moduleTemplateEntity, channel)
+}
+
 func NewCoreModuleTemplateFromParams(templateName, moduleName, version, channel, namespace string) *CoreModuleTemplate {
-	base := MapBaseModuleTemplateFromParams(templateName, moduleName, version, namespace)
+	base := BaseModuleTemplateFromParams(templateName, moduleName, version, namespace)
 
 	return &CoreModuleTemplate{
 		*base,

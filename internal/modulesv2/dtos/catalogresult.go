@@ -41,7 +41,7 @@ func CatalogResultFromCommunityModuleTemplates(communityModuleTemplates []*entit
 	resultsCache := map[string]int{}
 
 	for _, communityModuleTemplate := range communityModuleTemplates {
-		origin := getOriginFor(communityModuleTemplate)
+		origin := communityModuleTemplate.GetNamespacedName()
 		cacheKey := communityModuleTemplate.ModuleName + "|" + origin
 
 		if i, exists := resultsCache[cacheKey]; exists {
@@ -60,10 +60,28 @@ func CatalogResultFromCommunityModuleTemplates(communityModuleTemplates []*entit
 	return results
 }
 
-func getOriginFor(communityModuleTemplate *entities.CommunityModuleTemplate) string {
-	if communityModuleTemplate.IsExternal() {
-		return COMMUNITY_ORIGIN
+func CatalogResultFromExternalModuleTemplates(externalModuleTemplates []*entities.ExternalModuleTemplate) []CatalogResult {
+	results := []CatalogResult{}
+
+	// Cache key: moduleName + origin
+	resultsCache := map[string]int{}
+
+	for _, communityModuleTemplate := range externalModuleTemplates {
+		origin := COMMUNITY_ORIGIN
+		cacheKey := communityModuleTemplate.ModuleName + "|" + origin
+
+		if i, exists := resultsCache[cacheKey]; exists {
+			results[i].AvailableVersions = append(results[i].AvailableVersions, communityModuleTemplate.Version)
+		} else {
+			newResult := CatalogResult{
+				Name:              communityModuleTemplate.ModuleName,
+				AvailableVersions: []string{communityModuleTemplate.Version},
+				Origin:            origin,
+			}
+			results = append(results, newResult)
+			resultsCache[cacheKey] = len(results) - 1
+		}
 	}
 
-	return communityModuleTemplate.GetNamespacedName()
+	return results
 }
