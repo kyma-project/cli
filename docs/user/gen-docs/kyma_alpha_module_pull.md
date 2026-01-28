@@ -1,10 +1,10 @@
 # kyma alpha module pull
 
-Pull a module from a remote repository.
+Pulls a module from a remote repository.
 
 ## Synopsis
 
-Pull a module from a remote repository to make it available for installation on the cluster.
+Pulls a module from a remote repository to make it available for installation in the cluster.
 
 This command downloads module templates and resources from remote repositories,
 making them available locally for subsequent installation. Community modules
@@ -34,9 +34,9 @@ kyma alpha module pull <module-name> [flags]
 
 ```text
       --force                   Forces application of the module template, overwriting if it already exists
-  -n, --namespace string        Destination namespace there the module is stored (default "default")
+  -n, --namespace string        Destination namespace where the module is stored (default "default")
       --remote-url string       Specifies the community modules repository URL (defaults to official repository)
-  -v, --version string          Specify version of the community module to pull
+  -v, --version string          Specifies the version of the community module to pull
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file

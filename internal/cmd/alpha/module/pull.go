@@ -28,8 +28,8 @@ func NewPullV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "pull <module-name> [flags]",
-		Short: "Pull a module from a remote repository",
-		Long: `Pull a module from a remote repository to make it available for installation on the cluster.
+		Short: "Pulls a module from a remote repository",
+		Long: `Pulls a module from a remote repository to make it available for installation in the cluster.
 
 This command downloads module templates and resources from remote repositories,
 making them available locally for subsequent installation. Community modules
@@ -52,9 +52,9 @@ must be pulled before they can be installed using the 'kyma module add' command.
 		},
 	}
 
-	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace there the module is stored")
+	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where the module is stored")
 	cmd.Flags().StringVar(&cfg.remote, "remote-url", "", "Specifies the community modules repository URL (defaults to official repository)")
-	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull")
+	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specifies the version of the community module to pull")
 	cmd.Flags().BoolVar(&cfg.force, "force", false, "Forces application of the module template, overwriting if it already exists")
 
 	return cmd
