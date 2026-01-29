@@ -16,18 +16,19 @@ import (
 
 type authorizeRepositoryConfig struct {
 	*cmdcommon.KymaConfig
-	repository    string
-	clientId      string
-	issuerURL     string
-	prefix        string
-	namespace     string
-	clusterWide   bool
-	role          string
-	clusterrole   string
-	name          string
-	dryRun        bool
-	requiredClaim map[string]string
-	outputFormat  types.Format
+	repository       string
+	clientId         string
+	issuerURL        string
+	prefix           string
+	namespace        string
+	clusterWide      bool
+	role             string
+	clusterrole      string
+	name             string
+	dryRun           bool
+	requiredClaimRaw []string
+	requiredClaim    map[string]string
+	outputFormat     types.Format
 }
 
 func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -86,13 +87,54 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding and ClusterRoleBinding)")
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name for the OpenIDConnect resource (optional; default derives from clientId)")
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Prints resources without applying")
-	cmd.Flags().StringToStringVar(&cfg.requiredClaim, "required-claim", nil, "Additional required claims (key=value) for the OpenIDConnect resource")
+	cmd.Flags().StringSliceVar(&cfg.requiredClaimRaw, "required-claim", nil, "Additional required claims (key=value) for the OpenIDConnect resource")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
 
 	return cmd
 }
 
+func parseRequiredClaims(cfg *authorizeRepositoryConfig) clierror.Error {
+	if len(cfg.requiredClaimRaw) == 0 {
+		cfg.requiredClaim = nil
+		return nil
+	}
+
+	cfg.requiredClaim = make(map[string]string)
+	seenKeys := make(map[string]bool)
+
+	for _, claim := range cfg.requiredClaimRaw {
+		parts := strings.SplitN(claim, "=", 2)
+		if len(parts) != 2 {
+			return clierror.New(fmt.Sprintf("invalid required-claim format: %q (expected key=value)", claim))
+		}
+
+		key := parts[0]
+		value := parts[1]
+
+		if key == "" {
+			return clierror.New(fmt.Sprintf("invalid required-claim: empty key in %q", claim))
+		}
+
+		if value == "" {
+			return clierror.New(fmt.Sprintf("invalid required-claim: empty value in %q", claim))
+		}
+
+		if seenKeys[key] {
+			return clierror.New(fmt.Sprintf("duplicate required-claim key: %q provided multiple times", key))
+		}
+
+		seenKeys[key] = true
+		cfg.requiredClaim[key] = value
+	}
+
+	return nil
+}
+
 func authorizeRepository(cfg *authorizeRepositoryConfig) clierror.Error {
+	if err := parseRequiredClaims(cfg); err != nil {
+		return err
+	}
+
 	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
 		ForRepository(cfg.repository).
 		ForRequiredClaims(cfg.requiredClaim).

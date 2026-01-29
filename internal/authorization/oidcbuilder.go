@@ -108,6 +108,9 @@ func (b *OIDCBuilder) validate() error {
 	if b.issuerURL == "" {
 		return fmt.Errorf("issuerURL can't be blank")
 	}
+	if _, hasRepository := b.requiredClaims["repository"]; hasRepository {
+		return fmt.Errorf("required-claim key 'repository' is reserved and cannot be specified")
+	}
 
 	return nil
 }
