@@ -49,7 +49,6 @@ func New(name, port, id string, verbose bool) (*ContainerRunner, error) {
 // Start runs the dashboard container.
 func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 	var envs []string
-	// TODO: create tmp folder for the container (based on its id) and put apiConfig in it
 	tmpDir := filepath.Join(os.TempDir(), "busola", c.id)
 
 	err := os.MkdirAll(tmpDir, 0700)
@@ -76,7 +75,7 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 	return nil
 }
 
-// Opens the kyma dashboard in a browser.
+// Open opens the kyma dashboard in a browser.
 func (c *ContainerRunner) Open() error {
 	url := fmt.Sprintf("http://localhost:%s/clusters", c.port)
 
@@ -87,9 +86,7 @@ func (c *ContainerRunner) Open() error {
 	return nil
 }
 
-// TODO: implement Stop method to stop the running container that will cleanup cache
-
-// Stops kyma dashboard container and removes its temporary kubeconfig folder.
+// Stop stops kyma dashboard container and removes its temporary kubeconfig folder.
 func (c *ContainerRunner) Stop(cfg *cmdcommon.KymaConfig, containerName string) clierror.Error {
 	cli, err := docker.NewClient()
 	if err != nil {
@@ -101,7 +98,6 @@ func (c *ContainerRunner) Stop(cfg *cmdcommon.KymaConfig, containerName string) 
 		return clierror.Wrap(err, clierror.New("failed to inspect container "+containerName))
 	}
 
-	//TODO get container id by name through container inspect, delete it's tmp folder base on it
 	err = cli.ContainerStop(cfg.Ctx, containerName, container.StopOptions{})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to delete container "+containerName))
@@ -128,7 +124,6 @@ func (c *ContainerRunner) containerOpts(envs []string) docker.ContainerRunOpts {
 	containerRunOpts := docker.ContainerRunOpts{
 		Envs:          envs,
 		ContainerName: c.name,
-		NetworkMode:   "host",
 		Image:         dashboardImage,
 		Mounts: []mount.Mount{
 			{
@@ -146,15 +141,39 @@ func (c *ContainerRunner) containerOpts(envs []string) docker.ContainerRunOpts {
 	return containerRunOpts
 }
 
-/*
 type ContainerStopper struct {
+	cfg           *cmdcommon.KymaConfig
+	containerName string
 }
 
-func NewStopper() *ContainerStopper {
-
+func NewStopper(cfg *cmdcommon.KymaConfig, containerName string) *ContainerStopper {
+	return &ContainerStopper{
+		cfg:           cfg,
+		containerName: containerName,
+	}
 }
 
-func (c *ContainerStopper) Stop(cfg *cmdcommon.KymaConfig) error {
+func (c *ContainerStopper) Stop(cfg *cmdcommon.KymaConfig) clierror.Error {
+	cli, err := docker.NewClient()
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to initialize docker client"))
+	}
 
+	inspectResponse, err := cli.ContainerInspect(cfg.Ctx, c.containerName)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to inspect container "+c.containerName))
+	}
+
+	err = cli.ContainerStop(cfg.Ctx, c.containerName, container.StopOptions{})
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to delete container "+c.containerName))
+	}
+
+	configPath := filepath.Join(os.TempDir(), "busola", inspectResponse.ID)
+
+	err = os.RemoveAll(configPath)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to remove kubeconfig folder at tmp with container id "+inspectResponse.ID))
+	}
+	return nil
 }
-*/
