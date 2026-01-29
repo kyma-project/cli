@@ -23,7 +23,7 @@ kyma alpha module catalog [flags]
   kyma alpha module catalog --remote-url=https://example.com/modules.json
 
   # List available community modules from multiple remote URLs
-  kyma alpha module catalog --remote=https://example.com/modules1.json,https://example.com/modules2.json
+  kyma alpha module catalog --remote-url=https://example.com/modules1.json,https://example.com/modules2.json
 
   # Output catalog as JSON
   kyma alpha module catalog -o json
