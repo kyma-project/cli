@@ -1,4 +1,4 @@
-# kyma dashboard
+# kyma alpha dashboard
 
 Manages Kyma dashboard locally.
 
@@ -7,7 +7,7 @@ Manages Kyma dashboard locally.
 Use this command to manage Kyma dashboard locally in a Docker container.
 
 ```bash
-kyma dashboard <command> [flags]
+kyma alpha dashboard <command> [flags]
 ```
 
 ## Available Commands
@@ -20,6 +20,7 @@ kyma dashboard <command> [flags]
 ## Flags
 
 ```text
+      --container-id string     Specifies the id of the local container. (default "kyma-dashboard")
       --container-name string   Specifies the name of the local container. (default "kyma-dashboard")
   -p, --port string             Specifies the port on which the local dashboard will be exposed. (default "8000")
   -v, --verbose                 Enables verbose output with detailed logs.
@@ -32,6 +33,6 @@ kyma dashboard <command> [flags]
 
 ## See also
 
-* [kyma](kyma.md)                                 - A simple set of commands to manage a Kyma cluster
-* [kyma dashboard start](kyma_dashboard_start.md) - Runs Kyma dashboard locally.
-* [kyma dashboard stop](kyma_dashboard_stop.md)   - Terminates the locally running Kyma dashboard.
+* [kyma alpha](kyma_alpha.md)                                 - Groups command prototypes for which the API may still change
+* [kyma alpha dashboard start](kyma_alpha_dashboard_start.md) - Runs Kyma dashboard locally.
+* [kyma alpha dashboard stop](kyma_alpha_dashboard_stop.md)   - Terminates the locally running Kyma dashboard.

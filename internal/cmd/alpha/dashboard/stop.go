@@ -1,10 +1,9 @@
 package dashboard
 
 import (
-	"github.com/docker/docker/api/types/container"
+	"github.com/kyma-project/cli.v3/internal/busola"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/spf13/cobra"
 )
 
@@ -32,15 +31,9 @@ func NewDashboardStopCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runDashboardStop(cfg *dashboardStopConfig) clierror.Error {
-	cli, err := docker.NewClient()
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to initialize docker client"))
+	stopper := busola.NewStopper(cfg.KymaConfig, cfg.containerName)
+	if err := stopper.Stop(cfg.KymaConfig); err != nil {
+		return clierror.New("failed to stop container " + cfg.containerName)
 	}
-
-	err = cli.ContainerStop(cfg.Ctx, cfg.containerName, container.StopOptions{})
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to delete container "+cfg.containerName))
-	}
-
 	return nil
 }
