@@ -48,7 +48,7 @@ kyma alpha authorize repository [flags]
   -o, --output string                Output format (yaml or json)
       --prefix string                Username prefix for the repository claim (e.g., gh-oidc:)
       --repository string            GitHub repo in owner/name format (e.g., kyma-project/cli) (required)
-      --required-claim stringSlice   Additional required claims (key=value) for the OpenIDConnect resource (default "[]")
+      --required-claim stringArray   Additional required claims (key=value) for the OpenIDConnect resource
       --role string                  Role name to bind (namespaced)
       --context string               The name of the kubeconfig context to use
   -h, --help                         Help for the command
