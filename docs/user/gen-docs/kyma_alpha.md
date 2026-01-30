@@ -14,6 +14,7 @@ kyma alpha <command> [flags]
 
 ```text
   authorize          - Authorizes a subject (user, group, or service account) with Kyma RBAC resources
+  dashboard          - Manages Kyma dashboard locally.
   diagnose           - Runs diagnostic commands to troubleshoot your Kyma cluster
   hana               - Manages an SAP HANA instance in the Kyma cluster
   kubeconfig         - Manages access to the Kyma cluster
@@ -36,6 +37,7 @@ kyma alpha <command> [flags]
 
 * [kyma](kyma.md)                                                   - A simple set of commands to manage a Kyma cluster
 * [kyma alpha authorize](kyma_alpha_authorize.md)                   - Authorizes a subject (user, group, or service account) with Kyma RBAC resources
+* [kyma alpha dashboard](kyma_alpha_dashboard.md)                   - Manages Kyma dashboard locally.
 * [kyma alpha diagnose](kyma_alpha_diagnose.md)                     - Runs diagnostic commands to troubleshoot your Kyma cluster
 * [kyma alpha hana](kyma_alpha_hana.md)                             - Manages an SAP HANA instance in the Kyma cluster
 * [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md)                 - Manages access to the Kyma cluster

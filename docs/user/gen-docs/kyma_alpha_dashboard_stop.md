@@ -1,4 +1,4 @@
-# kyma dashboard stop
+# kyma alpha dashboard stop
 
 Terminates the locally running Kyma dashboard.
 
@@ -7,7 +7,7 @@ Terminates the locally running Kyma dashboard.
 Use this command to terminate the locally running Kyma dashboard in a Docker container.
 
 ```bash
-kyma dashboard stop [flags]
+kyma alpha dashboard stop [flags]
 ```
 
 ## Flags
@@ -23,4 +23,4 @@ kyma dashboard stop [flags]
 
 ## See also
 
-* [kyma dashboard](kyma_dashboard.md) - Manages Kyma dashboard locally.
+* [kyma alpha dashboard](kyma_alpha_dashboard.md) - Manages Kyma dashboard locally.

@@ -1,4 +1,4 @@
-# kyma dashboard start
+# kyma alpha dashboard start
 
 Runs Kyma dashboard locally.
 
@@ -7,12 +7,13 @@ Runs Kyma dashboard locally.
 Use this command to run Kyma dashboard locally in a Docker container and open it directly in a web browser.
 
 ```bash
-kyma dashboard start [flags]
+kyma alpha dashboard start [flags]
 ```
 
 ## Flags
 
 ```text
+      --container-id string     Specifies the id of the local container. (default "kyma-dashboard")
       --container-name string   Specify the name of the local container. (default "kyma-dashboard")
   -o, --open                    Specify if the browser should open after executing the command.
   -p, --port string             Specify the port on which the local dashboard will be exposed. (default "8000")
@@ -26,4 +27,4 @@ kyma dashboard start [flags]
 
 ## See also
 
-* [kyma dashboard](kyma_dashboard.md) - Manages Kyma dashboard locally.
+* [kyma alpha dashboard](kyma_alpha_dashboard.md) - Manages Kyma dashboard locally.
