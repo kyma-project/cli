@@ -69,18 +69,18 @@ func pull(cfg *pullConfig) clierror.Error {
 
 	pullConfigDto := dtos.NewPullConfig(cfg.moduleName, cfg.namespace, cfg.remote, cfg.version, cfg.force)
 
-	err = pullOperation.Run(cfg.Ctx, pullConfigDto)
+	pulledModule, err := pullOperation.Run(cfg.Ctx, pullConfigDto)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to pull the community module template into the target Kyma environment"))
 	}
 
 	out.Msgfln("Module %s pulled successfully into namespace '%s'\n", cfg.moduleName, cfg.namespace)
-	out.Msgf("%s", getWarningTextForCommunityModuleUsage(pullConfigDto))
+	out.Msgf("%s", getWarningTextForCommunityModuleUsage(pulledModule))
 
 	return nil
 }
 
-func getWarningTextForCommunityModuleUsage(pullConfigDto *dtos.PullConfig) string {
+func getWarningTextForCommunityModuleUsage(pulledModule *dtos.PullResult) string {
 	return "WARNING: Community Module\n" +
 		"This is a community module that is not officially supported by the Kyma team.\n" +
 		"Community modules:\n" +
@@ -92,6 +92,6 @@ func getWarningTextForCommunityModuleUsage(pullConfigDto *dtos.PullConfig) strin
 		"Next Steps:\n" +
 		"To install this module on your cluster, you can use the sample command:\n\n" +
 		"  # Install with default configuration:\n" +
-		fmt.Sprintf("  kyma module add %s/%s --default-cr\n\n", pullConfigDto.Namespace, pullConfigDto.ModuleName) +
+		fmt.Sprintf("  kyma module add %s/%s --default-cr\n\n", pulledModule.Namespace, pulledModule.ModuleTemplateName) +
 		"For more information about module installation, run: kyma module add --help\n"
 }
