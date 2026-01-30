@@ -1,4 +1,4 @@
-package modulesv2
+package precheck
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
-type PreCheck struct {
+type InstallCRD struct {
 	client                    kube.Client
 	clusterMetadataRepository repository.ClusterMetadataRepository
 	httpClient                *http.Client
@@ -39,8 +39,8 @@ var moduleTemplateCRDMeta = crdMeta{
 
 const moduleTemplateCRDURL = "https://raw.githubusercontent.com/kyma-project/lifecycle-manager/refs/heads/main/config/crd/bases/operator.kyma-project.io_moduletemplates.yaml"
 
-func NewPreCheck(client kube.Client, clusterMetadataRepository repository.ClusterMetadataRepository, httpClient *http.Client, crdURL string) *PreCheck {
-	return &PreCheck{
+func NewInstallCRD(client kube.Client, clusterMetadataRepository repository.ClusterMetadataRepository, httpClient *http.Client, crdURL string) *InstallCRD {
+	return &InstallCRD{
 		client:                    client,
 		clusterMetadataRepository: clusterMetadataRepository,
 		httpClient:                httpClient,
@@ -48,26 +48,26 @@ func NewPreCheck(client kube.Client, clusterMetadataRepository repository.Cluste
 	}
 }
 
-func newPreCheck(client kube.Client) *PreCheck {
-	return NewPreCheck(client, repository.NewClusterMetadataRepository(client), http.DefaultClient, moduleTemplateCRDURL)
+func newPreCheck(client kube.Client) *InstallCRD {
+	return NewInstallCRD(client, repository.NewClusterMetadataRepository(client), http.DefaultClient, moduleTemplateCRDURL)
 }
 
-// RunPreCheck bootstraps dependencies and runs the PreCheck; returns clierror.Error for easy reuse.
-func RunPreCheck(ctx context.Context, kymaConfig *cmdcommon.KymaConfig) clierror.Error {
+// RunInstallCRD bootstraps dependencies and runs the InstallCRD; returns clierror.Error for easy reuse.
+func RunInstallCRD(kymaConfig *cmdcommon.KymaConfig) clierror.Error {
 	kubeClient, clierr := kymaConfig.KubeClientConfig.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
 
 	preCheck := newPreCheck(kubeClient)
-	if err := preCheck.run(ctx); err != nil {
+	if err := preCheck.run(kymaConfig.Ctx); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to run pre-checks"))
 	}
 
 	return nil
 }
 
-func (p *PreCheck) run(ctx context.Context) error {
+func (p *InstallCRD) run(ctx context.Context) error {
 	if p.isKLMManaged(ctx) {
 		return nil
 	}
@@ -110,7 +110,7 @@ func crdSpecDigest(u *unstructured.Unstructured) (string, error) {
 	return hex.EncodeToString(sum[:]), nil
 }
 
-func (p *PreCheck) fetchRemoteCRD(ctx context.Context) (*unstructured.Unstructured, error) {
+func (p *InstallCRD) fetchRemoteCRD(ctx context.Context) (*unstructured.Unstructured, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.remoteURL, nil)
 	if err != nil {
 		return nil, err
@@ -146,11 +146,11 @@ func (p *PreCheck) fetchRemoteCRD(ctx context.Context) (*unstructured.Unstructur
 	return &unstructured.Unstructured{Object: obj}, nil
 }
 
-func (p *PreCheck) isKLMManaged(ctx context.Context) bool {
+func (p *InstallCRD) isKLMManaged(ctx context.Context) bool {
 	return p.clusterMetadataRepository.Get(ctx).IsManagedByKLM
 }
 
-func (p *PreCheck) fetchStoredCRD(ctx context.Context) (*unstructured.Unstructured, error) {
+func (p *InstallCRD) fetchStoredCRD(ctx context.Context) (*unstructured.Unstructured, error) {
 	crd := &unstructured.Unstructured{}
 	crd.SetAPIVersion(moduleTemplateCRDMeta.APIVersion)
 	crd.SetKind(moduleTemplateCRDMeta.Kind)
@@ -160,7 +160,7 @@ func (p *PreCheck) fetchStoredCRD(ctx context.Context) (*unstructured.Unstructur
 }
 
 // specEqual compares the .spec section of two CRDs via SHA-256 digest
-func (p *PreCheck) specEqual(a, b *unstructured.Unstructured) (bool, error) {
+func (p *InstallCRD) specEqual(a, b *unstructured.Unstructured) (bool, error) {
 	var ad, bd string
 	var err error
 
@@ -179,7 +179,7 @@ func (p *PreCheck) specEqual(a, b *unstructured.Unstructured) (bool, error) {
 	return ad == bd, nil
 }
 
-func (p *PreCheck) applyCRD(ctx context.Context, remote *unstructured.Unstructured) error {
+func (p *InstallCRD) applyCRD(ctx context.Context, remote *unstructured.Unstructured) error {
 	if err := p.client.RootlessDynamic().Apply(ctx, remote, false); err != nil {
 		return fmt.Errorf("failed to apply ModuleTemplate CRD on the target cluster: %w", err)
 	}

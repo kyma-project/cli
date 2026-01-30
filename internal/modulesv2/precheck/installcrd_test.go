@@ -1,4 +1,4 @@
-package modulesv2
+package precheck
 
 import (
 	"context"
@@ -77,17 +77,17 @@ func startCRDServer(t *testing.T, body string, status int) (*httptest.Server, *i
 	return srv, &callCount
 }
 
-func newTestPreCheck(rootless *kubefake.RootlessDynamicClient, isManaged bool, remoteURL string) *PreCheck {
+func newTestInstalLCRD(rootless *kubefake.RootlessDynamicClient, isManaged bool, remoteURL string) *InstallCRD {
 	kubeClient := &kubefake.KubeClient{TestRootlessDynamicInterface: rootless}
 	metadataRepo := &m2fake.ClusterMetadataRepository{IsManagedByKLM: isManaged}
-	return NewPreCheck(kubeClient, metadataRepo, http.DefaultClient, remoteURL)
+	return NewInstallCRD(kubeClient, metadataRepo, http.DefaultClient, remoteURL)
 }
 
 func TestRun_SkipsWhenManagedByKLM(t *testing.T) {
 	t.Parallel()
 	rootlessClient := &kubefake.RootlessDynamicClient{}
 	remoteServer, callCount := startCRDServer(t, "", http.StatusInternalServerError)
-	preCheck := newTestPreCheck(rootlessClient, true, remoteServer.URL)
+	preCheck := newTestInstalLCRD(rootlessClient, true, remoteServer.URL)
 
 	require.NoError(t, preCheck.run(context.Background()))
 	require.Zero(t, *callCount, "expected server not to be called")
@@ -98,7 +98,7 @@ func TestRun_AppliesWhenStoredNotFound(t *testing.T) {
 	rootlessClient := &kubefake.RootlessDynamicClient{}
 	rootlessClient.ReturnGetErr = k8serrors.NewNotFound(crdGroupResource, testCRDName)
 	remoteServer, _ := startCRDServer(t, minimalCRDYAML("v1beta2"), http.StatusOK)
-	preCheck := newTestPreCheck(rootlessClient, false, remoteServer.URL)
+	preCheck := newTestInstalLCRD(rootlessClient, false, remoteServer.URL)
 
 	require.NoError(t, preCheck.run(context.Background()))
 	require.NotEmpty(t, rootlessClient.ApplyObjs, "expected apply to be called")
@@ -110,7 +110,7 @@ func TestRun_SkipsWhenSpecsEqual(t *testing.T) {
 	rootlessClient := &kubefake.RootlessDynamicClient{}
 	rootlessClient.ReturnGetObj = *storedCRD
 	remoteServer, _ := startCRDServer(t, minimalCRDYAML("v1beta2"), http.StatusOK)
-	preCheck := newTestPreCheck(rootlessClient, false, remoteServer.URL)
+	preCheck := newTestInstalLCRD(rootlessClient, false, remoteServer.URL)
 
 	require.NoError(t, preCheck.run(context.Background()))
 	require.Empty(t, rootlessClient.ApplyObjs, "did not expect apply when specs equal")
@@ -122,7 +122,7 @@ func TestRun_RemoteFetchError(t *testing.T) {
 		ReturnGetErr: k8serrors.NewNotFound(crdGroupResource, testCRDName),
 	}
 	remoteServer, _ := startCRDServer(t, "error", http.StatusInternalServerError)
-	preCheck := newTestPreCheck(rootlessClient, false, remoteServer.URL)
+	preCheck := newTestInstalLCRD(rootlessClient, false, remoteServer.URL)
 
 	err := preCheck.run(context.Background())
 	require.Error(t, err, "expected error on remote fetch")
