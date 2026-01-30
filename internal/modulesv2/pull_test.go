@@ -79,7 +79,7 @@ func TestPullService_Run(t *testing.T) {
 			},
 			saveCommunityError: errors.New("moduleTemplatesRepository.SaveCommunityModule#Error"),
 			expectedError:      true,
-			expectedErrorMsg:   "moduleTemplatesRepository.SaveCommunityModule#Error",
+			expectedErrorMsg:   "failed to save sample-external-community-template-0.0.1 module template in the default namespace: moduleTemplatesRepository.SaveCommunityModule#Error",
 		},
 		{
 			name:       "Operation succeeds",
@@ -104,7 +104,7 @@ func TestPullService_Run(t *testing.T) {
 
 			service := modulesv2.NewPullService(mockModulesRepo)
 
-			err := service.Run(context.Background(), test.pullConfig)
+			_, err := service.Run(context.Background(), test.pullConfig)
 
 			if test.expectedError {
 				require.Error(t, err)

@@ -22,26 +22,35 @@ func NewPullService(
 	}
 }
 
-func (s *PullService) Run(ctx context.Context, pullConfig *dtos.PullConfig) error {
+func (s *PullService) Run(ctx context.Context, pullConfig *dtos.PullConfig) (*dtos.PullResult, error) {
 	externalModule, err := s.getExternalCommunityModule(ctx, pullConfig.ModuleName, pullConfig.Version, pullConfig.RemoteRepositoryUrl)
 	if err != nil {
-		return fmt.Errorf("failed to get community module from remote: %v", err)
+		return nil, fmt.Errorf("failed to get community module from remote: %v", err)
 	}
 
 	err = externalModule.SetNamespace(pullConfig.Namespace)
 	if err != nil {
-		return fmt.Errorf("failed to store community module in the provided namespace: %v", err)
+		return nil, fmt.Errorf("failed to store community module in the provided namespace: %v", err)
 	}
 
 	existingModule, err := s.moduleTemplatesRepository.GetLocalCommunity(ctx, externalModule.TemplateName, pullConfig.Namespace)
 	if err != nil {
-		return fmt.Errorf("failed to get community module from the target kyma cluster: %v", err)
+		return nil, fmt.Errorf("failed to get community module from the target kyma cluster: %v", err)
 	}
 	if existingModule != nil && !pullConfig.Force {
-		return fmt.Errorf("failed to apply module template, '%s' template already exists in the '%s' namespace. Use `--force` flag to override it", externalModule.TemplateName, pullConfig.Namespace)
+		return nil, fmt.Errorf("failed to apply module template, '%s' template already exists in the '%s' namespace. Use `--force` flag to override it", externalModule.TemplateName, pullConfig.Namespace)
 	}
 
-	return s.moduleTemplatesRepository.SaveCommunityModule(ctx, externalModule)
+	if err = s.moduleTemplatesRepository.SaveCommunityModule(ctx, externalModule); err != nil {
+		return nil, fmt.Errorf("failed to save %s module template in the %s namespace: %v", externalModule.TemplateName, externalModule.Namespace, err)
+	}
+
+	return dtos.NewPullResult(
+		externalModule.ModuleName,
+		externalModule.TemplateName,
+		externalModule.Version,
+		externalModule.Namespace,
+	), nil
 }
 
 func (s *PullService) getExternalCommunityModule(ctx context.Context, moduleName, version, remoteRepositoryUrl string) (*entities.ExternalModuleTemplate, error) {

@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"gopkg.in/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -113,6 +114,9 @@ func (r *moduleTemplatesRepository) ListExternalCommunity(ctx context.Context, u
 
 func (r *moduleTemplatesRepository) GetLocalCommunity(ctx context.Context, name, namespace string) (*entities.CommunityModuleTemplate, error) {
 	rawModuleTemplate, err := r.client.Kyma().GetModuleTemplate(ctx, namespace, name)
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
