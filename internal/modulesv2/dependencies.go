@@ -11,7 +11,7 @@ import (
 
 type ModuleOperations interface {
 	Catalog() (*CatalogService, error)
-
+	Pull() (*PullService, error)
 	// TODO
 	// Add() (*AddService, error)
 	// Install() (*InstallService, error)
@@ -36,6 +36,17 @@ func (m *moduleOperations) Catalog() (*CatalogService, error) {
 	}
 
 	return catalogService, nil
+}
+
+func (m *moduleOperations) Pull() (*PullService, error) {
+	c := setupDIContainer(m.kymaConfig)
+
+	pullService, err := di.GetTyped[*PullService](c)
+	if err != nil {
+		return nil, errors.New("failed to execute the pull command")
+	}
+
+	return pullService, nil
 }
 
 func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
@@ -72,6 +83,8 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 		return repository.NewClusterMetadataRepository(kubeClient), nil
 	})
 
+	// Services:
+
 	di.RegisterTyped(container, func(c *di.Container) (*CatalogService, error) {
 		moduleRepo, err := di.GetTyped[repository.ModuleTemplatesRepository](c)
 		if err != nil {
@@ -84,6 +97,15 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 		}
 
 		return NewCatalogService(moduleRepo, metadataRepo), nil
+	})
+
+	di.RegisterTyped(container, func(c *di.Container) (*PullService, error) {
+		moduleRepo, err := di.GetTyped[repository.ModuleTemplatesRepository](c)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewPullService(moduleRepo), nil
 	})
 
 	return container

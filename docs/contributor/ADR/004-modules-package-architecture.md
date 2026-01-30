@@ -272,7 +272,7 @@ Suppose we want to inject a `ModuleTemplatesRepository` into a `CatalogService` 
 
 #### Factory Pattern (for testing purposes)
 
-The Factory Pattern is used to streamline the creation of test data objects for unit tests. This approach is especially useful for testing purposes, as it allows developers to generate objects with sensible default values and override only the fields relevant to a specific test scenario. Files like [internal/modulesv2/fake/coremoduletemplate.go](../../../../internal/modulesv2/fake/coremoduletemplate.go) are examples of such factories, but the pattern is used for various domain entities, not just core module templates.
+The Factory Pattern is used to streamline the creation of test data objects for unit tests. This approach is especially useful for testing purposes, as it allows developers to generate objects with sensible default values and override only the fields relevant to a specific test scenario. Files like [internal/modulesv2/fake/coremoduletemplate.go](../../../internal/modulesv2/fake/coremoduletemplate.go) are examples of such factories, but the pattern is used for various domain entities, not just core module templates.
 
 **Key points:**
 - Centralized test data creation: Instead of manually defining long sections of test data in each test file, the factory provides a single place to create instances of core module templates.

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,12 +12,18 @@ import (
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type ModuleTemplatesRepository interface {
 	ListCore(ctx context.Context) ([]*entities.CoreModuleTemplate, error)
 	ListLocalCommunity(ctx context.Context) ([]*entities.CommunityModuleTemplate, error)
-	ListExternalCommunity(ctx context.Context, urls []string) ([]*entities.CommunityModuleTemplate, error)
+	ListExternalCommunity(ctx context.Context, urls []string, filterClause func(*entities.ExternalModuleTemplate) bool) ([]*entities.ExternalModuleTemplate, error)
+
+	GetLocalCommunity(ctx context.Context, name, namespace string) (*entities.CommunityModuleTemplate, error)
+
+	SaveCommunityModule(ctx context.Context, externalModule *entities.ExternalModuleTemplate) error
 }
 
 type moduleTemplatesRepository struct {
@@ -82,13 +89,52 @@ func (r *moduleTemplatesRepository) ListLocalCommunity(ctx context.Context) ([]*
 	return r.mapToCommunityEntities(communityModuleTemplates), nil
 }
 
-func (r *moduleTemplatesRepository) ListExternalCommunity(ctx context.Context, urls []string) ([]*entities.CommunityModuleTemplate, error) {
+func (r *moduleTemplatesRepository) ListExternalCommunity(ctx context.Context, urls []string, filterClause func(*entities.ExternalModuleTemplate) bool) ([]*entities.ExternalModuleTemplate, error) {
 	rawModuleTemplates, err := r.externalModuleTemplateRepository.Get(urls)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.mapToCommunityEntities(rawModuleTemplates), nil
+	communityEntities := r.mapToExternalCommunityEntities(rawModuleTemplates)
+
+	if filterClause == nil {
+		return communityEntities, nil
+	}
+
+	filteredCommunityEntities := []*entities.ExternalModuleTemplate{}
+	for _, communityEntity := range communityEntities {
+		if filterClause(communityEntity) {
+			filteredCommunityEntities = append(filteredCommunityEntities, communityEntity)
+		}
+	}
+
+	return filteredCommunityEntities, nil
+}
+
+func (r *moduleTemplatesRepository) GetLocalCommunity(ctx context.Context, name, namespace string) (*entities.CommunityModuleTemplate, error) {
+	rawModuleTemplate, err := r.client.Kyma().GetModuleTemplate(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.mapToCommunityEntity(rawModuleTemplate), nil
+}
+
+func (r *moduleTemplatesRepository) SaveCommunityModule(ctx context.Context, externalModule *entities.ExternalModuleTemplate) error {
+	var kymaModuleTemplate kyma.ModuleTemplate
+	err := json.Unmarshal([]byte(externalModule.JsonDefinition), &kymaModuleTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshall %s moduleTemplate: %v", externalModule.ModuleName, err)
+	}
+
+	kymaModuleTemplate.Namespace = externalModule.Namespace
+
+	unstructuredModule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&kymaModuleTemplate)
+	if err != nil {
+		return err
+	}
+
+	return r.client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: unstructuredModule}, false)
 }
 
 func (r *moduleTemplatesRepository) mapToCoreEntities(rawModuleTemplates []kyma.ModuleTemplate, rawReleaseMetas []kyma.ModuleReleaseMeta) []*entities.CoreModuleTemplate {
@@ -105,9 +151,7 @@ func (r *moduleTemplatesRepository) mapToCoreEntities(rawModuleTemplates []kyma.
 }
 
 func (r *moduleTemplatesRepository) mapToCoreEntity(rawModuleTemplate *kyma.ModuleTemplate, channel string) *entities.CoreModuleTemplate {
-	moduleTemplateEntity := entities.MapBaseModuleTemplateFromRaw(rawModuleTemplate)
-
-	return entities.NewCoreModuleTemplate(moduleTemplateEntity, channel)
+	return entities.NewCoreModuleTemplateFromRaw(rawModuleTemplate, channel)
 }
 
 func (r *moduleTemplatesRepository) mapToCommunityEntities(rawModuleTemplates []kyma.ModuleTemplate) []*entities.CommunityModuleTemplate {
@@ -120,19 +164,18 @@ func (r *moduleTemplatesRepository) mapToCommunityEntities(rawModuleTemplates []
 	return entities
 }
 
-func (r *moduleTemplatesRepository) mapToCommunityEntity(rawModuleTemplate *kyma.ModuleTemplate) *entities.CommunityModuleTemplate {
-	moduleTemplateEntity := entities.MapBaseModuleTemplateFromRaw(rawModuleTemplate)
-	sourceURL := rawModuleTemplate.Annotations["source"]
-	resources := map[string]string{}
+func (r *moduleTemplatesRepository) mapToExternalCommunityEntities(rawModuleTemplates []kyma.ModuleTemplate) []*entities.ExternalModuleTemplate {
+	extModuleTemplates := []*entities.ExternalModuleTemplate{}
 
-	for _, rawResource := range rawModuleTemplate.Spec.Resources {
-		key := rawResource.Name
-		value := rawResource.Link
-
-		resources[key] = value
+	for _, rawModuleTemplate := range rawModuleTemplates {
+		extModuleTemplates = append(extModuleTemplates, entities.NewExternalModuleTemplateFromRaw(&rawModuleTemplate))
 	}
 
-	return entities.NewCommunityModuleTemplate(moduleTemplateEntity, sourceURL, resources)
+	return extModuleTemplates
+}
+
+func (r *moduleTemplatesRepository) mapToCommunityEntity(rawModuleTemplate *kyma.ModuleTemplate) *entities.CommunityModuleTemplate {
+	return entities.NewCommunityModuleTemplateFromRaw(rawModuleTemplate)
 }
 
 func (r *moduleTemplatesRepository) mapToCoreEntityLegacy(coreModuleTemplates []kyma.ModuleTemplate) ([]*entities.CoreModuleTemplate, error) {
