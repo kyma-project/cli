@@ -38,23 +38,23 @@ kyma alpha authorize repository [flags]
 ## Flags
 
 ```text
-      --client-id string                OIDC client ID (audience) expected in the token (required)
-      --cluster-wide                    If true, creates a ClusterRoleBinding; otherwise, a RoleBinding
-      --clusterrole string              ClusterRole name to bind (usable for RoleBinding and ClusterRoleBinding)
-      --dry-run                         Prints resources without applying
-      --issuer-url string               OIDC issuer (default "https://token.actions.githubusercontent.com")
-      --name string                     Name for the OpenIDConnect resource (optional; default derives from clientId)
-      --namespace string                Namespace where the RoleBinding is created (required unless --cluster-wide is set)
-  -o, --output string                   Output format (yaml or json)
-      --prefix string                   Username prefix for the repository claim (e.g., gh-oidc:)
-      --repository string               GitHub repo in owner/name format (e.g., kyma-project/cli) (required)
-      --required-claim stringToString   Additional required claims (key=value) for the OpenIDConnect resource (default "[]")
-      --role string                     Role name to bind (namespaced)
-      --context string                  The name of the kubeconfig context to use
-  -h, --help                            Help for the command
-      --kubeconfig string               Path to the Kyma kubeconfig file
-      --show-extensions-error           Prints a possible error when fetching extensions fails
-      --skip-extensions                 Skips fetching extensions from the target Kyma environment
+      --client-id string             OIDC client ID (audience) expected in the token (required)
+      --cluster-wide                 If true, creates a ClusterRoleBinding; otherwise, a RoleBinding
+      --clusterrole string           ClusterRole name to bind (usable for RoleBinding and ClusterRoleBinding)
+      --dry-run                      Prints resources without applying
+      --issuer-url string            OIDC issuer (default "https://token.actions.githubusercontent.com")
+      --name string                  Name for the OpenIDConnect resource (optional; default derives from clientId)
+      --namespace string             Namespace where the RoleBinding is created (required unless --cluster-wide is set)
+  -o, --output string                Output format (yaml or json)
+      --prefix string                Username prefix for the repository claim (e.g., gh-oidc:)
+      --repository string            GitHub repo in owner/name format (e.g., kyma-project/cli) (required)
+      --required-claim stringArray   Additional required claims (key=value) for the OpenIDConnect resource
+      --role string                  Role name to bind (namespaced)
+      --context string               The name of the kubeconfig context to use
+  -h, --help                         Help for the command
+      --kubeconfig string            Path to the Kyma kubeconfig file
+      --show-extensions-error        Prints a possible error when fetching extensions fails
+      --skip-extensions              Skips fetching extensions from the target Kyma environment
 ```
 
 ## See also

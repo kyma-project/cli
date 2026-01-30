@@ -41,7 +41,12 @@ func (em *Map) SetValue(value *string) error {
 		return fmt.Errorf("failed to parse value '%s', should be in format KEY=VALUE", *value)
 	}
 
-	em.Values[elems[0]] = elems[1]
+	key := elems[0]
+	if _, exists := em.Values[key]; exists {
+		return fmt.Errorf("duplicate key: '%s' is provided multiple times", key)
+	}
+
+	em.Values[key] = elems[1]
 	return nil
 }
 

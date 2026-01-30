@@ -26,7 +26,7 @@ type authorizeRepositoryConfig struct {
 	clusterrole   string
 	name          string
 	dryRun        bool
-	requiredClaim map[string]string
+	requiredClaim types.Map
 	outputFormat  types.Format
 }
 
@@ -86,16 +86,21 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding and ClusterRoleBinding)")
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name for the OpenIDConnect resource (optional; default derives from clientId)")
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Prints resources without applying")
-	cmd.Flags().StringToStringVar(&cfg.requiredClaim, "required-claim", nil, "Additional required claims (key=value) for the OpenIDConnect resource")
+	cmd.Flags().Var(&cfg.requiredClaim, "required-claim", "Additional required claims (key=value) for the OpenIDConnect resource")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
 
 	return cmd
 }
 
 func authorizeRepository(cfg *authorizeRepositoryConfig) clierror.Error {
+	requiredClaimsCasted := map[string]string{}
+	for k, v := range cfg.requiredClaim.Values {
+		requiredClaimsCasted[k] = fmt.Sprintf("%v", v)
+	}
+
 	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
 		ForRepository(cfg.repository).
-		ForRequiredClaims(cfg.requiredClaim).
+		ForRequiredClaims(requiredClaimsCasted).
 		ForName(cfg.name).
 		ForPrefix(cfg.prefix)
 	oidcResource, err := repositoryOIDCBuilder.Build()
