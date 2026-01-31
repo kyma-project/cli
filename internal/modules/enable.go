@@ -47,8 +47,18 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		return clierr
 	}
 
-	printer.Msgfln("%s module enabled", module)
+	printer.Msgfln("%s module enabled"+handleCROutput(len(crs), defaultCR), module)
 	return nil
+}
+
+func handleCROutput(customCount int, defaultApplicable bool) string {
+	if customCount > 0 {
+		return ""
+	}
+	if defaultApplicable {
+		return ", with enabling default module CR"
+	}
+	return ", without enabling module CR"
 }
 
 func applyCustomCR(printer *out.Printer, ctx context.Context, client kube.Client, module string, crs ...unstructured.Unstructured) clierror.Error {

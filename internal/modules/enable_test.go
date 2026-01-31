@@ -78,7 +78,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
 		require.Nil(t, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled, with enabling default module CR\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
@@ -112,7 +112,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "", true)
 		require.Nil(t, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled, with enabling default module CR\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
