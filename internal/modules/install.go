@@ -37,24 +37,19 @@ func Install(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesR
 		return clierror.Wrap(err, clierror.New("failed to install community module"))
 	}
 
-	out.Msgln(handleCROutput(len(data.CustomResources), data.IsDefaultCRApplicable))
-
 	if err := applyCustomResources(ctx, client, data.CommunityModuleTemplate, data); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to apply custom resources"))
 	}
 
-	out.Msgfln("%s community module enabled", data.CommunityModuleTemplate.Name)
+	out.Msgfln("%s community module enabled"+handleCROutputForCommunity(len(data.CustomResources), data.IsDefaultCRApplicable), data.CommunityModuleTemplate.Name)
 	return nil
 }
 
-func handleCROutput(customCount int, defaultApplicable bool) string {
-	if customCount > 0 {
-		return fmt.Sprintf("custom CRs from path will be applied (%d)", customCount)
+func handleCROutputForCommunity(customCount int, defaultApplicable bool) string {
+	if customCount == 0 && !defaultApplicable {
+		return ", without enabling module CR"
 	}
-	if defaultApplicable {
-		return "default CR will be installed"
-	}
-	return "no CR will be installed"
+	return ""
 }
 
 func FindCommunityModuleTemplate(ctx context.Context, namespace, moduleTemplate string, repo repo.ModuleTemplatesRepository) (*kyma.ModuleTemplate, error) {
