@@ -39,20 +39,20 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
 		Example: `  # Add the Keda module with the default CR
-  kyma module add keda --default-cr
+  kyma module add keda --default-config-cr
 
   # Add the Keda module with a custom CR from a file
-  kyma module add keda --cr-path ./keda-cr.yaml
+  kyma module add keda --config-cr-path ./keda-cr.yaml
 
   ## Add a community module with a default CR and auto-approve the SLA
   #  passed argument must be in the format <namespace>/<module-template-name>
   #  the module must be pulled from the catalog first using the 'kyma module pull' command
-  kyma module add my-namespace/my-module-template-name --default-cr --auto-approve`,
+  kyma module add my-namespace/my-module-template-name --default-config-cr --auto-approve`,
 
 		Args: cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
-				flags.MarkMutuallyExclusive("cr-path", "default-cr"),
+				flags.MarkMutuallyExclusive("cr-path", "default-cr", "config-cr-path", "default-config-cr"),
 				flags.MarkUnsupported("community", "the --community flag is no longer supported - community modules need to be pulled first using 'kyma module pull' command, then installed"),
 				flags.MarkUnsupported("origin", "the --origin flag is no longer supported - use commands argument instead"),
 			))
@@ -65,7 +65,11 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVarP(&cfg.channel, "channel", "c", "", "Name of the Kyma channel to use for the module")
 	cmd.Flags().StringVar(&cfg.crPath, "cr-path", "", "Path to the custom resource file")
+	_ = cmd.Flags().MarkHidden("cr-path")
+	cmd.Flags().StringVar(&cfg.crPath, "config-cr-path", "", "Path to the manifest file with custom configuration (alias: --cr-path)")
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Deploys the module with the default CR")
+	_ = cmd.Flags().MarkHidden("default-cr")
+	cmd.Flags().BoolVar(&cfg.defaultCR, "default-config-cr", false, "Deploys the module with default configuration (alias: --default-cr)")
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approve community module installation")
 	cmd.Flags().StringVar(&cfg.version, "version", "", "Specifies version of the community module to install")
 	cmd.Flags().StringVar(&cfg.modulePath, "origin", "", "Specifies the source of the module (kyma or custom name)")

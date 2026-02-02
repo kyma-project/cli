@@ -41,7 +41,7 @@ func Install(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesR
 		return clierror.Wrap(err, clierror.New("failed to apply custom resources"))
 	}
 
-	out.Msgfln("%s community module enabled", data.CommunityModuleTemplate.Name)
+	out.Msgfln("%s community module enabled %s", data.CommunityModuleTemplate.Name, crMsgSuffix(len(data.CustomResources), data.IsDefaultCRApplicable))
 	return nil
 }
 
@@ -167,6 +167,7 @@ func getResourceYamlStringsFromURL(url string) ([]string, error) {
 func applyDefaultCustomResource(ctx context.Context, client kube.Client, existingModule *kyma.ModuleTemplate) error {
 	defaultCustomResourceUnstructured := existingModule.Spec.Data
 
+	out.Debugfln("applying default CR %s/%s", defaultCustomResourceUnstructured.GetNamespace(), defaultCustomResourceUnstructured.GetName())
 	if err := client.RootlessDynamic().Apply(ctx, &defaultCustomResourceUnstructured, false); err != nil {
 		return fmt.Errorf("failed to apply default custom resource: %w", err)
 	}
@@ -183,6 +184,7 @@ func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, custo
 	defer cancel()
 
 	for _, customResource := range customResources {
+		out.Debugfln("applying %s/%s CR", customResource.GetNamespace(), customResource.GetName())
 		err := client.RootlessDynamic().Apply(timeoutCtx, &customResource, false)
 		if err != nil {
 			return fmt.Errorf("failed to apply custom resource from path: %w", err)

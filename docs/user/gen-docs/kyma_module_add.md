@@ -14,15 +14,15 @@ kyma module add <module> [flags]
 
 ```bash
   # Add the Keda module with the default CR
-  kyma module add keda --default-cr
+  kyma module add keda --default-config-cr
 
   # Add the Keda module with a custom CR from a file
-  kyma module add keda --cr-path ./keda-cr.yaml
+  kyma module add keda --config-cr-path ./keda-cr.yaml
 
   ## Add a community module with a default CR and auto-approve the SLA
   #  passed argument must be in the format <namespace>/<module-template-name>
   #  the module must be pulled from the catalog first using the 'kyma module pull' command
-  kyma module add my-namespace/my-module-template-name --default-cr --auto-approve
+  kyma module add my-namespace/my-module-template-name --default-config-cr --auto-approve
 ```
 
 ## Flags
@@ -30,8 +30,8 @@ kyma module add <module> [flags]
 ```text
       --auto-approve            Automatically approve community module installation
   -c, --channel string          Name of the Kyma channel to use for the module
-      --cr-path string          Path to the custom resource file
-      --default-cr              Deploys the module with the default CR
+      --config-cr-path string   Path to the manifest file with custom configuration (alias: --cr-path)
+      --default-config-cr       Deploys the module with default configuration (alias: --default-cr)
       --version string          Specifies version of the community module to install
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command

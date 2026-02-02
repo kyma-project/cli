@@ -187,7 +187,7 @@ func TestDisableCore(t *testing.T) {
 		require.Empty(t, buffer.String())
 	})
 
-	t.Run("failed to remove module cr", func(t *testing.T) {
+	t.Run("failed to remove module CR", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		fakeKymaClient := fake.KymaClient{
 			ReturnErr: nil,
@@ -218,7 +218,7 @@ func TestDisableCore(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to remove kyma-system/default cr"),
+			clierror.New("failed to remove kyma-system/default CR"),
 		)
 
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")

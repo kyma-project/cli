@@ -47,6 +47,7 @@ func (l *OneOfEnumList) Prompt() (string, error) {
 	scanner.Scan()
 	err := scanner.Err()
 	userInput := scanner.Text()
+	l.printer.Msg("\n")
 
 	if err != nil {
 		return "", err

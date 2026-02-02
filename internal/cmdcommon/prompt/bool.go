@@ -33,6 +33,7 @@ func (b *Bool) Prompt() (bool, error) {
 	scanner.Scan()
 	err := scanner.Err()
 	userInput := scanner.Text()
+	b.printer.Msg("\n")
 
 	if err != nil {
 		return false, err

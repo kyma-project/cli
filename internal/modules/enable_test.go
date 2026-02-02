@@ -78,7 +78,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
 		require.Nil(t, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "keda module enabled with default module CR\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
@@ -112,7 +112,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "", true)
 		require.Nil(t, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "keda module enabled with default module CR\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
@@ -142,7 +142,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Nil(t, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "keda module enabled with custom configuration\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 		require.Equal(t, []unstructured.Unstructured{testKedaCR}, rootlessDynamicClient.ApplyObjs)
 	})
@@ -259,7 +259,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
+		require.Equal(t, "", buffer.String())
 	})
 
 	t.Run("failed to apply custom resource", func(t *testing.T) {
@@ -289,6 +289,6 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding the keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\n", buffer.String())
+		require.Equal(t, "", buffer.String())
 	})
 }
