@@ -27,7 +27,7 @@ func TestOneOfStringListPrompt_Table(t *testing.T) {
 			values:      []string{"apple", "banana", "orange"},
 			want:        "banana",
 			wantErr:     "",
-			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: \n",
 		},
 		{
 			name:        "Invalid input",
@@ -35,7 +35,7 @@ func TestOneOfStringListPrompt_Table(t *testing.T) {
 			values:      []string{"apple", "banana", "orange"},
 			want:        "",
 			wantErr:     "provided value is not present on the list: Faraon",
-			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: \n",
 		},
 		{
 			name:        "Empty input",
@@ -43,7 +43,7 @@ func TestOneOfStringListPrompt_Table(t *testing.T) {
 			values:      []string{"apple", "banana", "orange"},
 			want:        "",
 			wantErr:     "no value was selected",
-			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: \n",
 		},
 		{
 			name:        "Invalid reader",
@@ -51,7 +51,7 @@ func TestOneOfStringListPrompt_Table(t *testing.T) {
 			values:      []string{"apple", "banana", "orange"},
 			want:        "",
 			wantErr:     "test error",
-			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: \n",
 		},
 	}
 

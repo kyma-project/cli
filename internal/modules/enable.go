@@ -36,7 +36,7 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		crPolicy = kyma.CustomResourcePolicyCreateAndDelete
 	}
 
-	printer.Msgfln("adding the %s module to the Kyma CR", module)
+	printer.Debugfln("adding the %s module to the Kyma CR", module)
 	err := client.Kyma().EnableModule(ctx, module, channel, crPolicy)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to enable the module"))
@@ -47,8 +47,18 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		return clierr
 	}
 
-	printer.Msgfln("%s module enabled", module)
+	printer.Msgfln("%s module enabled %s", module, crMsgSuffix(len(crs), defaultCR))
 	return nil
+}
+
+func crMsgSuffix(customCount int, defaultApplicable bool) string {
+	if customCount > 0 {
+		return "with custom configuration"
+	}
+	if defaultApplicable {
+		return "with default module CR"
+	}
+	return "without module CR"
 }
 
 func applyCustomCR(printer *out.Printer, ctx context.Context, client kube.Client, module string, crs ...unstructured.Unstructured) clierror.Error {
@@ -60,14 +70,14 @@ func applyCustomCR(printer *out.Printer, ctx context.Context, client kube.Client
 	ctx, cancel := context.WithTimeout(ctx, time.Second*100)
 	defer cancel()
 
-	printer.Msgln("waiting for module to be ready")
+	printer.Debugln("waiting for module to be ready")
 	err := client.Kyma().WaitForModuleState(ctx, module, "Ready", "Warning")
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to check the module state"))
 	}
 
 	for _, cr := range crs {
-		printer.Msgfln("applying %s/%s cr", cr.GetNamespace(), cr.GetName())
+		printer.Debugfln("applying %s/%s CR", cr.GetNamespace(), cr.GetName())
 		err = client.RootlessDynamic().Apply(ctx, &cr, false)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to apply a custom CR from path"))

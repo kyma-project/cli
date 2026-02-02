@@ -124,9 +124,6 @@ func getOutputDirAcceptance(path string) clierror.Error {
 		true,
 	).Prompt()
 
-	// add empty line for better readability
-	out.Msgln("")
-
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to read user input"))
 	}
