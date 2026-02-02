@@ -82,7 +82,7 @@ func removeModuleCR(printer *out.Printer, ctx context.Context, client kube.Clien
 		err = client.RootlessDynamic().Remove(ctx, &moduleCR, false)
 		if err != nil && !errors.IsNotFound(err) {
 			return clierror.Wrap(err, clierror.New(
-				fmt.Sprintf("failed to remove %s/%s cr", moduleCR.GetNamespace(), moduleCR.GetName()),
+				fmt.Sprintf("failed to remove %s/%s CR", moduleCR.GetNamespace(), moduleCR.GetName()),
 			))
 		}
 	}
