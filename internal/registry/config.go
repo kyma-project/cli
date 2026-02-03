@@ -44,7 +44,7 @@ func GetInternalConfig(ctx context.Context, client kube.Client) (*InternalRegist
 		return nil, clierror.Wrap(err,
 			clierror.New("failed to load the in-cluster registry configuration",
 				"ensure cluster is available and properly configured",
-				"add the Docker Registry module by calling `kyma module add docker-registry -c experimental --default-cr`",
+				"add the Docker Registry module by calling `kyma module add docker-registry -c experimental --default-config-cr`",
 			),
 		)
 	}

@@ -92,6 +92,6 @@ func getWarningTextForCommunityModuleUsage(pulledModule *dtos.PullResult) string
 		"Next Steps:\n" +
 		"To install this module on your cluster, you can use the sample command:\n\n" +
 		"  # Install with default configuration:\n" +
-		fmt.Sprintf("  kyma module add %s/%s --default-cr\n\n", pulledModule.Namespace, pulledModule.ModuleTemplateName) +
+		fmt.Sprintf("  kyma module add %s/%s --default-config-cr\n\n", pulledModule.Namespace, pulledModule.ModuleTemplateName) +
 		"For more information about module installation, run: kyma module add --help\n"
 }
