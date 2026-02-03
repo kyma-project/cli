@@ -30,7 +30,7 @@ echo -e "\n---------------------------------------------------------------------
 echo -e "Step2: Manage modules \n"
 
 ../../bin/kyma module catalog
-../../bin/kyma module add serverless --default-cr
+../../bin/kyma module add serverless --default-config-cr
 echo "..waiting for serverless module to be installed"
 while ! kubectl get crd serverlesses.operator.kyma-project.io; do echo "Waiting for CRD serverless..."; sleep 1; done
 kubectl wait --for condition=established crd/serverlesses.operator.kyma-project.io
@@ -76,7 +76,7 @@ while ! kubectl get secret object-store-reference-binding --namespace kyma-syste
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step5: Enable Docker Registry community module (with persistent BTP based storage)\n"
 ../../bin/kyma module pull docker-registry
-../../bin/kyma module add default/docker-registry-0.11.0 --cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
+../../bin/kyma module add default/docker-registry-0.11.0 --config-cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
 
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s

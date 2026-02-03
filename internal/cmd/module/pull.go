@@ -104,6 +104,6 @@ func getWarningTextForCommunityModuleUsage(moduleTemplate *kyma.ModuleTemplate) 
 		"Next Steps:\n" +
 		"To install this module on your cluster, you can use the sample command:\n" +
 		"  # Install with default configuration:\n" +
-		fmt.Sprintf("  kyma module add %s/%s --default-cr\n\n", moduleTemplate.Namespace, moduleTemplate.Name) +
+		fmt.Sprintf("  kyma module add %s/%s --default-config-cr\n\n", moduleTemplate.Namespace, moduleTemplate.Name) +
 		"For more information about module installation, run: kyma module add --help\n"
 }
