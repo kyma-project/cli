@@ -16,7 +16,6 @@ import (
 
 type authorizeRepositoryConfig struct {
 	*cmdcommon.KymaConfig
-	repository    string
 	clientId      string
 	issuerURL     string
 	prefix        string
@@ -61,12 +60,15 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
   kyma alpha authorize repository --repository kyma-project/cli --client-id repo-ci-client --role view --namespace dev --dry-run -o json`,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
-				flags.MarkRequired("repository"),
 				flags.MarkRequired("client-id"),
 				flags.MarkExactlyOneRequired("role", "clusterrole"),
 				flags.MarkPrerequisites("role", "namespace"),
 				flags.MarkPrerequisites("cluster-wide", "clusterrole"),
 			))
+
+			if _, exists := cfg.requiredClaim.Values["repository"]; !exists {
+				clierror.Check(clierror.New(`required flag "repository" not set`))
+			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(authorizeRepository(&cfg))
@@ -74,7 +76,7 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 	}
 
 	// Required flags
-	cmd.Flags().StringVar(&cfg.repository, "repository", "", "GitHub repo in owner/name format (e.g., kyma-project/cli) (required)")
+	cmd.Flags().Var(types.NewMapElem("repository", &cfg.requiredClaim), "repository", "GitHub repo in owner/name format (e.g., kyma-project/cli) (required)")
 	cmd.Flags().StringVar(&cfg.clientId, "client-id", "", "OIDC client ID (audience) expected in the token (required)")
 
 	// Optional flags with defaults
@@ -99,7 +101,7 @@ func authorizeRepository(cfg *authorizeRepositoryConfig) clierror.Error {
 	}
 
 	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
-		ForRepository(cfg.repository).
+		ForRepository(requiredClaimsCasted["repository"]).
 		ForRequiredClaims(requiredClaimsCasted).
 		ForName(cfg.name).
 		ForPrefix(cfg.prefix)
@@ -138,8 +140,9 @@ func buildRBACResourceForRepository(cfg *authorizeRepositoryConfig, bindingPrefi
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("failed to generate binding"))
 	}
+	repository := fmt.Sprintf("%s", cfg.requiredClaim.Values["repository"])
 
-	sanitizedRepoName := strings.ReplaceAll(cfg.repository, "/", "-")
+	sanitizedRepoName := strings.ReplaceAll(repository, "/", "-")
 	var bindingName string
 	if cfg.role != "" {
 		bindingName = fmt.Sprintf("%s-%s-binding", sanitizedRepoName, cfg.role)
@@ -150,7 +153,7 @@ func buildRBACResourceForRepository(cfg *authorizeRepositoryConfig, bindingPrefi
 	builder := authorization.NewRBACBuilder().
 		ForPrefix(bindingPrefix).
 		ForSubjectKind(subjectKind).
-		ForSubjectName(cfg.repository).
+		ForSubjectName(repository).
 		ForBindingName(bindingName)
 
 	if cfg.clusterWide {

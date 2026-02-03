@@ -5,6 +5,43 @@ import (
 	"strings"
 )
 
+type MapElem struct {
+	key string
+	m   *Map
+}
+
+func NewMapElem(key string, m *Map) *MapElem {
+	return &MapElem{
+		key: key,
+		m:   m,
+	}
+}
+
+// Set implements the flag.Value interface
+func (me *MapElem) Set(val string) error {
+	if me.m.Values == nil {
+		me.m.Values = map[string]interface{}{}
+	}
+	me.m.Values[me.key] = val
+	return nil
+}
+
+// String implements the flag.Value interface
+func (me *MapElem) String() string {
+	if me.m == nil || me.m.Values == nil {
+		return ""
+	}
+	if v, ok := me.m.Values[me.key]; ok {
+		return fmt.Sprintf("%v", v)
+	}
+	return ""
+}
+
+// Type implements the pflag.Value interface
+func (me *MapElem) Type() string {
+	return "string"
+}
+
 type Map struct {
 	Values map[string]interface{}
 }

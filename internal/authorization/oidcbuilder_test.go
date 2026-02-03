@@ -214,17 +214,6 @@ func TestOIDCBuilder_Build_ValidationErrors(t *testing.T) {
 			},
 			expectedError: "repository can't be blank",
 		},
-		{
-			name: "invalid requiredClaim key - reserved 'repository' name",
-			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder("test-client", "https://example.com").
-					ForRepository("some/repo").
-					ForRequiredClaims(map[string]string{
-						"repository": "some/other-repo",
-					})
-			},
-			expectedError: "required-claim key 'repository' is reserved and cannot be specified",
-		},
 	}
 
 	for _, tt := range tests {
