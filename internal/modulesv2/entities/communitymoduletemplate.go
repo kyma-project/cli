@@ -36,5 +36,5 @@ func NewCommunityModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *
 }
 
 func (m *CommunityModuleTemplate) GetNamespacedName() string {
-	return fmt.Sprintf("%s/%s", m.namespace, m.name)
+	return fmt.Sprintf("%s/%s", m.Namespace, m.TemplateName)
 }

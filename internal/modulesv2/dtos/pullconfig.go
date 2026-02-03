@@ -5,10 +5,9 @@ type PullConfig struct {
 	ModuleName          string
 	Version             string
 	RemoteRepositoryUrl string
-	Force               bool
 }
 
-func NewPullConfig(moduleName, namespace, remote, version string, force bool) *PullConfig {
+func NewPullConfig(moduleName, namespace, remote, version string) *PullConfig {
 	var remoteRepo string
 
 	if remote == "" {
@@ -22,6 +21,5 @@ func NewPullConfig(moduleName, namespace, remote, version string, force bool) *P
 		Namespace:           namespace,
 		Version:             version,
 		RemoteRepositoryUrl: remoteRepo,
-		Force:               force,
 	}
 }
