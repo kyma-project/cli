@@ -130,7 +130,7 @@ resource: {...}
 | **dryRun**        | bool   | Simulates resource deletion if set to `true`                                 |
 | **output**        | enum   | Changes the output format if not empty. It can be `yaml` or `json`           |
 | **outputMessage** | string | Print the given message to the standard output if the `.output` is empty     |
-| **outputWarning** | string | Print the given message to the standard error right before applying the reso |
+| **outputWarning** | string | Print the given message to the standard error right before applying the resource |
 | **resource**      | object | Raw object applied to a cluster                                              |
 
 > [!NOTE]
