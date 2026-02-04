@@ -96,7 +96,7 @@ func (b *OIDCBuilder) GetUsernamePrefix() string {
 }
 
 func (b *OIDCBuilder) validate() error {
-	if b.repository == "" {
+	if b.repository == "" && b.requiredClaims["repository"] == "" {
 		return fmt.Errorf("repository can't be blank")
 	}
 	if !repositoryFormatValid(b.repository) {
@@ -107,9 +107,6 @@ func (b *OIDCBuilder) validate() error {
 	}
 	if b.issuerURL == "" {
 		return fmt.Errorf("issuerURL can't be blank")
-	}
-	if _, hasRepository := b.requiredClaims["repository"]; hasRepository {
-		return fmt.Errorf("required-claim key 'repository' is reserved and cannot be specified")
 	}
 
 	return nil
