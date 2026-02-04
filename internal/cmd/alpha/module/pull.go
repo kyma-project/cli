@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
 	"github.com/kyma-project/cli.v3/internal/modulesv2"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
 	"github.com/kyma-project/cli.v3/internal/out"
@@ -67,7 +68,11 @@ func pull(cfg *pullConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to execute the pull command"))
 	}
 
-	pullConfigDto := dtos.NewPullConfig(cfg.moduleName, cfg.namespace, cfg.remote, cfg.version, cfg.force)
+	pullConfigDto := dtos.NewPullConfig(cfg.moduleName, cfg.namespace, cfg.remote, cfg.version)
+
+	if shouldAbort, clierr := confirmOverwriteIfNeeded(cfg, pullOperation, pullConfigDto); clierr != nil || shouldAbort {
+		return clierr
+	}
 
 	pulledModule, err := pullOperation.Run(cfg.Ctx, pullConfigDto)
 	if err != nil {
@@ -78,6 +83,39 @@ func pull(cfg *pullConfig) clierror.Error {
 	out.Msgf("%s", getWarningTextForCommunityModuleUsage(pulledModule))
 
 	return nil
+}
+
+// confirmOverwriteIfNeeded checks if the module is already installed and prompts the user for confirmation.
+// Returns (shouldAbort, error) - if shouldAbort is true, the caller should return early.
+func confirmOverwriteIfNeeded(cfg *pullConfig, pullOperation *modulesv2.PullService, pullConfigDto *dtos.PullConfig) (bool, clierror.Error) {
+	if cfg.force {
+		return false, nil
+	}
+
+	installedModule, err := pullOperation.GetInstalledModuleTemplate(cfg.Ctx, pullConfigDto)
+	if err != nil {
+		return true, clierror.Wrap(err, clierror.New("failed to check if module template is already installed"))
+	}
+
+	if installedModule == nil {
+		return false, nil
+	}
+
+	confirmed, err := promptForInstallationConfirmation(installedModule.ModuleName, installedModule.Namespace)
+	if err != nil {
+		return true, clierror.Wrap(err, clierror.New("failed to read user confirmation"))
+	}
+
+	return !confirmed, nil
+}
+
+func promptForInstallationConfirmation(moduleName, namespace string) (bool, error) {
+	out.Msgfln("\nModule template '%s' is already installed in namespace '%s'.", moduleName, namespace)
+	out.Msgfln("Proceeding will overwrite the existing module template.\n")
+	out.Msgfln("Tip: Use '--force' flag to bypass this confirmation prompt.\n")
+
+	confirmPrompt := prompt.NewBool("Do you want to continue?", false)
+	return confirmPrompt.Prompt()
 }
 
 func getWarningTextForCommunityModuleUsage(pulledModule *dtos.PullResult) string {

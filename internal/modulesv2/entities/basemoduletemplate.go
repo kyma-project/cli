@@ -7,11 +7,10 @@ import (
 // BaseModuleTemplate is something like abstract class;
 // Should be created only in "child" entities (coremoduletemplate, communitymoduletemplate)
 type BaseModuleTemplate struct {
-	ModuleName string
-	Version    string
-
-	name      string
-	namespace string
+	ModuleName   string
+	Version      string
+	TemplateName string
+	Namespace    string
 
 	// not needed right now but will be needed in the future
 	// data      *unstructured.Unstructured
@@ -24,17 +23,17 @@ func BaseModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *BaseModu
 	entity.ModuleName = rawModuleTemplate.Spec.ModuleName
 	entity.Version = rawModuleTemplate.Spec.Version
 
-	entity.name = rawModuleTemplate.GetName()
-	entity.namespace = rawModuleTemplate.GetNamespace()
+	entity.TemplateName = rawModuleTemplate.GetName()
+	entity.Namespace = rawModuleTemplate.GetNamespace()
 
 	return &entity
 }
 
 func BaseModuleTemplateFromParams(templateName, moduleName, version, namespace string) *BaseModuleTemplate {
 	return &BaseModuleTemplate{
-		ModuleName: moduleName,
-		Version:    version,
-		name:       templateName,
-		namespace:  namespace,
+		ModuleName:   moduleName,
+		Version:      version,
+		TemplateName: templateName,
+		Namespace:    namespace,
 	}
 }

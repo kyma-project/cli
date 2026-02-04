@@ -6,12 +6,3 @@ type PullResult struct {
 	Version            string
 	Namespace          string
 }
-
-func NewPullResult(moduleName, templateName, version, namespace string) *PullResult {
-	return &PullResult{
-		ModuleName:         moduleName,
-		ModuleTemplateName: templateName,
-		Version:            version,
-		Namespace:          namespace,
-	}
-}
