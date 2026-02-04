@@ -19,7 +19,7 @@ More complex example:
 ```yaml
 outputWarning: |-
   ${{ if eq .flags.version.value "20" -}}
-  Warning: runtime Node.js 20 is deprecated and will be removed in the future releases. Please consider upgrading to Node.js 22 runtime.
+  warning: nodejs20 is deprecated and will be removed in future releases - consider upgrading to Node.js 22.
   ${{- end }}
 ```
 
