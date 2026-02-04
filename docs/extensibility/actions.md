@@ -14,70 +14,86 @@ All templates start with the `${{` prefix and end with the `}}` suffix. For exam
 name: ${{ .flags.name.value }}
 ```
 
+More complex example:
+
+```yaml
+outputWarning: |-
+  ${{ if eq .flags.version.value "20" -}}
+  Warning: runtime Node.js 20 is deprecated and will be removed in the future releases. Please consider upgrading to Node.js 22 runtime.
+  ${{- end }}
+```
+
 ### Sprig Functions
 
 The template system includes all [Sprig functions](https://masterminds.github.io/sprig/), providing 100+ utility functions for string manipulation, encoding, math, dates, and more. Common examples below:
 
 #### String Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `lower` | Convert to lowercase | `${{ .flags.name.value \| lower }}` |
-| `upper` | Convert to uppercase | `${{ .flags.name.value \| upper }}` |
-| `title` | Convert to title case | `${{ .flags.name.value \| title }}` |
-| `trim` | Remove whitespace | `${{ .flags.name.value \| trim }}` |
-| `replace` | Replace substring | `${{ .flags.name.value \| replace " " "-" }}` |
-| `contains` | Check if string contains substring | `${{ .flags.name.value \| contains "test" }}` |
-| `hasPrefix` | Check if string has prefix | `${{ .flags.name.value \| hasPrefix "kyma" }}` |
-| `hasSuffix` | Check if string has suffix | `${{ .flags.name.value \| hasSuffix ".yaml" }}` |
-| `repeat` | Repeat string n times | `${{ "=" \| repeat 10 }}` |
-| `indent` | Indent text by n spaces | `${{ .config \| indent 4 }}` |
-| `nindent` | Newline + indent by n spaces | `${{ .config \| nindent 2 }}` |
+
+| Function    | Description                        | Example                                         |
+| ----------- | ---------------------------------- | ----------------------------------------------- |
+| `lower`     | Convert to lowercase               | `${{ .flags.name.value \| lower }}`             |
+| `upper`     | Convert to uppercase               | `${{ .flags.name.value \| upper }}`             |
+| `title`     | Convert to title case              | `${{ .flags.name.value \| title }}`             |
+| `trim`      | Remove whitespace                  | `${{ .flags.name.value \| trim }}`              |
+| `replace`   | Replace substring                  | `${{ .flags.name.value \| replace " " "-" }}`   |
+| `contains`  | Check if string contains substring | `${{ .flags.name.value \| contains "test" }}`   |
+| `hasPrefix` | Check if string has prefix         | `${{ .flags.name.value \| hasPrefix "kyma" }}`  |
+| `hasSuffix` | Check if string has suffix         | `${{ .flags.name.value \| hasSuffix ".yaml" }}` |
+| `repeat`    | Repeat string n times              | `${{ "=" \| repeat 10 }}`                       |
+| `indent`    | Indent text by n spaces            | `${{ .config \| indent 4 }}`                    |
+| `nindent`   | Newline + indent by n spaces       | `${{ .config \| nindent 2 }}`                   |
 
 #### Encoding Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `b64enc` | Base64 encode | `${{ .flags.secret.value \| b64enc }}` |
-| `b64dec` | Base64 decode | `${{ .flags.encoded.value \| b64dec }}` |
-| `quote` | Add quotes around string | `${{ .flags.name.value \| quote }}` |
-| `squote` | Add single quotes | `${{ .flags.name.value \| squote }}` |
+
+| Function | Description              | Example                                 |
+| -------- | ------------------------ | --------------------------------------- |
+| `b64enc` | Base64 encode            | `${{ .flags.secret.value \| b64enc }}`  |
+| `b64dec` | Base64 decode            | `${{ .flags.encoded.value \| b64dec }}` |
+| `quote`  | Add quotes around string | `${{ .flags.name.value \| quote }}`     |
+| `squote` | Add single quotes        | `${{ .flags.name.value \| squote }}`    |
 
 #### Random Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `randAlpha` | Random alphabetic string | `${{ randAlpha 10 }}` |
+
+| Function       | Description                | Example                  |
+| -------------- | -------------------------- | ------------------------ |
+| `randAlpha`    | Random alphabetic string   | `${{ randAlpha 10 }}`    |
 | `randAlphaNum` | Random alphanumeric string | `${{ randAlphaNum 16 }}` |
-| `randNumeric` | Random numeric string | `${{ randNumeric 8 }}` |
-| `randAscii` | Random ASCII string | `${{ randAscii 12 }}` |
+| `randNumeric`  | Random numeric string      | `${{ randNumeric 8 }}`   |
+| `randAscii`    | Random ASCII string        | `${{ randAscii 12 }}`    |
 
 #### Math Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `add` | Addition | `${{ add 1 2 3 }}` |
-| `sub` | Subtraction | `${{ sub 10 5 }}` |
-| `mul` | Multiplication | `${{ mul 4 5 }}` |
-| `div` | Division | `${{ div 20 4 }}` |
-| `max` | Maximum value | `${{ max 1 5 3 }}` |
-| `min` | Minimum value | `${{ min 1 5 3 }}` |
+
+| Function | Description    | Example            |
+| -------- | -------------- | ------------------ |
+| `add`    | Addition       | `${{ add 1 2 3 }}` |
+| `sub`    | Subtraction    | `${{ sub 10 5 }}`  |
+| `mul`    | Multiplication | `${{ mul 4 5 }}`   |
+| `div`    | Division       | `${{ div 20 4 }}`  |
+| `max`    | Maximum value  | `${{ max 1 5 3 }}` |
+| `min`    | Minimum value  | `${{ min 1 5 3 }}` |
 
 #### Date Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `now` | Current timestamp | `${{ now }}` |
-| `date` | Format date | `${{ now \| date "2006-01-02" }}` |
+
+| Function     | Description             | Example                                       |
+| ------------ | ----------------------- | --------------------------------------------- |
+| `now`        | Current timestamp       | `${{ now }}`                                  |
+| `date`       | Format date             | `${{ now \| date "2006-01-02" }}`             |
 | `dateInZone` | Format date in timezone | `${{ now \| dateInZone "2006-01-02" "UTC" }}` |
 
 #### Type Conversion
-| Function | Description | Example |
-|----------|-------------|---------|
-| `toString` | Convert to string | `${{ .flags.port.value \| toString }}` |
-| `toInt` | Convert to integer | `${{ .flags.count.value \| toInt }}` |
-| `toBool` | Convert to boolean | `${{ .flags.enabled.value \| toBool }}` |
+
+| Function   | Description        | Example                                 |
+| ---------- | ------------------ | --------------------------------------- |
+| `toString` | Convert to string  | `${{ .flags.port.value \| toString }}`  |
+| `toInt`    | Convert to integer | `${{ .flags.count.value \| toInt }}`    |
+| `toBool`   | Convert to boolean | `${{ .flags.enabled.value \| toBool }}` |
 
 ### Custom Functions
+
 The template system also supports custom functions specific to the Kyma CLI extensions:
 
 | Function          | For Type                     | Description                                                                                                                                                                                                                                                                                                             | Example                                                                                                                        |
-|-------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| ----------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | **newLineIndent** | string                       | Adds given indent to string if it's multiline                                                                                                                                                                                                                                                                           | `source: ${{ .flags.source.value \| newLineIndent 20 }}`                                                                       |
 | **toEnvs**        | map                          | Converts the input data map to an array of Kubernetes-like envs                                                                                                                                                                                                                                                         | `envs: ${{ .flags.env.value \| toEnvs }}`                                                                                      |
 | **toArray**       | map                          | Converts the input data map to an array in a given format. Use `{{.key}}` and `{{.value}}` to access map data                                                                                                                                                                                                           | `secretMounts: ${{ .flags.secretmount.value \| toArray "{'secretName':'{{.key}}','mountPath':'{{.value}}'}" }}`                |
@@ -86,11 +102,11 @@ The template system also supports custom functions specific to the Kyma CLI exte
 
 ## Available Resource-Oriented Actions
 
-| Name | Description |
-| --- | --- |
-| **resource_create** | Creates a resource in a cluster |
-| **resource_get** | Gets a resource from a cluster |
-| **resource_delete** | Deletes a resource from a cluster |
+| Name                 | Description                                     |
+| -------------------- | ----------------------------------------------- |
+| **resource_create**  | Creates a resource in a cluster                 |
+| **resource_get**     | Gets a resource from a cluster                  |
+| **resource_delete**  | Deletes a resource from a cluster               |
 | **resource_explain** | Explains a resource by displaying info about it |
 
 ### resource_create
@@ -102,16 +118,20 @@ Use this action to create any cluster resource.
 ```yaml
 dryRun: false
 output: "..."
+outputMessage: "..."
+outputWarning: "..."
 resource: {...}
 ```
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **dryRun** | bool | Simulates resource deletion if set to `true` |
-| **output** | enum | Changes the output format if not empty. It can be `yaml` or `json` |
-| **resource** | object | Raw object applied to a cluster |
+| Name              | Type   | Description                                                                  |
+| ----------------- | ------ | ---------------------------------------------------------------------------- |
+| **dryRun**        | bool   | Simulates resource deletion if set to `true`                                 |
+| **output**        | enum   | Changes the output format if not empty. It can be `yaml` or `json`           |
+| **outputMessage** | string | Print the given message to the standard output if the `.output` is empty     |
+| **outputWarning** | string | Print the given message to the standard error right before applying the reso |
+| **resource**      | object | Raw object applied to a cluster                                              |
 
 > [!NOTE]
 > For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L81-L149).
@@ -138,16 +158,16 @@ outputParameters:
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **output** | enum | Changes the output format if not empty. It can be `yaml` or `json` |
-| **fromAllNamespaces** | bool | Determines if resources must be taken from all namespaces |
-| **resource.apiVersion** | string | Output resources ApiVersion |
-| **resource.kind** | string | Output resources Kind |
-| **resource.metadata.name** | string | Name of the resource to get. If empty, it gets all resources in the namespace |
-| **resource.metadata.namespace** | string | Namespace from which resources are obtained |
-| **outputParameters[]** | array | List of additional parameters displayed in the table view |
-| **outputParameters[].name** | string | Additional column name |
+| Name                                | Type   | Description                                                                                            |
+| ----------------------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| **output**                          | enum   | Changes the output format if not empty. It can be `yaml` or `json`                                     |
+| **fromAllNamespaces**               | bool   | Determines if resources must be taken from all namespaces                                              |
+| **resource.apiVersion**             | string | Output resources ApiVersion                                                                            |
+| **resource.kind**                   | string | Output resources Kind                                                                                  |
+| **resource.metadata.name**          | string | Name of the resource to get. If empty, it gets all resources in the namespace                          |
+| **resource.metadata.namespace**     | string | Namespace from which resources are obtained                                                            |
+| **outputParameters[]**              | array  | List of additional parameters displayed in the table view                                              |
+| **outputParameters[].name**         | string | Additional column name                                                                                 |
 | **outputParameters[].resourcePath** | string | Path in the resource from which the value is obtained. Supports the [JQ](https://jqlang.org/) language |
 
 > [!NOTE]
@@ -171,13 +191,13 @@ resource:
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **dryRun** | bool | Simulates resource deletion if set to `true` |
-| **resource.apiVersion** | string | Resources ApiVersion |
-| **resource.kind** | string | Resources Kind |
-| **resource.metadata.name** | string | Name of the resource to delete |
-| **resource.metadata.namespace** | string | Namespace of the resource to delete |
+| Name                            | Type   | Description                                  |
+| ------------------------------- | ------ | -------------------------------------------- |
+| **dryRun**                      | bool   | Simulates resource deletion if set to `true` |
+| **resource.apiVersion**         | string | Resources ApiVersion                         |
+| **resource.kind**               | string | Resources Kind                               |
+| **resource.metadata.name**      | string | Name of the resource to delete               |
+| **resource.metadata.namespace** | string | Namespace of the resource to delete          |
 
 > [!NOTE]
 > For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L61-L79).
@@ -194,8 +214,8 @@ output: "..."
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
+| Name       | Type   | Description     |
+| ---------- | ------ | --------------- |
 | **output** | string | Note to display |
 
 > [!NOTE]
@@ -203,11 +223,11 @@ output: "..."
 
 ## Available Module-Oriented Actions
 
-| Name | Module | Description |
-| --- | --- | --- |
+| Name                      | Module            | Description                                                    |
+| ------------------------- | ----------------- | -------------------------------------------------------------- |
 | **registry_image_import** | `docker-registry` | Import image from local registry to in-cluster Docker registry |
-| **registry_config** | `docker-registry` | Get in-cluster registry configuration |
-| **function_init** | `serverless` | Generate Function's source and dependencies locally |
+| **registry_config**       | `docker-registry` | Get in-cluster registry configuration                          |
+| **function_init**         | `serverless`      | Generate Function's source and dependencies locally            |
 
 ### registry_image_import
 
@@ -221,8 +241,8 @@ image: "..."
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
+| Name      | Type   | Description                                                     |
+| --------- | ------ | --------------------------------------------------------------- |
 | **image** | string | Image from local registry to import in format \<image\>:\<tag\> |
 
 ### registry_config
@@ -240,12 +260,12 @@ useExternal: false
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **pushRegAddrOnly** | bool | Return the push registry address only |
-| **pullRegAddrOnly** | bool | Return the pull registry address only |
-| **output** | string | Path to the file to write output to instead of printing it in the terminal |
-| **useExternal** | bool | Use external configuration instead of internal one |
+| Name                | Type   | Description                                                                |
+| ------------------- | ------ | -------------------------------------------------------------------------- |
+| **pushRegAddrOnly** | bool   | Return the push registry address only                                      |
+| **pullRegAddrOnly** | bool   | Return the pull registry address only                                      |
+| **output**          | string | Path to the file to write output to instead of printing it in the terminal |
+| **useExternal**     | bool   | Use external configuration instead of internal one                         |
 
 ### function_init
 
@@ -266,22 +286,22 @@ runtimes:
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **useRuntime** | string | Desired runtime to generate workspace for |
-| **outputDir** | string | Path to the output directory where the workspace is generated |
-| **runtimes** | map | Map of available runtimes from which workspace is generated by using the `useRuntime` field |
-| **runtimes[\<runtime\>].depsFilename** | string | The filename of the depdencies file |
-| **runtimes[\<runtime\>].depsData** | string | The output dependencies file content  |
-| **runtimes[\<runtime\>].handlerFilename** | string | The filename of the handler file |
-| **runtimes[\<runtime\>].handlerData** | string | The output handler file content |
+| Name                                      | Type   | Description                                                                                 |
+| ----------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| **useRuntime**                            | string | Desired runtime to generate workspace for                                                   |
+| **outputDir**                             | string | Path to the output directory where the workspace is generated                               |
+| **runtimes**                              | map    | Map of available runtimes from which workspace is generated by using the `useRuntime` field |
+| **runtimes[\<runtime\>].depsFilename**    | string | The filename of the depdencies file                                                         |
+| **runtimes[\<runtime\>].depsData**        | string | The output dependencies file content                                                        |
+| **runtimes[\<runtime\>].handlerFilename** | string | The filename of the handler file                                                            |
+| **runtimes[\<runtime\>].handlerData**     | string | The output handler file content                                                             |
 
 ## Available Cluster-Call Actions
 
 Some functionality implemented by the resource and module-oriented actions may not be enough for some more complex cases. To cover such cases, it is possible to define your own procedures/scripts on the module controller level or an open endpoint allowing you to run the script and call it using the Kyma CLI.
 
-| Name | Description |
-| --- | --- |
+| Name                   | Description                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
 | **call_files_to_save** | Call the container for a list of files and save them on a machine |
 
 **Server error handling:**
@@ -313,14 +333,14 @@ targetPod:
 
 **Fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **outputDir** | string | Path to the output directory where the workspace is generated |
-| **request.parameters** | string | Additional parameters passed to the request |
-| **targetPod.path** | string | Target server path |
-| **targetPod.port** | string | Target server port |
-| **targetPod.namespace** | string | Target Pod namespace |
-| **targetPod.selector** | string | Target Pod label selector (same as Kubernetes [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
+| Name                    | Type   | Description                                                                                                                                                  |
+| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **outputDir**           | string | Path to the output directory where the workspace is generated                                                                                                |
+| **request.parameters**  | string | Additional parameters passed to the request                                                                                                                  |
+| **targetPod.path**      | string | Target server path                                                                                                                                           |
+| **targetPod.port**      | string | Target server port                                                                                                                                           |
+| **targetPod.namespace** | string | Target Pod namespace                                                                                                                                         |
+| **targetPod.selector**  | string | Target Pod label selector (same as Kubernetes [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
 
 ### Server Response
 
@@ -339,9 +359,9 @@ Action expects that the data response will contain the status code `204` and JSO
 }
 ```
 
-| Name | Description |
-| --- | --- |
-| **outputMessage** | Message that is printed to the terminal after saving all files |
-| **files** | List of the output files to save on a machine |
-| **files[].name** | Name of the file (may contain directories like `bin/readme.md`) |
-| **files[].data** | Encoded by base64 file content |
+| Name              | Description                                                     |
+| ----------------- | --------------------------------------------------------------- |
+| **outputMessage** | Message that is printed to the terminal after saving all files  |
+| **files**         | List of the output files to save on a machine                   |
+| **files[].name**  | Name of the file (may contain directories like `bin/readme.md`) |
+| **files[].data**  | Encoded by base64 file content                                  |
