@@ -282,7 +282,7 @@ The Factory Pattern is used to streamline the creation of test data objects for 
 
 **Example usage:**
 
-Suppose you have a factory function like `fake.CoreModuleTemplate()` in [coremoduletemplate.go](../../../../internal/modulesv2/fake/coremoduletemplate.go):
+Suppose you have a factory function like `fake.CoreModuleTemplate()` in [coremoduletemplate.go](../../../internal/modulesv2/fake/coremoduletemplate.go):
 
 ```go
 // Params struct allows you to specify only the fields you want to override
