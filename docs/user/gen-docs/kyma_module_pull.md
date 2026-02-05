@@ -30,8 +30,9 @@ kyma module pull <module-name> [flags]
 ## Flags
 
 ```text
+      --force                   Automatically approves the installation of dependencies for clusters that are not managed by KLM.
   -n, --namespace string        Destination namespace where the module is stored (default "default")
-  -v, --version string          Specify version of the community module to pull
+  -v, --version string          Specifies version of the community module to pull
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
