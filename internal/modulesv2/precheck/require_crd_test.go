@@ -2,16 +2,17 @@ package precheck
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
-	"github.com/kyma-project/cli.v3/internal/kube/fake"
-	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	kubefake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type fakeKubeClientConfig struct {
@@ -20,9 +21,6 @@ type fakeKubeClientConfig struct {
 }
 
 func (f *fakeKubeClientConfig) GetKubeClient() (kube.Client, error) {
-	if f.returnErr != nil {
-		return nil, errors.New("test error")
-	}
 	return f.returnClient, nil
 }
 
@@ -30,7 +28,7 @@ func (f *fakeKubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.
 	return f.returnClient, f.returnErr
 }
 
-func TestRunClusterKLMManagedCheck_KubeClientError(t *testing.T) {
+func TestRequireCRD_KubeClientError(t *testing.T) {
 	expectedErr := clierror.New("failed to get kube client")
 	kymaConfig := &cmdcommon.KymaConfig{
 		KubeClientConfig: &fakeKubeClientConfig{
@@ -40,23 +38,28 @@ func TestRunClusterKLMManagedCheck_KubeClientError(t *testing.T) {
 		Ctx: context.Background(),
 	}
 
-	err := RunClusterKLMManagedCheck(kymaConfig)
+	err := RequireCRD(kymaConfig, CmdGroupStable)
 
 	assert.NotNil(t, err)
 	assert.Equal(t, expectedErr, err)
 }
 
-func TestRunClusterKLMManagedCheck_ClusterManagedByKLM_NoError(t *testing.T) {
-	fakeKymaClient := &fake.KymaClient{
-		ReturnErr: nil,
-		ReturnDefaultKyma: kyma.Kyma{
-			Spec: kyma.KymaSpec{
-				Modules: []kyma.Module{},
+func TestRequireCRD_CRDPresent_NoError(t *testing.T) {
+	// Create a fake rootless dynamic client that returns the CRD
+	fakeRootlessDynamic := &kubefake.RootlessDynamicClient{
+		ReturnGetObj: unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "apiextensions.k8s.io/v1",
+				"kind":       "CustomResourceDefinition",
+				"metadata": map[string]any{
+					"name": "moduletemplates.operator.kyma-project.io",
+				},
 			},
 		},
+		ReturnGetErr: nil,
 	}
-	fakeKubeClient := &fake.KubeClient{
-		TestKymaInterface: fakeKymaClient,
+	fakeKubeClient := &kubefake.KubeClient{
+		TestRootlessDynamicInterface: fakeRootlessDynamic,
 	}
 
 	kymaConfig := &cmdcommon.KymaConfig{
@@ -67,17 +70,19 @@ func TestRunClusterKLMManagedCheck_ClusterManagedByKLM_NoError(t *testing.T) {
 		Ctx: context.Background(),
 	}
 
-	err := RunClusterKLMManagedCheck(kymaConfig)
+	err := RequireCRD(kymaConfig, CmdGroupStable)
 
 	assert.Nil(t, err)
 }
 
-func TestRunClusterKLMManagedCheck_ClusterNotManagedByKLM_ReturnsError(t *testing.T) {
-	fakeKymaClient := &fake.KymaClient{
-		ReturnErr: errors.New("kyma resource not found"),
+func TestRequireCRD_CRDNotPresent_ReturnsError(t *testing.T) {
+	// Create a fake rootless dynamic client that returns NotFound error
+	fakeRootlessDynamic := &kubefake.RootlessDynamicClient{
+		ReturnGetObj: unstructured.Unstructured{},
+		ReturnGetErr: k8serrors.NewNotFound(schema.GroupResource{Group: "apiextensions.k8s.io", Resource: "customresourcedefinitions"}, "moduletemplates.operator.kyma-project.io"),
 	}
-	fakeKubeClient := &fake.KubeClient{
-		TestKymaInterface: fakeKymaClient,
+	fakeKubeClient := &kubefake.KubeClient{
+		TestRootlessDynamicInterface: fakeRootlessDynamic,
 	}
 
 	kymaConfig := &cmdcommon.KymaConfig{
@@ -88,7 +93,7 @@ func TestRunClusterKLMManagedCheck_ClusterNotManagedByKLM_ReturnsError(t *testin
 		Ctx: context.Background(),
 	}
 
-	err := RunClusterKLMManagedCheck(kymaConfig)
+	err := RequireCRD(kymaConfig, CmdGroupStable)
 
 	require.NotNil(t, err)
 	errStr := err.String()
@@ -98,12 +103,14 @@ func TestRunClusterKLMManagedCheck_ClusterNotManagedByKLM_ReturnsError(t *testin
 	assert.Contains(t, errStr, "kyma module pull")
 }
 
-func TestRunClusterKLMManagedCheck_ErrorMessageContent(t *testing.T) {
-	fakeKymaClient := &fake.KymaClient{
-		ReturnErr: errors.New("not found"),
+func TestRequireCRD_ErrorMessageContent(t *testing.T) {
+	// Create a fake rootless dynamic client that returns NotFound error
+	fakeRootlessDynamic := &kubefake.RootlessDynamicClient{
+		ReturnGetObj: unstructured.Unstructured{},
+		ReturnGetErr: k8serrors.NewNotFound(schema.GroupResource{Group: "apiextensions.k8s.io", Resource: "customresourcedefinitions"}, "moduletemplates.operator.kyma-project.io"),
 	}
-	fakeKubeClient := &fake.KubeClient{
-		TestKymaInterface: fakeKymaClient,
+	fakeKubeClient := &kubefake.KubeClient{
+		TestRootlessDynamicInterface: fakeRootlessDynamic,
 	}
 
 	kymaConfig := &cmdcommon.KymaConfig{
@@ -114,7 +121,7 @@ func TestRunClusterKLMManagedCheck_ErrorMessageContent(t *testing.T) {
 		Ctx: context.Background(),
 	}
 
-	err := RunClusterKLMManagedCheck(kymaConfig)
+	err := RequireCRD(kymaConfig, CmdGroupStable)
 
 	require.NotNil(t, err)
 	errStr := err.String()

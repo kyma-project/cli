@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
 	"github.com/kyma-project/cli.v3/internal/modulesv2"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
@@ -47,6 +48,9 @@ must be pulled before they can be installed using the 'kyma module add' command.
   # Pull a module from a custom remote repository URL
   kyma alpha module pull community-module-name --remote-url https://example.com/modules.json`,
 		Args: cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(precheck.EnsureCRD(kymaConfig, cfg.force))
+		},
 		Run: func(_ *cobra.Command, args []string) {
 			cfg.moduleName = args[0]
 			clierror.Check(pull(&cfg))
@@ -119,7 +123,7 @@ func promptForInstallationConfirmation(moduleName, namespace string) (bool, erro
 }
 
 func getWarningTextForCommunityModuleUsage(pulledModule *dtos.PullResult) string {
-	return "WARNING: Community Module\n" +
+	return "WARNING:\n" +
 		"This is a community module that is not officially supported by the Kyma team.\n" +
 		"Community modules:\n" +
 		"  • Do not guarantee compatibility or stability\n" +
@@ -130,6 +134,6 @@ func getWarningTextForCommunityModuleUsage(pulledModule *dtos.PullResult) string
 		"Next Steps:\n" +
 		"To install this module on your cluster, you can use the sample command:\n\n" +
 		"  # Install with default configuration:\n" +
-		fmt.Sprintf("  kyma module add %s/%s --default-config-cr\n\n", pulledModule.Namespace, pulledModule.ModuleTemplateName) +
+		fmt.Sprintf("  kyma alpha module add %s/%s --default-config-cr\n\n", pulledModule.Namespace, pulledModule.ModuleTemplateName) +
 		"For more information about module installation, run: kyma module add --help\n"
 }

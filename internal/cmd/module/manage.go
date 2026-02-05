@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -36,6 +37,7 @@ func newManageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(cfg.validate())
+			clierror.Check(precheck.RequireKLMManaged(kymaConfig, precheck.CmdGroupStable))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]

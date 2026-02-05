@@ -3,6 +3,7 @@ package module
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
@@ -23,6 +24,9 @@ func newUnmanageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Sets a module to the unmanaged state",
 		Long:  "Use this command to set an existing module to the unmanaged state.",
 		Args:  cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(precheck.RequireKLMManaged(kymaConfig, precheck.CmdGroupStable))
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]
 			clierror.Check(runUnmanage(&cfg))

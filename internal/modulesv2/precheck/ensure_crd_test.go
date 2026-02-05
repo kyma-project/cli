@@ -15,7 +15,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// ---- helpers ----
+const (
+	testCRDName       = "moduletemplates.operator.kyma-project.io"
+	testCRDAPIVersion = "apiextensions.k8s.io/v1"
+	testCRDKind       = "CustomResourceDefinition"
+)
+
+var crdGroupResource = schema.GroupResource{Group: "apiextensions.k8s.io", Resource: "customresourcedefinitions"}
 
 func minimalCRDUnstructuredWithVersion(version string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
@@ -61,8 +67,6 @@ spec:
 `, testCRDAPIVersion, testCRDKind, testCRDName, version)
 }
 
-var crdGroupResource = schema.GroupResource{Group: "apiextensions.k8s.io", Resource: "customresourcedefinitions"}
-
 func startCRDServer(t *testing.T, body string, status int) (*httptest.Server, *int) {
 	t.Helper()
 	callCount := 0
@@ -77,56 +81,55 @@ func startCRDServer(t *testing.T, body string, status int) (*httptest.Server, *i
 	return srv, &callCount
 }
 
-func newTestInstalLCRD(rootless *kubefake.RootlessDynamicClient, isManaged bool, remoteURL string) *InstallCRD {
+func newTestCRDEnsurer(rootless *kubefake.RootlessDynamicClient, isManaged bool, remoteURL string) *CRDEnsurer {
 	kubeClient := &kubefake.KubeClient{TestRootlessDynamicInterface: rootless}
 	metadataRepo := &m2fake.ClusterMetadataRepository{IsManagedByKLM: isManaged}
-	return NewInstallCRD(kubeClient, metadataRepo, http.DefaultClient, remoteURL)
+	return NewCRDEnsurer(kubeClient, metadataRepo, http.DefaultClient, remoteURL)
 }
 
-func TestRun_SkipsWhenManagedByKLM(t *testing.T) {
+func TestEnsureCRD_SkipsWhenManagedByKLM(t *testing.T) {
 	t.Parallel()
 	rootlessClient := &kubefake.RootlessDynamicClient{}
 	remoteServer, callCount := startCRDServer(t, "", http.StatusInternalServerError)
-	preCheck := newTestInstalLCRD(rootlessClient, true, remoteServer.URL)
+	ensurer := newTestCRDEnsurer(rootlessClient, true, remoteServer.URL)
 
-	require.NoError(t, preCheck.run(context.Background()))
+	require.NoError(t, ensurer.run(context.Background(), true))
 	require.Zero(t, *callCount, "expected server not to be called")
 }
 
-func TestRun_AppliesWhenStoredNotFound(t *testing.T) {
+func TestEnsureCRD_AppliesWhenStoredNotFound(t *testing.T) {
 	t.Parallel()
 	rootlessClient := &kubefake.RootlessDynamicClient{}
 	rootlessClient.ReturnGetErr = k8serrors.NewNotFound(crdGroupResource, testCRDName)
 	remoteServer, _ := startCRDServer(t, minimalCRDYAML("v1beta2"), http.StatusOK)
-	preCheck := newTestInstalLCRD(rootlessClient, false, remoteServer.URL)
+	ensurer := newTestCRDEnsurer(rootlessClient, false, remoteServer.URL)
 
-	require.NoError(t, preCheck.run(context.Background()))
+	require.NoError(t, ensurer.run(context.Background(), true))
 	require.NotEmpty(t, rootlessClient.ApplyObjs, "expected apply to be called")
 }
 
-func TestRun_SkipsWhenSpecsEqual(t *testing.T) {
+func TestEnsureCRD_SkipsWhenSpecsEqual(t *testing.T) {
 	t.Parallel()
 	storedCRD := minimalCRDUnstructuredWithVersion("v1beta2")
 	rootlessClient := &kubefake.RootlessDynamicClient{}
 	rootlessClient.ReturnGetObj = *storedCRD
 	remoteServer, _ := startCRDServer(t, minimalCRDYAML("v1beta2"), http.StatusOK)
-	preCheck := newTestInstalLCRD(rootlessClient, false, remoteServer.URL)
+	ensurer := newTestCRDEnsurer(rootlessClient, false, remoteServer.URL)
 
-	require.NoError(t, preCheck.run(context.Background()))
+	require.NoError(t, ensurer.run(context.Background(), true))
 	require.Empty(t, rootlessClient.ApplyObjs, "did not expect apply when specs equal")
 }
 
-func TestRun_RemoteFetchError(t *testing.T) {
+func TestEnsureCRD_RemoteFetchError(t *testing.T) {
 	t.Parallel()
 	rootlessClient := &kubefake.RootlessDynamicClient{
 		ReturnGetErr: k8serrors.NewNotFound(crdGroupResource, testCRDName),
 	}
 	remoteServer, _ := startCRDServer(t, "error", http.StatusInternalServerError)
-	preCheck := newTestInstalLCRD(rootlessClient, false, remoteServer.URL)
+	ensurer := newTestCRDEnsurer(rootlessClient, false, remoteServer.URL)
 
-	err := preCheck.run(context.Background())
-	require.Error(t, err, "expected error on remote fetch")
-	require.Equal(t, "failed to fetch CRD from remote: failed to fetch CRD: status 500: error", err.Error())
+	err := ensurer.run(context.Background(), true)
+	require.NoError(t, err)
 }
 
 func Test_crdSpecDigest_ErrorsOnMissingSpec(t *testing.T) {
@@ -135,9 +138,3 @@ func Test_crdSpecDigest_ErrorsOnMissingSpec(t *testing.T) {
 	_, err := crdSpecDigest(u)
 	require.Error(t, err, "expected error on missing spec")
 }
-
-const (
-	testCRDName       = "moduletemplates.operator.kyma-project.io"
-	testCRDAPIVersion = "apiextensions.k8s.io/v1"
-	testCRDKind       = "CustomResourceDefinition"
-)

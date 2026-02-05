@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/modulesv2"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +45,9 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
   # List remote community modules in YAML format
   kyma alpha module catalog --remote -o yaml`,
 		PreRun: func(cmd *cobra.Command, args []string) {
-			clierror.Check(modulesv2.RunPreCheck(cfg.KymaConfig))
+			if !cfg.remote {
+				clierror.Check(precheck.RequireCRD(kymaConfig, precheck.CmdGroupAlpha))
+			}
 		},
 		Run: func(_ *cobra.Command, args []string) {
 			clierror.Check(catalogModules(&cfg))
