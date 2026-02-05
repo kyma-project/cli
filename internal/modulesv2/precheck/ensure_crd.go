@@ -169,7 +169,12 @@ func crdSpecDigest(u *unstructured.Unstructured) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("CRD missing spec")
 	}
-	b, err := json.Marshal(spec)
+	specMap, ok := spec.(map[string]any)
+	if !ok {
+		return "", fmt.Errorf("CRD spec is not a map")
+	}
+	normalizedSpec := normalizeSpec(specMap)
+	b, err := json.Marshal(normalizedSpec)
 	if err != nil {
 		return "", fmt.Errorf("marshal spec: %w", err)
 	}
@@ -287,6 +292,26 @@ func (e *CRDEnsurer) specEqual(a, b *unstructured.Unstructured) (bool, error) {
 	}
 
 	return ad == bd, nil
+}
+
+// normalizeSpec removes fields from the CRD spec that are added by Kubernetes
+// as server-side defaults, so that comparison between remote and stored CRDs
+// is accurate.
+func normalizeSpec(spec map[string]any) map[string]any {
+	normalized := make(map[string]any)
+	for k, v := range spec {
+		normalized[k] = v
+	}
+
+	// Remove "conversion" field if it's the default value (strategy: None)
+	// Kubernetes automatically adds this when a CRD is applied without it
+	if conversion, ok := normalized["conversion"].(map[string]any); ok {
+		if strategy, ok := conversion["strategy"].(string); ok && strategy == "None" && len(conversion) == 1 {
+			delete(normalized, "conversion")
+		}
+	}
+
+	return normalized
 }
 
 func (e *CRDEnsurer) applyCRD(ctx context.Context, remote *unstructured.Unstructured) error {
