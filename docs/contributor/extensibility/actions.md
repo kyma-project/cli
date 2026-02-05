@@ -125,13 +125,13 @@ resource: {...}
 
 **Fields:**
 
-| Name              | Type   | Description                                                                  |
-| ----------------- | ------ | ---------------------------------------------------------------------------- |
-| **dryRun**        | bool   | Simulates resource deletion if set to `true`                                 |
-| **output**        | enum   | Changes the output format if not empty. It can be `yaml` or `json`           |
-| **outputMessage** | string | Print the given message to the standard output if the `.output` is empty     |
+| Name              | Type   | Description                                                                      |
+| ----------------- | ------ | -------------------------------------------------------------------------------- |
+| **dryRun**        | bool   | Simulates resource deletion if set to `true`                                     |
+| **output**        | enum   | Changes the output format if not empty. It can be `yaml` or `json`               |
+| **outputMessage** | string | Print the given message to the standard output if the `.output` is empty         |
 | **outputWarning** | string | Print the given message to the standard error right before applying the resource |
-| **resource**      | object | Raw object applied to a cluster                                              |
+| **resource**      | object | Raw object applied to a cluster                                                  |
 
 > [!NOTE]
 > For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L81-L149).
