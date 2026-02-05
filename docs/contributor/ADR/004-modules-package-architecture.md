@@ -1,7 +1,7 @@
 # ADR 004: Modules Package Architecture Refactoring
 
 **Creation Date:** 2025-12-17
-**Authors:** Antoni Pstraś 
+**Authors:** Antoni Pstraś
 
 ## Context
 
@@ -44,7 +44,7 @@ The new package is organized into three clear layers with well-defined responsib
 
 Below is a graphical representation of the architecture and the flow of communication between layers:
 
-```
+```text
 ┌────────────┐
 │   User     │
 └─────┬──────┘
@@ -70,18 +70,21 @@ Below is a graphical representation of the architecture and the flow of communic
 ```
 
 **Flow:**
+
 - The **User** interacts with the **UI Layer** (Cobra CLI)
 - The **UI Layer** invokes operations in the **Domain Layer**
 - The **Domain Layer** encapsulates business logic in services, operates on entities and (optionally) value objects, and interacts with the **Infrastructure Layer**
 - The **Infrastructure Layer** provides data access (e.g., Kubernetes, databases, external APIs)
 
 #### 1. **UI Layer** (Cobra CLI)
+
 - The entry point for user interaction with the Kyma CLI
 - Implements the command-line interface using Cobra
 - Responsible for parsing user input, displaying output, and invoking domain layer operations
 - Decoupled from business logic and data access
 
 #### 2. **Domain Layer** (`modulesv2/` root, `entities/`)
+
 - Contains business logic and orchestration in services (e.g., `CatalogService`)
 - Operates on domain entities (e.g., `CoreModuleTemplate`, `CommunityModuleTemplate`)
 - May use value objects to encapsulate domain concepts (currently not present, but recommended for future evolution)
@@ -89,6 +92,7 @@ Below is a graphical representation of the architecture and the flow of communic
 - Returns DTOs for presentation layer
 
 #### 3. **Infrastructure Layer** (`repository/`)
+
 - Implements the Repository Pattern for data access
 - Provides abstraction over data sources (Kubernetes cluster, databases, external APIs)
 - Responsible for reading and writing data
@@ -105,6 +109,7 @@ In Domain-Driven Design (DDD), an Entity is an object defined by its identity an
 - The entity is created by mapping raw Kubernetes resources (e.g., `kyma.ModuleTemplate`) to a domain-specific struct, which is then used throughout the domain and service layers.
 
 **Example:**
+
 ```go
 // internal/modulesv2/entities/core_module_template.go
 type CoreModuleTemplate struct {
@@ -126,6 +131,7 @@ func mapToCoreModuleTemplate(raw kyma.ModuleTemplate) CoreModuleTemplate {
 ```
 
 **How it's used:**
+
 - The repository fetches raw data from Kubernetes and maps it to entities.
 - The service layer operates on these entities, applying business logic and orchestrating workflows.
 - Entities are passed to the UI layer (CLI) for presentation or further processing.
@@ -133,10 +139,12 @@ func mapToCoreModuleTemplate(raw kyma.ModuleTemplate) CoreModuleTemplate {
 This approach allows us to encapsulate business logic within entities, maintain a clear separation from infrastructure concerns, and model the lifecycle of domain objects that are persisted in the cluster.
 
 **When to use:**
+
 - Represent core concepts with identity and lifecycle (e.g., core/community module templates).
 - Centralize invariants/rules close to the data that they govern.
 
 **Anti-patterns:**
+
 - Passing raw Kubernetes types through the domain/services.
 - Embedding persistence (API calls) inside entities.
 
@@ -149,6 +157,7 @@ The repository pattern is responsible for accessing infrastructure data (e.g., f
 Suppose we want to access module templates from a Kubernetes cluster and expose them as domain entities:
 
 1. **Define the repository interface:**
+
    ```go
    // internal/modulesv2/repository/moduletemplates.go
    type ModuleTemplatesRepository interface {
@@ -157,6 +166,7 @@ Suppose we want to access module templates from a Kubernetes cluster and expose 
    ```
 
 2. **Implement the repository:**
+
    ```go
    type moduleTemplatesRepository struct {
       kubeClient kube.Client
@@ -178,6 +188,7 @@ Suppose we want to access module templates from a Kubernetes cluster and expose 
    ```
 
 3. **Use the repository via the interface:**
+
    ```go
    func PrintCoreModules(repo ModuleTemplatesRepository) error {
       modules, err := repo.ListCore()
@@ -194,38 +205,44 @@ Suppose we want to access module templates from a Kubernetes cluster and expose 
 This approach allows the domain and service layers to remain decoupled from infrastructure details, and makes testing easier by allowing the use of fake repositories.
 
 **When to use:**
+
 - Access external data sources (Kubernetes, DBs, APIs) and return domain entities.
 - Centralize mapping from infrastructure types into entities.
 
 **Anti-patterns:**
+
 - Calling Kubernetes clients directly from services.
 - Placing complex business logic inside repositories (beyond mapping/filtering).
 
 The Repository Pattern was selected over the Active Record pattern for several reasons:
 
 **Why Repository Pattern:**
+
 - ✅ **Separation of Concerns**: Business logic is completely separated from data access
 - ✅ **Testability**: Easy to mock repositories in service tests
 - ✅ **Flexibility**: Can change data sources without affecting business logic
 - ✅ **SOLID Compliance**: Single Responsibility and Dependency Inversion principles
 
 **Why NOT Active Record Pattern:**
+
 - ❌ **Tight Coupling**: Domain objects would be coupled to k8s API access
 - ❌ **Testing Complexity**: Difficult to test business logic without infrastructure
 - ❌ **Violation of SRP**: Objects would have both business logic and persistence logic
 - ❌ **Limited Flexibility**: Harder to swap data sources
 
-
 #### Dependency Injection Pattern
+
 The Kyma CLI uses a custom dependency injection (DI) container (`internal/di`) to manage and resolve dependencies for services and repositories in a flexible, testable, and loosely coupled way.
 
 **How it works:**
+
 - The DI container is responsible for resolving dependencies for each service, doing so in a lazy (on-demand) manner.
 - It uses Go’s reflection to map types to factory functions, which know how to construct each dependency.
 - When a service is requested, the container checks if an instance exists; if not, it calls the registered factory, resolving further dependencies recursively.
 - This enables loose coupling, easy testing, and clear dependency graphs.
 
 **Key features:**
+
 - Lazy instantiation: dependencies are only created when needed.
 - Singleton scope: each type is instantiated once per container.
 - Type safety: generic helpers (`GetTyped`, `RegisterTyped`) ensure correct types.
@@ -236,6 +253,7 @@ The Kyma CLI uses a custom dependency injection (DI) container (`internal/di`) t
 Suppose we want to inject a `ModuleTemplatesRepository` into a `CatalogService` using the DI container:
 
 1. **Registering factories:**
+
    ```go
    di.RegisterTyped(container, func(c *di.Container) (repository.ModuleTemplatesRepository, error) {
       kubeClient, err := di.GetTyped[kube.Client](c)
@@ -250,9 +268,11 @@ Suppose we want to inject a `ModuleTemplatesRepository` into a `CatalogService` 
    ```
 
 2. **Lazy resolution:**
+
    ```go
    catalogService, err := di.GetTyped[*CatalogService](container)
    ```
+
    - The container will resolve all dependencies recursively, using reflection and the registered factories.
 
 3. **Step-by-step explanation:**
@@ -262,6 +282,7 @@ Suppose we want to inject a `ModuleTemplatesRepository` into a `CatalogService` 
    4. For testing, you can register fake factories to inject mock dependencies.
 
 **Summary**:
+
 - Uses a custom DI container (`internal/di`)
 - Constructor injection for explicit dependencies
 - Enables:
@@ -275,6 +296,7 @@ Suppose we want to inject a `ModuleTemplatesRepository` into a `CatalogService` 
 The Factory Pattern is used to streamline the creation of test data objects for unit tests. This approach is especially useful for testing purposes, as it allows developers to generate objects with sensible default values and override only the fields relevant to a specific test scenario. Files like [internal/modulesv2/fake/coremoduletemplate.go](../../../internal/modulesv2/fake/coremoduletemplate.go) are examples of such factories, but the pattern is used for various domain entities, not just core module templates.
 
 **Key points:**
+
 - Centralized test data creation: Instead of manually defining long sections of test data in each test file, the factory provides a single place to create instances of core module templates.
 - Default values: The factory sets up default values for all fields, ensuring that each test object is valid and complete by default.
 - Selective overrides: When writing tests, you can override only the fields that matter for your test case, keeping your test code concise and focused.
@@ -299,20 +321,25 @@ tmpl := fake.CoreModuleTemplate(nil)
 Any field not provided (or if you pass nil) will be filled with sensible defaults. This lets you create valid test objects with minimal boilerplate, overriding only what matters for your scenario.
 
 **Benefits:**
+
 - Reduces boilerplate: No need to repeat full object definitions in every test.
 - Improves readability: Tests focus on what's relevant, not on setup.
 - Encourages reuse: Factories can be extended for other test objects.
 
 **When to use:**
+
 - You need valid test data quickly with safe defaults.
 - You want to override only a few fields per test scenario.
 
 **Anti-patterns:**
+
 - Sprawling test fixtures duplicated across files.
 - Encoding assertions/business logic inside factories (they should only construct data).
 
 #### Data Transfer Object (DTO) Pattern
+
 The Data Transfer Object (DTO) pattern is a well-established design pattern used to transfer data between software application subsystems, layers, or services. In the Kyma CLI, DTOs serve as plain data containers that wrap and transport information:
+
 - From the user to the application (input)
 - From the application to the user (output/server response)
 - Between internal layers of the application
@@ -320,6 +347,7 @@ The Data Transfer Object (DTO) pattern is a well-established design pattern used
 DTOs are intentionally kept free of business logic and validation. Their purpose is to carry data, not to enforce rules or perform computations. The only logic they may contain is related to their own construction or mapping (e.g., converting from domain entities to DTOs and vice versa). Any business validation or processing should be handled in the domain or service layers, not in DTOs themselves. This clear separation ensures maintainability, testability, and a clean architecture.
 
 **Example with DTO creation logic:**
+
 ```go
 // Domain entity
 type User struct {
@@ -347,18 +375,21 @@ func NewUserDTO(user User) UserDTO {
 ```
 
 **When to use:**
+
 - Accept user input in a defined shape, decoupled from domain models.
 - Return responses from services/CLI without leaking internal types.
 - Pass data between layers where business context is not required.
 
 **Anti-patterns:**
+
 - Embedding business rules or validation logic into DTOs.
 - Using DTOs as domain entities in business logic.
 
 ### Key Improvements
 
 1. **Clear Separation of Concerns**
-   ```
+
+   ```text
     modulesv2/
      ├── repository/
      │   ├── moduletemplates.go
@@ -415,4 +446,3 @@ func NewUserDTO(user User) UserDTO {
 - [Data Transfer Object (DTO) - Martin Fowler](https://martinfowler.com/eaaCatalog/dataTransferObject.html)
 - [Clean Architecture - Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Layered Architecture - Tomasz Świacko-Świackiewicz](https://tswiackiewicz.github.io/inside-the-source-code/architecture/ddd-layered-architecture/)
-
