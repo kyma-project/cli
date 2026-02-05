@@ -1,7 +1,7 @@
 # Create Extension
 
 > [!NOTE]
-> This feature is experimental and works only with the [Kyma CLI nightly build](../user/README.md#nightly-build)
+> This feature is experimental and works only with the [Kyma CLI nightly build](../../user/README.md#nightly-build)
 
 Learn how to prepare your own extension for ConfigMap management. This showcase extension provides the following functionalities:
 
