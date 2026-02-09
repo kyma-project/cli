@@ -27,9 +27,6 @@ func (r *clusterMetadataRepository) Get(ctx context.Context) entities.ClusterMet
 
 func (r *clusterMetadataRepository) getIsManagedByKLM(ctx context.Context) bool {
 	_, err := r.client.Kyma().GetDefaultKyma(ctx)
-	if err != nil {
-		return false
-	}
 
-	return true
+	return err == nil
 }
