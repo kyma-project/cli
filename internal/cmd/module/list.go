@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +25,9 @@ func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "list [flags]",
 		Short: "Lists the installed modules",
 		Long:  `Use this command to list the installed Kyma modules.`,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(precheck.RequireCRD(kymaConfig, precheck.CmdGroupStable))
+		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModules(&cfg))
 		},

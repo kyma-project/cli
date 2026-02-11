@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/spf13/cobra"
 )
 
@@ -47,6 +48,7 @@ func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkUnsupported("community", "the --community flag is no longer supported - specify community module to delete using argument"),
 			))
+			clierror.Check(precheck.RequireCRD(kymaConfig, precheck.CmdGroupStable))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.complete(args)

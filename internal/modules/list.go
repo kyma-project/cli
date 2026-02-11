@@ -245,9 +245,11 @@ func ListCatalog(ctx context.Context, client kube.Client, repo repo.ModuleTempla
 		}
 	}
 
-	communityModulesList, err = listCommunityModulesCatalog(ctx, repo)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list modules catalog: %v", err)
+	if isModuleTemplateCRDInstalled(ctx, client) {
+		communityModulesList, err = listCommunityModulesCatalog(ctx, repo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list modules catalog: %v", err)
+		}
 	}
 
 	externalModulesList, err = listExternalModulesCatalog(ctx, repo)
@@ -381,6 +383,16 @@ func listExternalModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesRe
 
 func isClusterManagedByKLM(ctx context.Context, client kube.Client) bool {
 	_, err := client.Kyma().GetDefaultKyma(ctx)
+	return err == nil
+}
+
+func isModuleTemplateCRDInstalled(ctx context.Context, client kube.Client) bool {
+	crd := &unstructured.Unstructured{}
+	crd.SetAPIVersion("apiextensions.k8s.io/v1")
+	crd.SetKind("CustomResourceDefinition")
+	crd.SetName("moduletemplates.operator.kyma-project.io")
+
+	_, err := client.RootlessDynamic().Get(ctx, crd)
 	return err == nil
 }
 

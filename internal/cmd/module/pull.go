@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/precheck"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,7 @@ type pullConfig struct {
 	moduleName string
 	namespace  string
 	version    string
+	force      bool
 }
 
 func newPullCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -43,6 +45,9 @@ must be pulled before they can be installed using the 'kyma module add' command.
   kyma module pull community-module-name --version v1.0.0 --namespace module-namespace`,
 
 		Args: cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(precheck.EnsureCRD(kymaConfig, cfg.force))
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.moduleName = args[0]
 			clierror.Check(pullModule(&cfg))
@@ -50,7 +55,8 @@ must be pulled before they can be installed using the 'kyma module add' command.
 	}
 
 	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where the module is stored")
-	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull")
+	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specifies version of the community module to pull")
+	cmd.Flags().BoolVar(&cfg.force, "force", false, "Automatically approves the installation of dependencies for clusters that are not managed by KLM.")
 
 	return cmd
 }
@@ -93,7 +99,7 @@ func getErrorTextForInvalidNamespace(moduleName string) string {
 }
 
 func getWarningTextForCommunityModuleUsage(moduleTemplate *kyma.ModuleTemplate) string {
-	return "WARNING: Community Module\n" +
+	return "WARNING:\n" +
 		"This is a community module that is not officially supported by the Kyma team.\n" +
 		"Community modules:\n" +
 		"  • Do not guarantee compatibility or stability\n" +
