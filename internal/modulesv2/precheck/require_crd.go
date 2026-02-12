@@ -38,9 +38,13 @@ func RequireCRD(kymaConfig *cmdcommon.KymaConfig, cmdGroup string) clierror.Erro
 
 	requirer := NewCRDRequirer(kubeClient)
 	if !requirer.IsInstalled(kymaConfig.Ctx) {
+		remoteFlag := ""
+		if cmdGroup == CmdGroupAlpha {
+			remoteFlag = "--remote"
+		}
 		return clierror.New(
 			"This cluster is not managed by KLM, so the required dependencies (Custom Resource Definitions) are not installed.",
-			fmt.Sprintf("List available modules from the community modules catalog (official or custom):\n\t$ %s module catalog --remote", cmdGroup),
+			fmt.Sprintf("List available modules from the community modules catalog (official or custom):\n\t$ %s module catalog %s", cmdGroup, remoteFlag),
 			fmt.Sprintf("Pull a community module to your cluster:\n\t$ %s module pull <module-name> [--namespace <namespace>]", cmdGroup),
 			"Pulling a community module will install the required dependencies, allowing you to proceed with module installation.",
 			fmt.Sprintf("For more information, refer to the documentation or run '%s module --help'.", cmdGroup),
