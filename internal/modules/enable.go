@@ -63,7 +63,7 @@ func crMsgSuffix(customCount int, defaultApplicable bool) string {
 
 func channelMsgSuffix(channel string) string {
 	if len(channel) > 0 {
-		return ", in channel " + channel
+		return ", from channel " + channel
 	}
 	return ""
 }
