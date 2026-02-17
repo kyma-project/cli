@@ -47,7 +47,7 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		return clierr
 	}
 
-	printer.Msgfln("%s module enabled %s", module, crMsgSuffix(len(crs), defaultCR))
+	printer.Msgfln("%s module enabled %s%s", module, crMsgSuffix(len(crs), defaultCR), channelMsgSuffix(channel))
 	return nil
 }
 
@@ -59,6 +59,13 @@ func crMsgSuffix(customCount int, defaultApplicable bool) string {
 		return "with default module CR"
 	}
 	return "without module CR"
+}
+
+func channelMsgSuffix(channel string) string {
+	if len(channel) > 0 {
+		return ", from the " + channel + " channel"
+	}
+	return ""
 }
 
 func applyCustomCR(printer *out.Printer, ctx context.Context, client kube.Client, module string, crs ...unstructured.Unstructured) clierror.Error {

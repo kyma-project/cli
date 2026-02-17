@@ -27,7 +27,6 @@ type addConfig struct {
 	defaultCR   bool
 	autoApprove bool
 	community   bool
-	version     string
 }
 
 func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -73,7 +72,6 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	_ = cmd.Flags().MarkHidden("default-cr")
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-config-cr", false, "Deploys the module with default configuration (alias: --default-cr)")
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approve community module installation")
-	cmd.Flags().StringVar(&cfg.version, "version", "", "Specifies version of the community module to install")
 	cmd.Flags().StringVar(&cfg.modulePath, "origin", "", "Specifies the source of the module (kyma or custom name)")
 	_ = cmd.Flags().MarkHidden("origin")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Install a community module (no official support, no binding SLA)")
