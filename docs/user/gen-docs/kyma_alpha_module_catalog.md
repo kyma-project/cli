@@ -37,7 +37,7 @@ kyma alpha module catalog [flags]
 ```text
   -o, --output string            Output format (Possible values: table, json, yaml)
       --remote                   Fetch modules from the official repository
-      --remote-url stringSlice   List of URLs to custom community module repositories (default "[]")
+      --remote-url stringSlice   List of URLs to files that contain ModuleTemplate CRs (community modules) (default "[]")
       --context string           The name of the kubeconfig context to use
   -h, --help                     Help for the command
       --kubeconfig string        Path to the Kyma kubeconfig file
