@@ -56,7 +56,7 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (Possible values: table, json, yaml)")
 	cmd.Flags().BoolVar(&cfg.remote, "remote", false, "Fetch modules from the official repository")
-	cmd.Flags().StringSliceVar(&cfg.remoteUrl, "remote-url", []string{}, "List of URLs to custom community module repositories")
+	cmd.Flags().StringSliceVar(&cfg.remoteUrl, "remote-url", []string{}, "List of URLs to files that contain ModuleTemplate CRs (community modules)")
 
 	return cmd
 }

@@ -58,7 +58,7 @@ must be pulled before they can be installed using the 'kyma module add' command.
 	}
 
 	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where the module is stored")
-	cmd.Flags().StringVar(&cfg.remote, "remote-url", "", "Specifies the community modules repository URL (defaults to official repository)")
+	cmd.Flags().StringVar(&cfg.remote, "remote-url", "", "URL to a file that contains ModuleTemplate CRs (defaults to official community catalog)")
 	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specifies the version of the community module to pull")
 	cmd.Flags().BoolVar(&cfg.force, "force", false, "Forces application of the module template, overwriting if it already exists")
 
