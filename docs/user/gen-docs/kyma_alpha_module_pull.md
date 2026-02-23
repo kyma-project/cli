@@ -35,7 +35,7 @@ kyma alpha module pull <module-name> [flags]
 ```text
       --force                   Forces application of the module template, overwriting if it already exists
   -n, --namespace string        Destination namespace where the module is stored (default "default")
-      --remote-url string       Specifies the community modules repository URL (defaults to official repository)
+      --remote-url string       URL to a file that contains ModuleTemplate CRs (defaults to official community catalog)
   -v, --version string          Specifies the version of the community module to pull
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
