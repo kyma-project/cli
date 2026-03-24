@@ -43,6 +43,7 @@ type generateConfig struct {
 	audience            string
 	idTokenRequestURL   string
 	idTokenRequestToken string
+	idTokenAutoRefresh  bool
 
 	// OIDC CR
 	oidcName string
@@ -80,7 +81,12 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
   # Generate a kubeconfig with an requested OIDC token with url from env
   export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
-  kyma alpha kubeconfig generate`,
+  kyma alpha kubeconfig generate
+
+  # Generate a kubeconfig with GitHub OIDC exec auto-refresh
+  export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
+  export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
+  kyma alpha kubeconfig generate --id-token-auto-refresh`,
 		Short:   "Generate kubeconfig with a Service Account-based or oidc tokens",
 		Long:    "Use this command to generate kubeconfig file with a Service Account-based or oidc tokens",
 		Aliases: []string{"gen"},
@@ -133,6 +139,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.token, "token", "", "Token used in the kubeconfig")
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
+	cmd.Flags().BoolVar(&cfg.idTokenAutoRefresh, "id-token-auto-refresh", false, "Generate kubeconfig with exec-based ID token auto-refresh using GitHub OIDC endpoint")
 
 	// generate from OIDC custom resource
 	cmd.Flags().StringVar(&cfg.oidcName, "oidc-name", "", "Name of the OIDC custom resource from which the kubeconfig is generated")
@@ -149,6 +156,16 @@ func (cfg *generateConfig) complete(cmd *cobra.Command) {
 }
 
 func (cfg *generateConfig) validate() clierror.Error {
+	if cfg.idTokenAutoRefresh && cfg.token != "" {
+		return clierror.New("--id-token-auto-refresh cannot be used together with --token")
+	}
+
+	if cfg.idTokenAutoRefresh && cfg.idTokenRequestURL == "" {
+		return clierror.New(
+			"--id-token-auto-refresh flag requires --id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",
+		)
+	}
+
 	if cfg.idTokenRequestURL != "" && cfg.idTokenRequestToken == "" {
 		// check if request token is provided
 		return clierror.New(
@@ -256,6 +273,11 @@ func returnKubeconfig(cfg *generateConfig, kubeconfig *api.Config) clierror.Erro
 }
 
 func generateWithToken(cfg *generateConfig, client kube.Client) (*api.Config, clierror.Error) {
+	if cfg.idTokenAutoRefresh {
+		kubeconfigTemplate := client.APIConfig()
+		return kubeconfig.PrepareWithIDTokenAutoRefresh(kubeconfigTemplate, cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience), nil
+	}
+
 	var clierr clierror.Error
 	token := cfg.token
 	if cfg.token == "" {

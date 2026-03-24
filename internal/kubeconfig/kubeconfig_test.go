@@ -80,6 +80,65 @@ func Test_PrepareWithToken(t *testing.T) {
 	}
 }
 
+func Test_PrepareWithIDTokenAutoRefresh(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		requestURL   string
+		requestToken string
+		audience     string
+	}{
+		{
+			name:         "creates exec auth info",
+			requestURL:   "https://test.com",
+			requestToken: "token",
+			audience:     "client-id",
+		},
+	}
+
+	for _, tt := range tests {
+		caseData := tt
+		t.Run(caseData.name, func(t *testing.T) {
+			base := &api.Config{
+				Clusters: map[string]*api.Cluster{
+					"cluster": {
+						Server:                   "https://localhost:8080",
+						CertificateAuthorityData: []byte("certificate"),
+					},
+				},
+				AuthInfos: map[string]*api.AuthInfo{
+					"user": {
+						Token: "legacy-token",
+					},
+				},
+				Contexts: map[string]*api.Context{
+					"context": {
+						AuthInfo: "user",
+						Cluster:  "cluster",
+					},
+				},
+				CurrentContext: "context",
+			}
+
+			got := PrepareWithIDTokenAutoRefresh(base, caseData.requestURL, caseData.requestToken, caseData.audience)
+
+			require.Equal(t, "v1", got.APIVersion)
+			require.Equal(t, "Config", got.Kind)
+			require.Equal(t, base.Clusters, got.Clusters)
+			require.Equal(t, base.Contexts, got.Contexts)
+			require.Equal(t, "context", got.CurrentContext)
+
+			require.Contains(t, got.AuthInfos, "user")
+			authInfo := got.AuthInfos["user"]
+			require.NotNil(t, authInfo.Exec)
+			require.Equal(t, "client.authentication.k8s.io/v1", authInfo.Exec.APIVersion)
+			require.Equal(t, "bash", authInfo.Exec.Command)
+			require.Equal(t, []string{"-c", buildGitHubOIDCExecScript(tt.requestURL, tt.audience, tt.requestToken)}, authInfo.Exec.Args)
+		})
+	}
+}
+
 func Test_Prepare(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
