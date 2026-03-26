@@ -36,6 +36,60 @@ func PrepareWithToken(apiBase *api.Config, token string) *api.Config {
 	return config
 }
 
+func PrepareWithIDTokenAutoRefresh(apiBase *api.Config, requestURL, requestToken, audience string) *api.Config {
+	currentUser := apiBase.Contexts[apiBase.CurrentContext].AuthInfo
+
+	config := &api.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		Clusters:   apiBase.Clusters,
+		AuthInfos: map[string]*api.AuthInfo{
+			currentUser: {
+				Exec: &api.ExecConfig{
+					APIVersion:      "client.authentication.k8s.io/v1",
+					Command:         "bash",
+					Args:            []string{"-c", buildGitHubOIDCExecScript(requestURL, audience, requestToken)},
+					InteractiveMode: api.NeverExecInteractiveMode,
+				},
+			},
+		},
+		Contexts:       apiBase.Contexts,
+		CurrentContext: apiBase.CurrentContext,
+		Extensions:     apiBase.Extensions,
+		Preferences:    apiBase.Preferences,
+	}
+
+	return config
+}
+
+func buildGitHubOIDCExecScript(requestURL, audience, requestToken string) string {
+	script := `set -e -o pipefail
+OIDC_URL_WITH_AUDIENCE="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$CLIENT_ID_HERE"
+IDTOKEN=$(curl -sS \
+  -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+  -H "Accept: application/json; api-version=2.0" \
+  "$OIDC_URL_WITH_AUDIENCE" | jq -r .value)
+EXP_TS=$(echo $IDTOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson | .exp')
+EXP_DATE=$(date -d @$EXP_TS --iso-8601=seconds)
+# return token back to the credential plugin
+cat << EOF
+{
+  "apiVersion": "client.authentication.k8s.io/v1",
+  "kind": "ExecCredential",
+  "status": {
+    "token": "$IDTOKEN",
+    "expirationTimestamp": "$EXP_DATE"
+  }
+}
+EOF`
+
+	script = strings.ReplaceAll(script, "$ACTIONS_ID_TOKEN_REQUEST_URL", requestURL)
+	script = strings.ReplaceAll(script, "$ACTIONS_ID_TOKEN_REQUEST_TOKEN", requestToken)
+	script = strings.ReplaceAll(script, "$CLIENT_ID_HERE", audience)
+
+	return script
+}
+
 func Prepare(ctx context.Context, client kube.Client, name, namespace, time, output string, permanent bool) (*api.Config, clierror.Error) {
 	clusterName := getKubeconfigCurrentClusterName(client.APIConfig())
 	var tokenData authv1.TokenRequestStatus

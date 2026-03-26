@@ -3,6 +3,7 @@ package kubeconfig
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -75,6 +76,92 @@ func Test_PrepareWithToken(t *testing.T) {
 			got := PrepareWithToken(kubeconfig, token)
 			if diff := deep.Equal(got, want); diff != nil {
 				t.Errorf("createKubeconfig() = %s", diff)
+			}
+		})
+	}
+}
+
+func Test_PrepareWithIDTokenAutoRefresh(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		requestURL   string
+		requestToken string
+		audience     string
+	}{
+		{
+			name:         "creates exec auth info",
+			requestURL:   "https://test.com",
+			requestToken: "token",
+			audience:     "client-id",
+		},
+	}
+
+	for _, tt := range tests {
+		caseData := tt
+		t.Run(caseData.name, func(t *testing.T) {
+			base := &api.Config{
+				Clusters: map[string]*api.Cluster{
+					"cluster": {
+						Server:                   "https://localhost:8080",
+						CertificateAuthorityData: []byte("certificate"),
+					},
+				},
+				AuthInfos: map[string]*api.AuthInfo{
+					"user": {
+						Token: "legacy-token",
+					},
+				},
+				Contexts: map[string]*api.Context{
+					"context": {
+						AuthInfo: "user",
+						Cluster:  "cluster",
+					},
+				},
+				CurrentContext: "context",
+			}
+
+			got := PrepareWithIDTokenAutoRefresh(base, caseData.requestURL, caseData.requestToken, caseData.audience)
+
+			want := &api.Config{
+				Kind:       "Config",
+				APIVersion: "v1",
+				Clusters:   base.Clusters,
+				AuthInfos: map[string]*api.AuthInfo{
+					"user": {
+						Exec: &api.ExecConfig{
+							APIVersion: "client.authentication.k8s.io/v1",
+							Command:    "bash",
+							Args: []string{"-c", "set -e -o pipefail\n" +
+								"OIDC_URL_WITH_AUDIENCE=\"https://test.com&audience=client-id\"\n" +
+								"IDTOKEN=$(curl -sS \\\n" +
+								"  -H \"Authorization: Bearer token\" \\\n" +
+								"  -H \"Accept: application/json; api-version=2.0\" \\\n" +
+								"  \"$OIDC_URL_WITH_AUDIENCE\" | jq -r .value)\n" +
+								"EXP_TS=$(echo $IDTOKEN | jq -R 'split(\".\") | .[1] | @base64d | fromjson | .exp')\n" +
+								"EXP_DATE=$(date -d @$EXP_TS --iso-8601=seconds)\n" +
+								"# return token back to the credential plugin\n" +
+								"cat << EOF\n" +
+								"{\n" +
+								"  \"apiVersion\": \"client.authentication.k8s.io/v1\",\n" +
+								"  \"kind\": \"ExecCredential\",\n" +
+								"  \"status\": {\n" +
+								"    \"token\": \"$IDTOKEN\",\n" +
+								"    \"expirationTimestamp\": \"$EXP_DATE\"\n" +
+								"  }\n" +
+								"}\n" +
+								"EOF"},
+							InteractiveMode: api.NeverExecInteractiveMode,
+						},
+					},
+				},
+				Contexts:       base.Contexts,
+				CurrentContext: base.CurrentContext,
+			}
+
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("PrepareWithIDTokenAutoRefresh() mismatch:\ngot:  %+v\nwant: %+v", got, want)
 			}
 		})
 	}

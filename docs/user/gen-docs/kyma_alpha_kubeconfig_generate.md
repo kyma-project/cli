@@ -39,6 +39,11 @@ kyma alpha kubeconfig generate [flags]
   export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
   kyma alpha kubeconfig generate
+
+  # Generates a kubeconfig with GitHub OIDC exec auto-refresh
+  export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
+  export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
+  kyma alpha kubeconfig generate --id-token-auto-refresh
 ```
 
 ## Flags
@@ -49,6 +54,7 @@ kyma alpha kubeconfig generate [flags]
       --certificate-authority-data string   Base64 encoded certificate authority data
       --cluster-wide                        Determines if the binding to the ClusterRole is cluster-wide
       --clusterrole string                  Name of the ClusterRole to bind the Service Account to (optional)
+      --id-token-auto-refresh               Generates a kubeconfig with exec-based ID token auto-refresh using GitHub OIDC endpoint
       --id-token-request-url string         URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable
   -n, --namespace string                    Namespace in which the subject Service Account is to be found or is created (default "default")
       --oidc-name string                    Name of the OIDC custom resource from which the kubeconfig is generated
