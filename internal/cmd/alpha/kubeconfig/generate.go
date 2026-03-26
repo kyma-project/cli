@@ -98,7 +98,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 			clierror.Check(flags.Validate(allFlags,
 				flags.MarkOneRequired("serviceaccount", "token", "id-token-request-url", "oidc-name"),
-				flags.MarkExclusive("token", "id-token-request-url", "audience"),
+				flags.MarkExclusive("token", "id-token-request-url", "audience", "id-token-auto-refresh"),
 				flags.MarkExclusive("permanent", "time"),
 				flags.MarkExclusive("cluster-wide", "role"),
 				flags.MarkExclusive("kubeconfig", "server"),
@@ -156,10 +156,6 @@ func (cfg *generateConfig) complete(cmd *cobra.Command) {
 }
 
 func (cfg *generateConfig) validate() clierror.Error {
-	if cfg.idTokenAutoRefresh && cfg.token != "" {
-		return clierror.New("--id-token-auto-refresh cannot be used together with --token")
-	}
-
 	if cfg.idTokenAutoRefresh && cfg.idTokenRequestURL == "" {
 		return clierror.New(
 			"--id-token-auto-refresh flag requires --id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",

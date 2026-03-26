@@ -3,6 +3,7 @@ package kubeconfig
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -123,18 +124,45 @@ func Test_PrepareWithIDTokenAutoRefresh(t *testing.T) {
 
 			got := PrepareWithIDTokenAutoRefresh(base, caseData.requestURL, caseData.requestToken, caseData.audience)
 
-			require.Equal(t, "v1", got.APIVersion)
-			require.Equal(t, "Config", got.Kind)
-			require.Equal(t, base.Clusters, got.Clusters)
-			require.Equal(t, base.Contexts, got.Contexts)
-			require.Equal(t, "context", got.CurrentContext)
+			want := &api.Config{
+				Kind:       "Config",
+				APIVersion: "v1",
+				Clusters:   base.Clusters,
+				AuthInfos: map[string]*api.AuthInfo{
+					"user": {
+						Exec: &api.ExecConfig{
+							APIVersion: "client.authentication.k8s.io/v1",
+							Command:    "bash",
+							Args: []string{"-c", "set -e -o pipefail\n" +
+								"OIDC_URL_WITH_AUDIENCE=\"https://test.com&audience=client-id\"\n" +
+								"IDTOKEN=$(curl -sS \\\n" +
+								"  -H \"Authorization: Bearer token\" \\\n" +
+								"  -H \"Accept: application/json; api-version=2.0\" \\\n" +
+								"  \"$OIDC_URL_WITH_AUDIENCE\" | jq -r .value)\n" +
+								"EXP_TS=$(echo $IDTOKEN | jq -R 'split(\".\") | .[1] | @base64d | fromjson | .exp')\n" +
+								"EXP_DATE=$(date -d @$EXP_TS --iso-8601=seconds)\n" +
+								"# return token back to the credential plugin\n" +
+								"cat << EOF\n" +
+								"{\n" +
+								"  \"apiVersion\": \"client.authentication.k8s.io/v1\",\n" +
+								"  \"kind\": \"ExecCredential\",\n" +
+								"  \"status\": {\n" +
+								"    \"token\": \"$IDTOKEN\",\n" +
+								"    \"expirationTimestamp\": \"$EXP_DATE\"\n" +
+								"  }\n" +
+								"}\n" +
+								"EOF"},
+							InteractiveMode: api.NeverExecInteractiveMode,
+						},
+					},
+				},
+				Contexts:       base.Contexts,
+				CurrentContext: base.CurrentContext,
+			}
 
-			require.Contains(t, got.AuthInfos, "user")
-			authInfo := got.AuthInfos["user"]
-			require.NotNil(t, authInfo.Exec)
-			require.Equal(t, "client.authentication.k8s.io/v1", authInfo.Exec.APIVersion)
-			require.Equal(t, "bash", authInfo.Exec.Command)
-			require.Equal(t, []string{"-c", buildGitHubOIDCExecScript(tt.requestURL, tt.audience, tt.requestToken)}, authInfo.Exec.Args)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("PrepareWithIDTokenAutoRefresh() mismatch:\ngot:  %+v\nwant: %+v", got, want)
+			}
 		})
 	}
 }
