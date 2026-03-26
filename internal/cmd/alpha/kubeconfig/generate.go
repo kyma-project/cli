@@ -139,7 +139,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.token, "token", "", "Token used in the kubeconfig")
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
-	cmd.Flags().BoolVar(&cfg.idTokenAutoRefresh, "id-token-auto-refresh", false, "Generate kubeconfig with exec-based ID token auto-refresh using GitHub OIDC endpoint")
+	cmd.Flags().BoolVar(&cfg.idTokenAutoRefresh, "id-token-auto-refresh", false, "Generates a kubeconfig with exec-based ID token auto-refresh using GitHub OIDC endpoint")
 
 	// generate from OIDC custom resource
 	cmd.Flags().StringVar(&cfg.oidcName, "oidc-name", "", "Name of the OIDC custom resource from which the kubeconfig is generated")
