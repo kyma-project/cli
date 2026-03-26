@@ -83,7 +83,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
   kyma alpha kubeconfig generate
 
-  # Generate a kubeconfig with GitHub OIDC exec auto-refresh
+  # Generates a kubeconfig with GitHub OIDC exec auto-refresh
   export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
   kyma alpha kubeconfig generate --id-token-auto-refresh`,
