@@ -19,6 +19,7 @@ export default [
   { text: 'kyma alpha kubeconfig generate', link: './gen-docs/kyma_alpha_kubeconfig_generate' },
   { text: 'kyma alpha module', link: './gen-docs/kyma_alpha_module' },
   { text: 'kyma alpha module catalog', link: './gen-docs/kyma_alpha_module_catalog' },
+  { text: 'kyma alpha module list', link: './gen-docs/kyma_alpha_module_list' },
   { text: 'kyma alpha module pull', link: './gen-docs/kyma_alpha_module_pull' },
   { text: 'kyma alpha provision', link: './gen-docs/kyma_alpha_provision' },
   { text: 'kyma alpha reference-instance', link: './gen-docs/kyma_alpha_reference-instance' },
