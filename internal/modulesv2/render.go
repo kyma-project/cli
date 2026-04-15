@@ -57,12 +57,17 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 
 func renderListTable(results []dtos.ListResult, printer *out.Printer) error {
 	headers := []interface{}{"MODULE", "VERSION", "CHANNEL"}
+	rows := convertListToRows(results)
+	render.Table(printer, headers, rows)
+	return nil
+}
+
+func convertListToRows(results []dtos.ListResult) [][]interface{} {
 	rows := make([][]interface{}, len(results))
 	for i, r := range results {
 		rows[i] = []interface{}{r.Name, r.Version, r.Channel}
 	}
-	render.Table(printer, headers, rows)
-	return nil
+	return rows
 }
 
 func RenderCatalog(results []dtos.CatalogResult, format types.Format) error {
