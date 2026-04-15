@@ -23,7 +23,11 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 
 	results := make([]dtos.ListResult, 0, len(installedModules))
 	for _, module := range installedModules {
-		results = append(results, dtos.ListResult{Name: module.Name})
+		results = append(results, dtos.ListResult{
+			Name:    module.Name,
+			Version: module.Version,
+			Channel: module.Channel,
+		})
 	}
 
 	return results, nil
