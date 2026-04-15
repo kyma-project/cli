@@ -16,6 +16,8 @@ func RenderList(results []dtos.ListResult, format types.Format, printer *out.Pri
 	switch format {
 	case types.JSONFormat:
 		return renderListJSON(results, printer)
+	case types.YAMLFormat:
+		return renderListYAML(results, printer)
 	default:
 		return renderListTable(results, printer)
 	}
@@ -31,6 +33,23 @@ func renderListJSON(results []dtos.ListResult, printer *out.Printer) error {
 		}
 	}
 	obj, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		return err
+	}
+	printer.Msgln(string(obj))
+	return nil
+}
+
+func renderListYAML(results []dtos.ListResult, printer *out.Printer) error {
+	output := make([]map[string]interface{}, len(results))
+	for i, r := range results {
+		output[i] = map[string]interface{}{
+			"name":    r.Name,
+			"version": r.Version,
+			"channel": r.Channel,
+		}
+	}
+	obj, err := yaml.Marshal(output)
 	if err != nil {
 		return err
 	}
