@@ -16,5 +16,15 @@ func NewListService(installedModulesRepository repository.InstalledModulesReposi
 }
 
 func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
-	return []dtos.ListResult{}, nil
+	installedModules, err := s.installedModulesRepository.ListInstalledModules(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]dtos.ListResult, 0, len(installedModules))
+	for _, module := range installedModules {
+		results = append(results, dtos.ListResult{Name: module.Name})
+	}
+
+	return results, nil
 }
