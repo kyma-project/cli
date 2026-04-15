@@ -1,5 +1,7 @@
 package dtos
 
 type ListResult struct {
-	Name string
+	Name    string
+	Version string
+	Channel string
 }
