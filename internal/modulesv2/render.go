@@ -12,14 +12,39 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func RenderList(results []dtos.ListResult) error {
+func RenderList(results []dtos.ListResult, format types.Format, printer *out.Printer) error {
+	switch format {
+	case types.JSONFormat:
+		return renderListJSON(results, printer)
+	default:
+		return renderListTable(results, printer)
+	}
+}
+
+func renderListJSON(results []dtos.ListResult, printer *out.Printer) error {
+	output := make([]map[string]interface{}, len(results))
+	for i, r := range results {
+		output[i] = map[string]interface{}{
+			"name":    r.Name,
+			"version": r.Version,
+			"channel": r.Channel,
+		}
+	}
+	obj, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		return err
+	}
+	printer.Msgln(string(obj))
+	return nil
+}
+
+func renderListTable(results []dtos.ListResult, printer *out.Printer) error {
 	headers := []interface{}{"MODULE", "VERSION", "CHANNEL"}
 	rows := make([][]interface{}, len(results))
 	for i, r := range results {
 		rows[i] = []interface{}{r.Name, r.Version, r.Channel}
 	}
-
-	render.Table(out.Default, headers, rows)
+	render.Table(printer, headers, rows)
 	return nil
 }
 

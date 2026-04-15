@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/modulesv2"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,7 @@ func listModulesV2(kymaConfig *cmdcommon.KymaConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules"))
 	}
 
-	err = modulesv2.RenderList(results)
+	err = modulesv2.RenderList(results, "", out.Default)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render module list"))
 	}
