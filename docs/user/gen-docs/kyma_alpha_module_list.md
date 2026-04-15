@@ -16,6 +16,7 @@ kyma alpha module list [flags]
 ## Flags
 
 ```text
+  -o, --output string           Output format (Possible values: table, json, yaml)
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file

@@ -12,3 +12,8 @@ func TestListCmd_Exists(t *testing.T) {
 	require.NotNil(t, cmd)
 	require.Equal(t, "list [flags]", cmd.Use)
 }
+
+func TestListCmd_HasOutputFlag(t *testing.T) {
+	cmd := NewListV2CMD(&cmdcommon.KymaConfig{})
+	require.NotNil(t, cmd.Flags().Lookup("output"))
+}
