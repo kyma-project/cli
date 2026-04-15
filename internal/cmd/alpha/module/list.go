@@ -1,8 +1,6 @@
 package module
 
 import (
-	"fmt"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/modulesv2"
@@ -16,7 +14,7 @@ func NewListV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Long: `Use this command to list all installed Kyma modules.
 
 NOTE: functionality under construction
-  - listing installed modules: partial (names only)`,
+  - listing installed core modules: partial (name, version, channel)`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModulesV2(kymaConfig))
 		},
@@ -38,8 +36,9 @@ func listModulesV2(kymaConfig *cmdcommon.KymaConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules"))
 	}
 
-	for _, r := range results {
-		fmt.Println(r.Name)
+	err = modulesv2.RenderList(results)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to render module list"))
 	}
 
 	return nil

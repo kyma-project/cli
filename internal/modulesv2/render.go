@@ -12,6 +12,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func RenderList(results []dtos.ListResult) error {
+	headers := []interface{}{"MODULE", "VERSION", "CHANNEL"}
+	rows := make([][]interface{}, len(results))
+	for i, r := range results {
+		rows[i] = []interface{}{r.Name, r.Version, r.Channel}
+	}
+
+	render.Table(out.Default, headers, rows)
+	return nil
+}
+
 func RenderCatalog(results []dtos.CatalogResult, format types.Format) error {
 	switch format {
 	case types.JSONFormat:
