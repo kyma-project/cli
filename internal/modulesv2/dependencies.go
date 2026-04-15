@@ -12,11 +12,7 @@ import (
 type ModuleOperations interface {
 	Catalog() (*CatalogService, error)
 	Pull() (*PullService, error)
-	// TODO
-	// Add() (*AddService, error)
-	// Install() (*InstallService, error)
-	// Pull() (*PullService, error)
-	// etc.
+	List() (*ListService, error)
 }
 
 type moduleOperations struct {
@@ -36,6 +32,17 @@ func (m *moduleOperations) Catalog() (*CatalogService, error) {
 	}
 
 	return catalogService, nil
+}
+
+func (m *moduleOperations) List() (*ListService, error) {
+	c := setupDIContainer(m.kymaConfig)
+
+	listService, err := di.GetTyped[*ListService](c)
+	if err != nil {
+		return nil, errors.New("failed to execute the list command")
+	}
+
+	return listService, nil
 }
 
 func (m *moduleOperations) Pull() (*PullService, error) {
@@ -83,6 +90,15 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 		return repository.NewClusterMetadataRepository(kubeClient), nil
 	})
 
+	di.RegisterTyped(container, func(c *di.Container) (repository.InstalledModulesRepository, error) {
+		kubeClient, err := di.GetTyped[kube.Client](c)
+		if err != nil {
+			return nil, err
+		}
+
+		return repository.NewInstalledModulesRepository(kubeClient.Kyma()), nil
+	})
+
 	// Services:
 
 	di.RegisterTyped(container, func(c *di.Container) (*CatalogService, error) {
@@ -106,6 +122,15 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 		}
 
 		return NewPullService(moduleRepo), nil
+	})
+
+	di.RegisterTyped(container, func(c *di.Container) (*ListService, error) {
+		installedModulesRepo, err := di.GetTyped[repository.InstalledModulesRepository](c)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewListService(installedModulesRepo), nil
 	})
 
 	return container
