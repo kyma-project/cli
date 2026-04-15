@@ -56,10 +56,17 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 }
 
 func renderListTable(results []dtos.ListResult, printer *out.Printer) error {
+	sortListResults(results)
 	headers := []interface{}{"MODULE", "VERSION", "CHANNEL"}
 	rows := convertListToRows(results)
 	render.Table(printer, headers, rows)
 	return nil
+}
+
+func sortListResults(results []dtos.ListResult) {
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Name < results[j].Name
+	})
 }
 
 func convertListToRows(results []dtos.ListResult) [][]interface{} {

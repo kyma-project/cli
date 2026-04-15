@@ -36,6 +36,19 @@ func TestRenderList_JSON(t *testing.T) {
 	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular"}]`, buf.String())
 }
 
+func TestRenderList_Table_SortedByName(t *testing.T) {
+	results := []dtos.ListResult{
+		{Name: "istio"},
+		{Name: "api-gateway"},
+	}
+
+	var buf bytes.Buffer
+	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+
+	require.NoError(t, err)
+	require.Regexp(t, `(?s)api-gateway.*istio`, buf.String())
+}
+
 func TestRenderList_YAML(t *testing.T) {
 	results := []dtos.ListResult{
 		{Name: "api-gateway", Version: "3.5.1", Channel: "regular"},
