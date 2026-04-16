@@ -59,7 +59,7 @@ func pullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts, u ut
 		PortBindings: portMap(opts.Ports),
 		AutoRemove:   true,
 		Mounts:       opts.Mounts,
-		NetworkMode:  container.NetworkMode(opts.NetworkMode),
+		NetworkMode:  container.NetworkMode("host"),
 	}
 
 	r, err := u.imagePull(ctx, config.Image, image.PullOptions{})

@@ -48,7 +48,6 @@ func New(name, port, id string, verbose bool) (*ContainerRunner, error) {
 
 // Start runs the dashboard container.
 func (c *ContainerRunner) Start(apiConfig *api.Config) error {
-	var envs []string
 	tmpDir := filepath.Join(os.TempDir(), "busola", c.id)
 
 	err := os.MkdirAll(tmpDir, 0700)
@@ -66,7 +65,13 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 		return fmt.Errorf("failed to write kubeconfig at %q: %w", kubeconfigPath, err)
 	}
 
-	opts := c.containerOpts(envs)
+	backendConfigPath := filepath.Join(tmpDir, "config.yaml")
+	backendConfig := "config:\n  features:\n    ALLOW_PRIVATE_IPS:\n      isEnabled: true\n"
+	if err := os.WriteFile(backendConfigPath, []byte(backendConfig), 0600); err != nil {
+		return fmt.Errorf("failed to write backend config at %q: %w", backendConfigPath, err)
+	}
+
+	opts := c.containerOpts()
 	out.Msg("\n")
 
 	if c.id, err = c.docker.PullImageAndStartContainer(context.Background(), opts); err != nil {
@@ -117,22 +122,32 @@ func (c *ContainerRunner) Watch() error {
 	return c.docker.ContainerFollowRun(c.id, c.verbose)
 }
 
-func (c *ContainerRunner) containerOpts(envs []string) docker.ContainerRunOpts {
+func (c *ContainerRunner) containerOpts() docker.ContainerRunOpts {
 	kubeconfigPath := filepath.Join(os.TempDir(), "busola", c.id, "config")
 	targetPath := "/app/core-ui/kubeconfig/config.yaml"
 
+	mounts := []mount.Mount{
+		{
+			Type:     mount.TypeBind,
+			Source:   kubeconfigPath,
+			Target:   targetPath,
+			ReadOnly: true,
+		},
+		{
+			Type:     mount.TypeBind,
+			Source:   filepath.Join(os.TempDir(), "busola", c.id, "config.yaml"),
+			Target:   "/app/config/config.yaml",
+			ReadOnly: true,
+		},
+	}
+
 	containerRunOpts := docker.ContainerRunOpts{
-		Envs:          envs,
 		ContainerName: c.name,
 		Image:         dashboardImage,
-		Mounts: []mount.Mount{
-			{
-				Type:     mount.TypeBind,
-				Source:   kubeconfigPath,
-				Target:   targetPath,
-				ReadOnly: true,
-			},
+		Envs: []string{
+			"PORT=8000",
 		},
+		Mounts: mounts,
 		Ports: map[string]string{
 			"3001": c.port,
 		},
