@@ -7,7 +7,7 @@ import (
 )
 
 type InstalledModulesRepository interface {
-	ListInstalledModules(ctx context.Context) ([]kyma.ModuleStatus, error)
+	ListInstalledModules(ctx context.Context) ([]kyma.KymaModuleInfo, error)
 }
 
 type installedModulesRepository struct {
@@ -18,11 +18,21 @@ func NewInstalledModulesRepository(kymaClient kyma.Interface) InstalledModulesRe
 	return &installedModulesRepository{kymaClient: kymaClient}
 }
 
-func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) ([]kyma.ModuleStatus, error) {
+func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) ([]kyma.KymaModuleInfo, error) {
 	kymaCR, err := r.kymaClient.GetDefaultKyma(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return kymaCR.Status.Modules, nil
+	modules := make([]kyma.KymaModuleInfo, len(kymaCR.Status.Modules))
+	for i, status := range kymaCR.Status.Modules {
+		modules[i] = kyma.KymaModuleInfo{Status: status}
+		for _, spec := range kymaCR.Spec.Modules {
+			if spec.Name == status.Name {
+				modules[i].Spec = spec
+				break
+			}
+		}
+	}
+	return modules, nil
 }

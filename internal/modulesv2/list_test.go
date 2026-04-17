@@ -11,7 +11,7 @@ import (
 
 func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.ModuleStatus{},
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{},
 	}
 	svc := NewListService(installedModulesRepo)
 
@@ -23,9 +23,9 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 
 func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.ModuleStatus{
-			{Name: "api-gateway"},
-			{Name: "istio"},
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{Status: kyma.ModuleStatus{Name: "api-gateway"}},
+			{Status: kyma.ModuleStatus{Name: "istio"}},
 		},
 	}
 	svc := NewListService(installedModulesRepo)
@@ -40,8 +40,8 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 
 func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.ModuleStatus{
-			{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready"},
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{Status: kyma.ModuleStatus{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready"}},
 		},
 	}
 	svc := NewListService(installedModulesRepo)

@@ -7,10 +7,10 @@ import (
 )
 
 type InstalledModulesRepository struct {
-	ListInstalledModulesResult []kyma.ModuleStatus
+	ListInstalledModulesResult []kyma.KymaModuleInfo
 	ListInstalledModulesError  error
 }
 
-func (f *InstalledModulesRepository) ListInstalledModules(_ context.Context) ([]kyma.ModuleStatus, error) {
+func (f *InstalledModulesRepository) ListInstalledModules(_ context.Context) ([]kyma.KymaModuleInfo, error) {
 	return f.ListInstalledModulesResult, f.ListInstalledModulesError
 }
