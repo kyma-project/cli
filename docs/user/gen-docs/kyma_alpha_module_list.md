@@ -4,10 +4,10 @@ Lists installed modules.
 
 ## Synopsis
 
-Use this command to list all installed Kyma modules.
+Use this command to list the installed Kyma modules.
 
 NOTE: functionality under construction
-  - listing installed core modules: partial (name, version, channel)
+  - community modules not yet supported
 
 ```bash
 kyma alpha module list [flags]
