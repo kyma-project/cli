@@ -28,6 +28,7 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 			Version: module.Status.Version,
 			Channel: module.Status.Channel,
 			State:   module.Status.State,
+			Managed: module.Spec.Managed == nil || *module.Spec.Managed,
 		})
 	}
 
