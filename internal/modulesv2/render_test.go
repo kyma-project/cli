@@ -13,7 +13,7 @@ import (
 
 func TestRenderList_Table(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
+		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
 
 	var buf bytes.Buffer
@@ -26,7 +26,7 @@ func TestRenderList_Table(t *testing.T) {
 
 func TestRenderList_JSON(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
+		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
 
 	var buf bytes.Buffer
@@ -51,7 +51,7 @@ func TestRenderList_Table_SortedByName(t *testing.T) {
 
 func TestRenderList_Table_CombinedInstallationStatus(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "nats", State: "Warning", InstallationState: "Deleting"},
+		{Name: "nats", ModuleState: "Warning", InstallationState: "Deleting"},
 	}
 
 	var buf bytes.Buffer
@@ -63,7 +63,7 @@ func TestRenderList_Table_CombinedInstallationStatus(t *testing.T) {
 
 func TestRenderList_YAML(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
+		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
 
 	var buf bytes.Buffer
