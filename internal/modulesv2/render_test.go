@@ -49,6 +49,18 @@ func TestRenderList_Table_SortedByName(t *testing.T) {
 	require.Regexp(t, `(?s)api-gateway.*istio`, buf.String())
 }
 
+func TestRenderList_Table_CombinedInstallationStatus(t *testing.T) {
+	results := []dtos.ListResult{
+		{Name: "nats", State: "Warning", InstallationState: "Deleting"},
+	}
+
+	var buf bytes.Buffer
+	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+
+	require.NoError(t, err)
+	require.Regexp(t, `nats.*Warning\(Deleting\)`, buf.String())
+}
+
 func TestRenderList_YAML(t *testing.T) {
 	results := []dtos.ListResult{
 		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},

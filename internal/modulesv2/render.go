@@ -77,9 +77,16 @@ func sortListResults(results []dtos.ListResult) {
 func convertListToRows(results []dtos.ListResult) [][]interface{} {
 	rows := make([][]interface{}, len(results))
 	for i, r := range results {
-		rows[i] = []interface{}{r.Name, versionWithChannel(r), r.CustomResourcePolicy, r.Managed, r.State, r.InstallationState}
+		rows[i] = []interface{}{r.Name, versionWithChannel(r), r.CustomResourcePolicy, r.Managed, r.State, installationStatus(r)}
 	}
 	return rows
+}
+
+func installationStatus(r dtos.ListResult) string {
+	if r.InstallationState != "" && r.State != r.InstallationState {
+		return fmt.Sprintf("%s(%s)", r.State, r.InstallationState)
+	}
+	return r.InstallationState
 }
 
 func versionWithChannel(r dtos.ListResult) string {
