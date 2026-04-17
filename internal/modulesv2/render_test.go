@@ -13,27 +13,27 @@ import (
 
 func TestRenderList_Table(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true},
+		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete"},
 	}
 
 	var buf bytes.Buffer
 	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
-	require.Regexp(t, `MODULE.*VERSION.*CHANNEL.*STATE.*MANAGED`, buf.String())
-	require.Regexp(t, `api-gateway.*3\.5\.1.*regular.*Ready.*true`, buf.String())
+	require.Regexp(t, `MODULE.*VERSION.*CHANNEL.*STATE.*MANAGED.*CUSTOM RESOURCE POLICY`, buf.String())
+	require.Regexp(t, `api-gateway.*3\.5\.1.*regular.*Ready.*true.*CreateAndDelete`, buf.String())
 }
 
 func TestRenderList_JSON(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true},
+		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete"},
 	}
 
 	var buf bytes.Buffer
 	err := RenderList(results, types.JSONFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
-	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular","state":"Ready","managed":true}]`, buf.String())
+	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular","state":"Ready","managed":true,"customResourcePolicy":"CreateAndDelete"}]`, buf.String())
 }
 
 func TestRenderList_Table_SortedByName(t *testing.T) {
@@ -51,7 +51,7 @@ func TestRenderList_Table_SortedByName(t *testing.T) {
 
 func TestRenderList_YAML(t *testing.T) {
 	results := []dtos.ListResult{
-		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true},
+		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete"},
 	}
 
 	var buf bytes.Buffer
@@ -67,4 +67,5 @@ func TestRenderList_YAML(t *testing.T) {
 	require.Equal(t, "regular", module["channel"])
 	require.Equal(t, "Ready", module["state"])
 	require.Equal(t, true, module["managed"])
+	require.Equal(t, "CreateAndDelete", module["customResourcePolicy"])
 }
