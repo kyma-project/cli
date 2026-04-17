@@ -5,4 +5,5 @@ type ListResult struct {
 	Version string
 	Channel string
 	State   string
+	Managed bool
 }

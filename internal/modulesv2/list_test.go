@@ -56,3 +56,61 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	require.Equal(t, "regular", module.Channel)
 	require.Equal(t, "Ready", module.State)
 }
+
+func TestListService_Run_ReturnsManaged(t *testing.T) {
+	managed := true
+	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{
+				Spec:   kyma.Module{Name: "api-gateway", Managed: &managed},
+				Status: kyma.ModuleStatus{Name: "api-gateway"},
+			},
+		},
+	}
+	svc := NewListService(installedModulesRepo)
+
+	result, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	module := result[0]
+	require.Equal(t, "api-gateway", module.Name)
+	require.True(t, module.Managed)
+}
+
+func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
+	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{
+				Spec:   kyma.Module{Name: "api-gateway", Managed: nil},
+				Status: kyma.ModuleStatus{Name: "api-gateway"},
+			},
+		},
+	}
+	svc := NewListService(installedModulesRepo)
+
+	result, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.True(t, module.Managed)
+}
+
+func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
+	managed := false
+	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{
+				Spec:   kyma.Module{Name: "api-gateway", Managed: &managed},
+				Status: kyma.ModuleStatus{Name: "api-gateway"},
+			},
+		},
+	}
+	svc := NewListService(installedModulesRepo)
+
+	result, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.False(t, module.Managed)
+}
