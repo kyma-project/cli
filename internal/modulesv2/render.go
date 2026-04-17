@@ -2,6 +2,7 @@ package modulesv2
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -60,7 +61,7 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 
 func renderListTable(results []dtos.ListResult, printer *out.Printer) error {
 	sortListResults(results)
-	headers := []interface{}{"MODULE", "VERSION", "CHANNEL", "STATE", "MANAGED", "CUSTOM RESOURCE POLICY"}
+	headers := []interface{}{"MODULE", "VERSION", "CR POLICY", "MANAGED", "MODULE STATUS"}
 	rows := convertListToRows(results)
 	render.Table(printer, headers, rows)
 	return nil
@@ -75,9 +76,16 @@ func sortListResults(results []dtos.ListResult) {
 func convertListToRows(results []dtos.ListResult) [][]interface{} {
 	rows := make([][]interface{}, len(results))
 	for i, r := range results {
-		rows[i] = []interface{}{r.Name, r.Version, r.Channel, r.State, r.Managed, r.CustomResourcePolicy}
+		rows[i] = []interface{}{r.Name, versionWithChannel(r), r.CustomResourcePolicy, r.Managed, r.State}
 	}
 	return rows
+}
+
+func versionWithChannel(r dtos.ListResult) string {
+	if r.Channel == "" {
+		return r.Version
+	}
+	return fmt.Sprintf("%s(%s)", r.Version, r.Channel)
 }
 
 func RenderCatalog(results []dtos.CatalogResult, format types.Format) error {
