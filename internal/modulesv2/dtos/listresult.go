@@ -7,4 +7,5 @@ type ListResult struct {
 	State                string
 	Managed              bool
 	CustomResourcePolicy string
+	InstallationState    string
 }

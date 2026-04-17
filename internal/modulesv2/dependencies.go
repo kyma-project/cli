@@ -99,6 +99,15 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 		return repository.NewInstalledModulesRepository(kubeClient.Kyma()), nil
 	})
 
+	di.RegisterTyped(container, func(c *di.Container) (repository.ModuleInstallationStateRepository, error) {
+		kubeClient, err := di.GetTyped[kube.Client](c)
+		if err != nil {
+			return nil, err
+		}
+
+		return repository.NewModuleInstallationStateRepository(kubeClient), nil
+	})
+
 	// Services:
 
 	di.RegisterTyped(container, func(c *di.Container) (*CatalogService, error) {
@@ -130,7 +139,12 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 			return nil, err
 		}
 
-		return NewListService(installedModulesRepo), nil
+		installationStateRepo, err := di.GetTyped[repository.ModuleInstallationStateRepository](c)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewListService(installedModulesRepo, installationStateRepo), nil
 	})
 
 	return container
