@@ -24,11 +24,12 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 	results := make([]dtos.ListResult, 0, len(installedModules))
 	for _, module := range installedModules {
 		results = append(results, dtos.ListResult{
-			Name:    module.Status.Name,
-			Version: module.Status.Version,
-			Channel: module.Status.Channel,
-			State:   module.Status.State,
-			Managed: module.Spec.Managed == nil || *module.Spec.Managed,
+			Name:                 module.Status.Name,
+			Version:              module.Status.Version,
+			Channel:              module.Status.Channel,
+			State:                module.Status.State,
+			Managed:              module.Spec.Managed == nil || *module.Spec.Managed,
+			CustomResourcePolicy: module.Spec.CustomResourcePolicy,
 		})
 	}
 

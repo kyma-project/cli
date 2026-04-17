@@ -114,3 +114,21 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 	module := result[0]
 	require.False(t, module.Managed)
 }
+
+func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
+	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{
+				Spec:   kyma.Module{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
+				Status: kyma.ModuleStatus{Name: "api-gateway"},
+			},
+		},
+	}
+	svc := NewListService(installedModulesRepo)
+
+	result, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.Equal(t, "CreateAndDelete", module.CustomResourcePolicy)
+}
