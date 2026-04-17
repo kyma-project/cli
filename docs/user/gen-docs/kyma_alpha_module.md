@@ -14,6 +14,7 @@ kyma alpha module <command> [flags]
 
 ```text
   catalog - Lists modules catalog
+  list    - Lists installed modules
   pull    - Pulls a module from a remote repository
 ```
 
@@ -31,4 +32,5 @@ kyma alpha module <command> [flags]
 
 * [kyma alpha](kyma_alpha.md)                               - Groups command prototypes for which the API may still change
 * [kyma alpha module catalog](kyma_alpha_module_catalog.md) - Lists modules catalog
+* [kyma alpha module list](kyma_alpha_module_list.md)       - Lists installed modules
 * [kyma alpha module pull](kyma_alpha_module_pull.md)       - Pulls a module from a remote repository

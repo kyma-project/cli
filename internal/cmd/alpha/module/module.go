@@ -15,6 +15,7 @@ func NewModuleCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.AddCommand(NewCatalogV2CMD(kymaConfig))
 	cmd.AddCommand(NewPullV2CMD(kymaConfig))
+	cmd.AddCommand(NewListV2CMD(kymaConfig))
 
 	return cmd
 }
