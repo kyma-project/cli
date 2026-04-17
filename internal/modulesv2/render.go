@@ -51,6 +51,7 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 			"version": r.Version,
 			"channel": r.Channel,
 			"state":   r.State,
+			"managed": r.Managed,
 		}
 	}
 	return output
@@ -58,7 +59,7 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 
 func renderListTable(results []dtos.ListResult, printer *out.Printer) error {
 	sortListResults(results)
-	headers := []interface{}{"MODULE", "VERSION", "CHANNEL", "STATE"}
+	headers := []interface{}{"MODULE", "VERSION", "CHANNEL", "STATE", "MANAGED"}
 	rows := convertListToRows(results)
 	render.Table(printer, headers, rows)
 	return nil
@@ -73,7 +74,7 @@ func sortListResults(results []dtos.ListResult) {
 func convertListToRows(results []dtos.ListResult) [][]interface{} {
 	rows := make([][]interface{}, len(results))
 	for i, r := range results {
-		rows[i] = []interface{}{r.Name, r.Version, r.Channel, r.State}
+		rows[i] = []interface{}{r.Name, r.Version, r.Channel, r.State, r.Managed}
 	}
 	return rows
 }
