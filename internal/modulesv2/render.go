@@ -48,13 +48,13 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 	output := make([]map[string]interface{}, len(results))
 	for i, r := range results {
 		output[i] = map[string]interface{}{
-			"name":                 r.Name,
-			"version":              r.Version,
-			"channel":              r.Channel,
-			"state":                r.State,
-			"managed":              r.Managed,
-			"customResourcePolicy": r.CustomResourcePolicy,
-			"installationState":    r.InstallationState,
+			"name":               r.Name,
+			"version":            r.Version,
+			"channel":            r.Channel,
+			"moduleStatus":       r.State,
+			"managed":            r.Managed,
+			"crPolicy":           r.CustomResourcePolicy,
+			"installationStatus": r.InstallationState,
 		}
 	}
 	return output

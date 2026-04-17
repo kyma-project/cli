@@ -33,7 +33,7 @@ func TestRenderList_JSON(t *testing.T) {
 	err := RenderList(results, types.JSONFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
-	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular","state":"Ready","managed":true,"customResourcePolicy":"CreateAndDelete","installationState":"Ready"}]`, buf.String())
+	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular","moduleStatus":"Ready","managed":true,"crPolicy":"CreateAndDelete","installationStatus":"Ready"}]`, buf.String())
 }
 
 func TestRenderList_Table_SortedByName(t *testing.T) {
@@ -77,8 +77,8 @@ func TestRenderList_YAML(t *testing.T) {
 	require.Equal(t, "api-gateway", module["name"])
 	require.Equal(t, "3.5.1", module["version"])
 	require.Equal(t, "regular", module["channel"])
-	require.Equal(t, "Ready", module["state"])
 	require.Equal(t, true, module["managed"])
-	require.Equal(t, "CreateAndDelete", module["customResourcePolicy"])
-	require.Equal(t, "Ready", module["installationState"])
+	require.Equal(t, "CreateAndDelete", module["crPolicy"])
+	require.Equal(t, "Ready", module["moduleStatus"])
+	require.Equal(t, "Ready", module["installationStatus"])
 }
