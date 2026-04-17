@@ -4,7 +4,7 @@ type ListResult struct {
 	Name                 string
 	Version              string
 	Channel              string
-	State                string
+	ModuleState          string
 	Managed              bool
 	CustomResourcePolicy string
 	InstallationState    string

@@ -51,7 +51,7 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 			"name":               r.Name,
 			"version":            r.Version,
 			"channel":            r.Channel,
-			"moduleStatus":       r.State,
+			"moduleStatus":       r.ModuleState,
 			"managed":            r.Managed,
 			"crPolicy":           r.CustomResourcePolicy,
 			"installationStatus": r.InstallationState,
@@ -77,14 +77,14 @@ func sortListResults(results []dtos.ListResult) {
 func convertListToRows(results []dtos.ListResult) [][]interface{} {
 	rows := make([][]interface{}, len(results))
 	for i, r := range results {
-		rows[i] = []interface{}{r.Name, versionWithChannel(r), r.CustomResourcePolicy, r.Managed, r.State, installationStatus(r)}
+		rows[i] = []interface{}{r.Name, versionWithChannel(r), r.CustomResourcePolicy, r.Managed, r.ModuleState, installationStatus(r)}
 	}
 	return rows
 }
 
 func installationStatus(r dtos.ListResult) string {
-	if r.InstallationState != "" && r.State != r.InstallationState {
-		return fmt.Sprintf("%s(%s)", r.State, r.InstallationState)
+	if r.InstallationState != "" && r.ModuleState != r.InstallationState {
+		return fmt.Sprintf("%s(%s)", r.ModuleState, r.InstallationState)
 	}
 	return r.InstallationState
 }

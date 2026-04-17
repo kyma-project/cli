@@ -54,7 +54,7 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	require.Equal(t, "api-gateway", module.Name)
 	require.Equal(t, "3.5.1", module.Version)
 	require.Equal(t, "regular", module.Channel)
-	require.Equal(t, "Ready", module.State)
+	require.Equal(t, "Ready", module.ModuleState)
 }
 
 func TestListService_Run_ReturnsManaged(t *testing.T) {
