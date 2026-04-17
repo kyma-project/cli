@@ -4,4 +4,5 @@ type ListResult struct {
 	Name    string
 	Version string
 	Channel string
+	State   string
 }

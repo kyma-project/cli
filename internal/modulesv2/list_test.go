@@ -41,7 +41,7 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []kyma.ModuleStatus{
-			{Name: "api-gateway", Version: "3.5.1", Channel: "regular"},
+			{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready"},
 		},
 	}
 	svc := NewListService(installedModulesRepo)
@@ -54,4 +54,5 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	require.Equal(t, "api-gateway", module.Name)
 	require.Equal(t, "3.5.1", module.Version)
 	require.Equal(t, "regular", module.Channel)
+	require.Equal(t, "Ready", module.State)
 }

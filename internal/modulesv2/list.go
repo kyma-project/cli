@@ -27,6 +27,7 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 			Name:    module.Name,
 			Version: module.Version,
 			Channel: module.Channel,
+			State:   module.State,
 		})
 	}
 
