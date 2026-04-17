@@ -8,11 +8,15 @@ import (
 )
 
 type ListService struct {
-	installedModulesRepository repository.InstalledModulesRepository
+	installedModulesRepository      repository.InstalledModulesRepository
+	installationStateRepository repository.ModuleInstallationStateRepository
 }
 
-func NewListService(installedModulesRepository repository.InstalledModulesRepository) *ListService {
-	return &ListService{installedModulesRepository: installedModulesRepository}
+func NewListService(installedModulesRepository repository.InstalledModulesRepository, installationStateRepository repository.ModuleInstallationStateRepository) *ListService {
+	return &ListService{
+		installedModulesRepository:  installedModulesRepository,
+		installationStateRepository: installationStateRepository,
+	}
 }
 
 func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
@@ -23,6 +27,11 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 
 	results := make([]dtos.ListResult, 0, len(installedModules))
 	for _, module := range installedModules {
+		installationState, err := s.installationStateRepository.GetInstallationState(ctx, module.Status, module.Spec)
+		if err != nil {
+			return nil, err
+		}
+
 		results = append(results, dtos.ListResult{
 			Name:                 module.Status.Name,
 			Version:              module.Status.Version,
@@ -30,6 +39,7 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 			State:                module.Status.State,
 			Managed:              module.Spec.Managed == nil || *module.Spec.Managed,
 			CustomResourcePolicy: module.Spec.CustomResourcePolicy,
+			InstallationState:    installationState,
 		})
 	}
 

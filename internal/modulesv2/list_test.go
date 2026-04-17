@@ -13,7 +13,7 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []kyma.KymaModuleInfo{},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -28,7 +28,7 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 			{Status: kyma.ModuleStatus{Name: "istio"}},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -44,7 +44,7 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 			{Status: kyma.ModuleStatus{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready"}},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -67,7 +67,7 @@ func TestListService_Run_ReturnsManaged(t *testing.T) {
 			},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -87,7 +87,7 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 			},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -106,7 +106,7 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 			},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -124,11 +124,32 @@ func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
 			},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
 	require.NoError(t, err)
 	module := result[0]
 	require.Equal(t, "CreateAndDelete", module.CustomResourcePolicy)
+}
+
+func TestListService_Run_ReturnsInstallationState(t *testing.T) {
+	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+		ListInstalledModulesResult: []kyma.KymaModuleInfo{
+			{
+				Spec:   kyma.Module{Name: "api-gateway"},
+				Status: kyma.ModuleStatus{Name: "api-gateway"},
+			},
+		},
+	}
+	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{
+		GetInstallationStateResult: "Ready",
+	}
+	svc := NewListService(installedModulesRepo, installationStateRepo)
+
+	result, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.Equal(t, "Ready", module.InstallationState)
 }
