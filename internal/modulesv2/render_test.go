@@ -20,8 +20,8 @@ func TestRenderList_Table(t *testing.T) {
 	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
-	require.Regexp(t, `MODULE.*VERSION.*CHANNEL.*STATE.*MANAGED.*CUSTOM RESOURCE POLICY`, buf.String())
-	require.Regexp(t, `api-gateway.*3\.5\.1.*regular.*Ready.*true.*CreateAndDelete`, buf.String())
+	require.Regexp(t, `MODULE.*VERSION.*CR POLICY.*MANAGED.*MODULE STATUS`, buf.String())
+	require.Regexp(t, `api-gateway.*3\.5\.1\(regular\).*CreateAndDelete.*true.*Ready`, buf.String())
 }
 
 func TestRenderList_JSON(t *testing.T) {
