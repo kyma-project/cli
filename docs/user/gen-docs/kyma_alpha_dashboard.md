@@ -22,11 +22,11 @@ kyma alpha dashboard <command> [flags]
 ```text
       --container-id string     Specifies the id of the local container. (default "kyma-dashboard")
       --container-name string   Specifies the name of the local container. (default "kyma-dashboard")
+      --kubeconfig string       Path to the kubeconfig file.
   -p, --port string             Specifies the port on which the local dashboard will be exposed. (default "8000")
   -v, --verbose                 Enables verbose output with detailed logs.
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
-      --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
       --skip-extensions         Skips fetching extensions from the target Kyma environment
 ```

@@ -53,7 +53,10 @@ func runDashboardStart(cfg *dashboardStartConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to initialize docker client"))
 	}
 
-	kubeconfig := getBusolaKubeconfig(cfg.kubeconfigPath)
+	kubeconfig, err := getBusolaKubeconfig(cfg.kubeconfigPath)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to load kubeconfig"))
+	}
 
 	if err = dash.Start(kubeconfig); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to start kyma dashboard"))

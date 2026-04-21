@@ -1,6 +1,9 @@
 package dashboard
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/kyma-project/cli.v3/internal/busola"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -56,7 +59,10 @@ func runDashboard(cfg *dashboardConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to initialize docker client"))
 	}
 
-	kubeconfig := getBusolaKubeconfig(cfg.kubeconfigPath)
+	kubeconfig, err := getBusolaKubeconfig(cfg.kubeconfigPath)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to load kubeconfig"))
+	}
 
 	if err = dash.Start(kubeconfig); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to start kyma dashboard"))
@@ -73,9 +79,13 @@ func runDashboard(cfg *dashboardConfig) clierror.Error {
 	return nil
 }
 
-func getBusolaKubeconfig(kubeconfigPath string) *api.Config {
+func getBusolaKubeconfig(kubeconfigPath string) (*api.Config, error) {
 	if kubeconfigPath == "" {
-		return nil
+		return nil, nil
+	}
+
+	if _, err := os.Stat(kubeconfigPath); err != nil {
+		return nil, fmt.Errorf("kubeconfig file not found at %q", kubeconfigPath)
 	}
 
 	pathOptions := clientcmd.NewDefaultPathOptions()
@@ -83,7 +93,7 @@ func getBusolaKubeconfig(kubeconfigPath string) *api.Config {
 
 	cfg, err := pathOptions.GetStartingConfig()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return cfg
+	return cfg, nil
 }
