@@ -15,7 +15,7 @@ kyma alpha dashboard start [flags]
 ```text
       --container-id string     Specifies the id of the local container. (default "kyma-dashboard")
       --container-name string   Specify the name of the local container. (default "kyma-dashboard")
-      --kubeconfig string       Path to the kubeconfig file.
+      --kubeconfig string       Path to the Kyma kubeconfig file.
   -o, --open                    Specify if the browser should open after executing the command.
   -p, --port string             Specify the port on which the local dashboard will be exposed. (default "8000")
   -v, --verbose                 Enable verbose output with detailed logs.

@@ -38,7 +38,7 @@ func NewDashboardCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.containerName, "container-name", "kyma-dashboard", `Specifies the name of the local container.`)
 	cmd.Flags().StringVar(&cfg.containerId, "container-id", "kyma-dashboard", `Specifies the id of the local container.`)
 	cmd.Flags().BoolVarP(&cfg.verbose, "verbose", "v", true, `Enables verbose output with detailed logs.`)
-	cmd.Flags().StringVar(&cfg.kubeconfigPath, "kubeconfig", "", `Path to the kubeconfig file.`)
+	cmd.Flags().StringVar(&cfg.kubeconfigPath, "kubeconfig", "", `Path to the Kyma kubeconfig file.`)
 
 	cmd.AddCommand(NewDashboardStartCMD(kymaConfig))
 	cmd.AddCommand(NewDashboardStopCMD(kymaConfig))
