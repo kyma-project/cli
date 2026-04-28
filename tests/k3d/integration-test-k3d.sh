@@ -19,9 +19,9 @@ echo "Running test in user context of: $(kubectl config view --minify --raw | yq
 echo "Step2: Enable latest Docker Registry release"
 kubectl create namespace kyma-system || true
 kubectl apply -f https://github.com/kyma-project/docker-registry/releases/latest/download/dockerregistry-operator.yaml
-kubectl apply -f https://github.com/kyma-project/docker-registry/releases/latest/download/default-dockerregistry-cr.yaml -n kyma-system
+kubectl apply -f https://github.com/kyma-project/docker-registry/releases/latest/download/default-dockerregistry-cr.yaml -n docker-registry
 echo "..waiting for docker registry"
-kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/default -n kyma-system --timeout=360s
+kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/default -n docker-registry --timeout=360s
 
 # -------------------------------------------------------------------------------------
 # Push sample go app
