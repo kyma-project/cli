@@ -27,6 +27,6 @@ func TestInstalledModulesRepository_ListInstalledModules(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result, 2)
-	require.Equal(t, "api-gateway", result[0].Status.Name)
-	require.Equal(t, "istio", result[1].Status.Name)
+	require.Equal(t, "api-gateway", result[0].Name)
+	require.Equal(t, "istio", result[1].Name)
 }

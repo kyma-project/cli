@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
 )
 
 type ListService struct {
-	installedModulesRepository      repository.InstalledModulesRepository
+	installedModulesRepository  repository.InstalledModulesRepository
 	installationStateRepository repository.ModuleInstallationStateRepository
 }
 
@@ -27,21 +28,33 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 
 	results := make([]dtos.ListResult, 0, len(installedModules))
 	for _, module := range installedModules {
-		installationState, err := s.installationStateRepository.GetInstallationState(ctx, module.Status, module.Spec)
+		installationState, err := s.resolveInstallationState(ctx, module)
 		if err != nil {
 			return nil, err
 		}
 
 		results = append(results, dtos.ListResult{
-			Name:                 module.Status.Name,
-			Version:              module.Status.Version,
-			Channel:              module.Status.Channel,
-			ModuleState:          module.Status.State,
-			Managed:              module.Spec.Managed == nil || *module.Spec.Managed,
-			CustomResourcePolicy: module.Spec.CustomResourcePolicy,
+			Name:                 module.Name,
+			Version:              module.Version,
+			Channel:              module.Channel,
+			ModuleState:          module.ModuleState,
+			Managed:              module.IsManaged(),
+			CustomResourcePolicy: module.CustomResourcePolicy,
 			InstallationState:    installationState,
 		})
 	}
 
 	return results, nil
+}
+
+func (s *ListService) resolveInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+	if module.CustomResourcePolicy == "CreateAndDelete" {
+		return module.ModuleState, nil
+	}
+
+	if !module.IsManaged() {
+		return module.ModuleState, nil
+	}
+
+	return s.installationStateRepository.GetInstallationState(ctx, module)
 }
