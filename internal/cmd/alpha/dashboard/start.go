@@ -9,11 +9,12 @@ import (
 
 type dashboardStartConfig struct {
 	*cmdcommon.KymaConfig
-	port          string
-	containerName string
-	containerId   string
-	verbose       bool
-	open          bool
+	port           string
+	containerName  string
+	containerId    string
+	verbose        bool
+	open           bool
+	kubeconfigPath string
 }
 
 func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -34,6 +35,7 @@ func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.containerId, "container-id", "kyma-dashboard", `Specifies the id of the local container.`)
 	cmd.Flags().BoolVarP(&cfg.verbose, "verbose", "v", true, `Enable verbose output with detailed logs.`)
 	cmd.Flags().BoolVarP(&cfg.open, "open", "o", false, `Specify if the browser should open after executing the command.`)
+	cmd.Flags().StringVar(&cfg.kubeconfigPath, "kubeconfig", "", `Path to the Kyma kubeconfig file.`)
 
 	return cmd
 }
@@ -44,13 +46,17 @@ func runDashboardStart(cfg *dashboardStartConfig) clierror.Error {
 		cfg.port,
 		cfg.containerId,
 		cfg.verbose,
+		cfg.kubeconfigPath,
 	)
 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to initialize docker client"))
 	}
 
-	kubeconfig := getBusolaKubeconfig(cfg.KymaConfig)
+	kubeconfig, err := getBusolaKubeconfig(cfg.kubeconfigPath)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to load kubeconfig"))
+	}
 
 	if err = dash.Start(kubeconfig); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to start kyma dashboard"))

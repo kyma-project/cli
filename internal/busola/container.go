@@ -23,32 +23,33 @@ const (
 
 // ContainerRunner is a wrapper around the kyma dashboard docker container, providing an easy to use API to manage the kyam dashboard.
 type ContainerRunner struct {
-	name    string
-	id      string
-	port    string
-	docker  *docker.Client
-	verbose bool
+	name           string
+	id             string
+	port           string
+	docker         *docker.Client
+	verbose        bool
+	kubeconfigPath string
 }
 
 // New creates a new dashboard container with the given configuration
-func New(name, port, id string, verbose bool) (*ContainerRunner, error) {
+func New(name, port, id string, verbose bool, kubeconfigPath string) (*ContainerRunner, error) {
 	dockerClient, err := docker.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("could not create docker client: %w", err)
 	}
 
 	return &ContainerRunner{
-		name:    name,
-		port:    port,
-		docker:  dockerClient,
-		id:      id,
-		verbose: verbose,
+		name:           name,
+		port:           port,
+		docker:         dockerClient,
+		id:             id,
+		verbose:        verbose,
+		kubeconfigPath: kubeconfigPath,
 	}, nil
 }
 
 // Start runs the dashboard container.
 func (c *ContainerRunner) Start(apiConfig *api.Config) error {
-	var envs []string
 	tmpDir := filepath.Join(os.TempDir(), "busola", c.id)
 
 	err := os.MkdirAll(tmpDir, 0700)
@@ -56,17 +57,25 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 		return fmt.Errorf("failed to create temp dir %q: %w", tmpDir, err)
 	}
 
-	config, err := clientcmd.Write(*apiConfig)
-	if err != nil {
-		return fmt.Errorf("failed to serialize kubeconfig: %w", err)
+	if apiConfig != nil {
+		config, err := clientcmd.Write(*apiConfig)
+		if err != nil {
+			return fmt.Errorf("failed to serialize kubeconfig: %w", err)
+		}
+
+		kubeconfigPath := filepath.Join(tmpDir, "config")
+		if err := os.WriteFile(kubeconfigPath, config, 0700); err != nil {
+			return fmt.Errorf("failed to write kubeconfig at %q: %w", kubeconfigPath, err)
+		}
 	}
 
-	kubeconfigPath := filepath.Join(tmpDir, "config")
-	if err := os.WriteFile(kubeconfigPath, config, 0700); err != nil {
-		return fmt.Errorf("failed to write kubeconfig at %q: %w", kubeconfigPath, err)
+	backendConfigPath := filepath.Join(tmpDir, "config.yaml")
+	backendConfig := "config:\n  features:\n    ALLOW_PRIVATE_IPS:\n      isEnabled: true\n"
+	if err := os.WriteFile(backendConfigPath, []byte(backendConfig), 0600); err != nil {
+		return fmt.Errorf("failed to write backend config at %q: %w", backendConfigPath, err)
 	}
 
-	opts := c.containerOpts(envs)
+	opts := c.containerOpts()
 	out.Msg("\n")
 
 	if c.id, err = c.docker.PullImageAndStartContainer(context.Background(), opts); err != nil {
@@ -78,6 +87,9 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 // Open opens the kyma dashboard in a browser.
 func (c *ContainerRunner) Open() error {
 	url := fmt.Sprintf("http://localhost:%s/clusters", c.port)
+	if c.kubeconfigPath != "" {
+		url = fmt.Sprintf("http://localhost:%s?kubeconfigID=config.yaml&storage=localStorage", c.port)
+	}
 
 	err := browser.OpenURL(url)
 	if err != nil {
@@ -117,28 +129,36 @@ func (c *ContainerRunner) Watch() error {
 	return c.docker.ContainerFollowRun(c.id, c.verbose)
 }
 
-func (c *ContainerRunner) containerOpts(envs []string) docker.ContainerRunOpts {
-	kubeconfigPath := filepath.Join(os.TempDir(), "busola", c.id, "config")
-	targetPath := "/app/core-ui/kubeconfig/config.yaml"
+func (c *ContainerRunner) containerOpts() docker.ContainerRunOpts {
+	mounts := []mount.Mount{
+		{
+			Type:     mount.TypeBind,
+			Source:   filepath.Join(os.TempDir(), "busola", c.id, "config.yaml"),
+			Target:   "/app/config/config.yaml",
+			ReadOnly: true,
+		},
+	}
 
-	containerRunOpts := docker.ContainerRunOpts{
-		Envs:          envs,
+	if c.kubeconfigPath != "" {
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   filepath.Join(os.TempDir(), "busola", c.id, "config"),
+			Target:   "/app/core-ui/kubeconfig/config.yaml",
+			ReadOnly: true,
+		})
+	}
+
+	return docker.ContainerRunOpts{
 		ContainerName: c.name,
 		Image:         dashboardImage,
-		Mounts: []mount.Mount{
-			{
-				Type:     mount.TypeBind,
-				Source:   kubeconfigPath,
-				Target:   targetPath,
-				ReadOnly: true,
-			},
+		Envs: []string{
+			"PORT=8000",
 		},
+		Mounts: mounts,
 		Ports: map[string]string{
 			"3001": c.port,
 		},
 	}
-
-	return containerRunOpts
 }
 
 type ContainerStopper struct {
