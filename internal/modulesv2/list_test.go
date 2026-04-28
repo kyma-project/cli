@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modulesv2/fake"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{},
+		ListInstalledModulesResult: []entities.ModuleInstallation{},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
@@ -23,9 +23,9 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 
 func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{Status: kyma.ModuleStatus{Name: "api-gateway"}},
-			{Status: kyma.ModuleStatus{Name: "istio"}},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway"},
+			{Name: "istio"},
 		},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
@@ -40,8 +40,8 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 
 func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{Status: kyma.ModuleStatus{Name: "api-gateway", Version: "3.5.1", Channel: "regular", State: "Ready"}},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready"},
 		},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
@@ -60,11 +60,8 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 func TestListService_Run_ReturnsManaged(t *testing.T) {
 	managed := true
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{
-				Spec:   kyma.Module{Name: "api-gateway", Managed: &managed},
-				Status: kyma.ModuleStatus{Name: "api-gateway"},
-			},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway", Managed: &managed},
 		},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
@@ -80,11 +77,8 @@ func TestListService_Run_ReturnsManaged(t *testing.T) {
 
 func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{
-				Spec:   kyma.Module{Name: "api-gateway", Managed: nil},
-				Status: kyma.ModuleStatus{Name: "api-gateway"},
-			},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway", Managed: nil},
 		},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
@@ -99,11 +93,8 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 	managed := false
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{
-				Spec:   kyma.Module{Name: "api-gateway", Managed: &managed},
-				Status: kyma.ModuleStatus{Name: "api-gateway"},
-			},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway", Managed: &managed},
 		},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
@@ -117,11 +108,8 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 
 func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{
-				Spec:   kyma.Module{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
-				Status: kyma.ModuleStatus{Name: "api-gateway"},
-			},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
 		},
 	}
 	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
@@ -135,11 +123,8 @@ func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
 
 func TestListService_Run_ReturnsInstallationState(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []kyma.KymaModuleInfo{
-			{
-				Spec:   kyma.Module{Name: "api-gateway"},
-				Status: kyma.ModuleStatus{Name: "api-gateway"},
-			},
+		ListInstalledModulesResult: []entities.ModuleInstallation{
+			{Name: "api-gateway"},
 		},
 	}
 	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{

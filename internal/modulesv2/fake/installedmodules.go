@@ -3,14 +3,14 @@ package fake
 import (
 	"context"
 
-	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 )
 
 type InstalledModulesRepository struct {
-	ListInstalledModulesResult []kyma.KymaModuleInfo
+	ListInstalledModulesResult []entities.ModuleInstallation
 	ListInstalledModulesError  error
 }
 
-func (f *InstalledModulesRepository) ListInstalledModules(_ context.Context) ([]kyma.KymaModuleInfo, error) {
+func (f *InstalledModulesRepository) ListInstalledModules(_ context.Context) ([]entities.ModuleInstallation, error) {
 	return f.ListInstalledModulesResult, f.ListInstalledModulesError
 }

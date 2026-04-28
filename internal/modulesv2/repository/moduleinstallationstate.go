@@ -5,13 +5,14 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type ModuleInstallationStateRepository interface {
-	GetInstallationState(ctx context.Context, status kyma.ModuleStatus, spec kyma.Module) (string, error)
+	GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error)
 }
 
 type moduleInstallationStateRepository struct {
@@ -22,21 +23,13 @@ func NewModuleInstallationStateRepository(kubeClient kube.Client) ModuleInstalla
 	return &moduleInstallationStateRepository{kubeClient: kubeClient}
 }
 
-func (r *moduleInstallationStateRepository) GetInstallationState(ctx context.Context, status kyma.ModuleStatus, spec kyma.Module) (string, error) {
-	if spec.CustomResourcePolicy == "CreateAndDelete" {
-		return status.State, nil
-	}
-
-	if spec.Managed != nil && !*spec.Managed {
-		return status.State, nil
-	}
-
-	moduleTemplate, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, status.Template.GetNamespace(), status.Template.GetName())
+func (r *moduleInstallationStateRepository) GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+	moduleTemplate, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, module.Template.Template.GetNamespace(), module.Template.Template.GetName())
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return "", nil
 		}
-		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", status.Template.GetNamespace(), status.Template.GetName())
+		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", module.Template.Template.GetNamespace(), module.Template.Template.GetName())
 	}
 
 	return getResourceState(ctx, r.kubeClient, moduleTemplate.Spec.Manager)
