@@ -2,6 +2,7 @@ package modulesv2
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -11,6 +12,89 @@ import (
 	"github.com/kyma-project/cli.v3/internal/render"
 	"gopkg.in/yaml.v3"
 )
+
+func RenderList(results []dtos.ListResult, format types.Format, printer *out.Printer) error {
+	switch format {
+	case types.JSONFormat:
+		return renderListJSON(results, printer)
+	case types.YAMLFormat:
+		return renderListYAML(results, printer)
+	default:
+		return renderListTable(results, printer)
+	}
+}
+
+func renderListJSON(results []dtos.ListResult, printer *out.Printer) error {
+	output := convertListToOutputFormat(results)
+	obj, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		return err
+	}
+	printer.Msgln(string(obj))
+	return nil
+}
+
+func renderListYAML(results []dtos.ListResult, printer *out.Printer) error {
+	output := convertListToOutputFormat(results)
+	obj, err := yaml.Marshal(output)
+	if err != nil {
+		return err
+	}
+	printer.Msgln(string(obj))
+	return nil
+}
+
+func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface{} {
+	output := make([]map[string]interface{}, len(results))
+	for i, r := range results {
+		output[i] = map[string]interface{}{
+			"name":               r.Name,
+			"version":            r.Version,
+			"channel":            r.Channel,
+			"moduleStatus":       r.ModuleState,
+			"managed":            r.Managed,
+			"crPolicy":           r.CustomResourcePolicy,
+			"installationStatus": r.InstallationState,
+		}
+	}
+	return output
+}
+
+func renderListTable(results []dtos.ListResult, printer *out.Printer) error {
+	sortListResults(results)
+	headers := []interface{}{"MODULE", "VERSION", "CR POLICY", "MANAGED", "MODULE STATUS", "INSTALLATION STATUS"}
+	rows := convertListToRows(results)
+	render.Table(printer, headers, rows)
+	return nil
+}
+
+func sortListResults(results []dtos.ListResult) {
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Name < results[j].Name
+	})
+}
+
+func convertListToRows(results []dtos.ListResult) [][]interface{} {
+	rows := make([][]interface{}, len(results))
+	for i, r := range results {
+		rows[i] = []interface{}{r.Name, versionWithChannel(r), r.CustomResourcePolicy, r.Managed, r.ModuleState, installationStatus(r)}
+	}
+	return rows
+}
+
+func installationStatus(r dtos.ListResult) string {
+	if r.InstallationState != "" && r.ModuleState != r.InstallationState {
+		return fmt.Sprintf("%s(%s)", r.ModuleState, r.InstallationState)
+	}
+	return r.InstallationState
+}
+
+func versionWithChannel(r dtos.ListResult) string {
+	if r.Channel == "" {
+		return r.Version
+	}
+	return fmt.Sprintf("%s(%s)", r.Version, r.Channel)
+}
 
 func RenderCatalog(results []dtos.CatalogResult, format types.Format) error {
 	switch format {
