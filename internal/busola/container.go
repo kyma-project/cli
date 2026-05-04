@@ -63,13 +63,13 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 			return fmt.Errorf("failed to serialize kubeconfig: %w", err)
 		}
 
-		kubeconfigPath := filepath.Join(tmpDir, "kubeconfig")
+		kubeconfigPath := filepath.Join(tmpDir, "config")
 		if err := os.WriteFile(kubeconfigPath, config, 0700); err != nil {
 			return fmt.Errorf("failed to write kubeconfig at %q: %w", kubeconfigPath, err)
 		}
 	}
 
-	backendConfigPath := filepath.Join(tmpDir, "config.yaml")
+	backendConfigPath := filepath.Join(tmpDir, "backendConfig.yaml")
 	backendConfig := "config:\n  features:\n    ALLOW_PRIVATE_IPS:\n      isEnabled: true\n"
 	if err := os.WriteFile(backendConfigPath, []byte(backendConfig), 0600); err != nil {
 		return fmt.Errorf("failed to write backend config at %q: %w", backendConfigPath, err)
