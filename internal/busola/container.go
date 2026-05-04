@@ -23,33 +23,33 @@ const (
 
 // ContainerRunner is a wrapper around the kyma dashboard docker container, providing an easy to use API to manage the kyam dashboard.
 type ContainerRunner struct {
-	name           string
-	id             string
-	port           string
-	docker         *docker.Client
-	verbose        bool
-	kubeconfigPath string
+	name      string
+	id        string
+	port      string
+	docker    *docker.Client
+	verbose   bool
+	apiConfig *api.Config
 }
 
 // New creates a new dashboard container with the given configuration
-func New(name, port, id string, verbose bool, kubeconfigPath string) (*ContainerRunner, error) {
+func New(name, port, id string, verbose bool) (*ContainerRunner, error) {
 	dockerClient, err := docker.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("could not create docker client: %w", err)
 	}
 
 	return &ContainerRunner{
-		name:           name,
-		port:           port,
-		docker:         dockerClient,
-		id:             id,
-		verbose:        verbose,
-		kubeconfigPath: kubeconfigPath,
+		name:    name,
+		port:    port,
+		docker:  dockerClient,
+		id:      id,
+		verbose: verbose,
 	}, nil
 }
 
 // Start runs the dashboard container.
 func (c *ContainerRunner) Start(apiConfig *api.Config) error {
+	c.apiConfig = apiConfig
 	tmpDir := filepath.Join(os.TempDir(), "busola", c.id)
 
 	err := os.MkdirAll(tmpDir, 0700)
@@ -57,8 +57,8 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 		return fmt.Errorf("failed to create temp dir %q: %w", tmpDir, err)
 	}
 
-	if apiConfig != nil {
-		config, err := clientcmd.Write(*apiConfig)
+	if c.apiConfig != nil {
+		config, err := clientcmd.Write(*c.apiConfig)
 		if err != nil {
 			return fmt.Errorf("failed to serialize kubeconfig: %w", err)
 		}
@@ -87,7 +87,7 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 // Open opens the kyma dashboard in a browser.
 func (c *ContainerRunner) Open() error {
 	url := fmt.Sprintf("http://localhost:%s/clusters", c.port)
-	if c.kubeconfigPath != "" {
+	if c.apiConfig != nil {
 		url = fmt.Sprintf("http://localhost:%s?kubeconfigID=config.yaml&storage=localStorage", c.port)
 	}
 
@@ -139,7 +139,7 @@ func (c *ContainerRunner) containerOpts() docker.ContainerRunOpts {
 		},
 	}
 
-	if c.kubeconfigPath != "" {
+	if c.apiConfig != nil {
 		mounts = append(mounts, mount.Mount{
 			Type:     mount.TypeBind,
 			Source:   filepath.Join(os.TempDir(), "busola", c.id, "config"),
