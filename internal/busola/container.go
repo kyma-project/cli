@@ -63,7 +63,7 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 			return fmt.Errorf("failed to serialize kubeconfig: %w", err)
 		}
 
-		kubeconfigPath := filepath.Join(tmpDir, "config")
+		kubeconfigPath := filepath.Join(tmpDir, "kubeconfig")
 		if err := os.WriteFile(kubeconfigPath, config, 0700); err != nil {
 			return fmt.Errorf("failed to write kubeconfig at %q: %w", kubeconfigPath, err)
 		}
