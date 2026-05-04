@@ -24,7 +24,6 @@ type ContainerRunOpts struct {
 	Envs          []string
 	Image         string
 	Mounts        []mount.Mount
-	NetworkMode   string
 	Ports         map[string]string
 }
 
