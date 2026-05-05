@@ -3,8 +3,6 @@ package com.example.movies;
 import com.sap.cloud.environment.servicebinding.api.DefaultServiceBindingAccessor;
 import com.sap.cloud.environment.servicebinding.api.ServiceBinding;
 import com.sap.cloud.environment.servicebinding.api.ServiceBindingAccessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -13,37 +11,21 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 @Configuration
 public class ObjectStoreConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(ObjectStoreConfig.class);
-
     @Bean
     public S3Client s3Client() {
         ServiceBindingAccessor accessor = DefaultServiceBindingAccessor.getInstance();
-        List<ServiceBinding> allBindings = accessor.getServiceBindings();
 
-        log.info("SERVICE_BINDING_ROOT = {}", System.getenv("SERVICE_BINDING_ROOT"));
-        log.info("Found {} service binding(s):", allBindings.size());
-        for (ServiceBinding b : allBindings) {
-            log.info("  - name={}, serviceName={}, servicePlan={}, tags={}, keys={}",
-                    b.getName().orElse("(none)"),
-                    b.getServiceName().orElse("(none)"),
-                    b.getServicePlan().orElse("(none)"),
-                    b.getTags(),
-                    b.getKeys());
-        }
-
-        ServiceBinding binding = allBindings.stream()
+        ServiceBinding binding = accessor.getServiceBindings().stream()
                 .filter(b -> "objectstore".equals(b.getServiceName().orElse(null)))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No matching Object Store binding found"));
 
         Map<String, Object> creds = binding.getCredentials();
-        log.info("Credentials keys: {}", creds.keySet());
 
         return S3Client.builder()
                 .region(Region.of((String) creds.get("region")))
