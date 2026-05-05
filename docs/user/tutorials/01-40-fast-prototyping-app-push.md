@@ -53,6 +53,18 @@ mkdir -p src/main/java/com/example/movies
         <java.version>21</java.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.sap.cloud.environment.servicebinding</groupId>
+                <artifactId>java-bom</artifactId>
+                <version>0.10.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -66,7 +78,6 @@ mkdir -p src/main/java/com/example/movies
         <dependency>
             <groupId>com.sap.cloud.environment.servicebinding</groupId>
             <artifactId>java-sap-service-operator</artifactId>
-            <version>0.10.6</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -331,7 +342,15 @@ kyma app push \
   --container-port 8080 \
   --expose \
   --istio-inject=true \
-  --mount-service-binding-secret object-store-binding
+  --mount-service-binding-secret object-store-binding \
+  --env-from-file .env
+```
+
+The `.env` file contains JVM memory tuning required to fit within the default 512Mi container limit:
+
+```properties
+BPL_JVM_THREAD_COUNT=20
+JAVA_TOOL_OPTIONS=-XX:ReservedCodeCacheSize=40M -XX:MaxMetaspaceSize=80M -Xss512k
 ```
 
 What happens under the hood:
