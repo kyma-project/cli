@@ -2,13 +2,14 @@
 
 This tutorial shows how to deploy a single-container application to SAP BTP Kyma runtime in one CLI command using `kyma app push`, then evolve it into an automated GitHub Actions CD pipeline. No YAML hand-crafting, no container registry setup, no CI/CD pipeline to configure upfront — just code → deploy → iterate.
 
-It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET), need BTP service bindings (e.g., Object Store), and want a clear path from local development to automated CD — all without writing a Dockerfile.
+It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET) and want a clear path from local development to automated CD — all without writing a Dockerfile.
 
 > For lightweight event-driven workloads where you want zero container knowledge, see [Fast Prototyping With Serverless Functions](01-50-fast-prototyping-serverless-functions.md).
 
 ## Prerequisites
 
 - [Kyma CLI](https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-cli?locale=en-US#install-kyma-cli) installed.
+- An [SAP BTP Kyma runtime](https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-environment) provisioned in your subaccount.
 - The following [Kyma modules enabled](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module#adding-a-kyma-module) on your runtime:
   - **Istio** (enabled by default) — service mesh and networking
   - **API Gateway** (enabled by default) — external exposure via APIRule
@@ -18,10 +19,12 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
 ## Step 1: Create Your App
 
-For this example, use a Spring Boot application that exposes a REST API for managing movies, storing data in BTP Object Store:
+For this example, use a Spring Boot application that exposes a REST API for managing movies, storing data in BTP Object Store. A ready-to-use version of this application is available in the [`examples/movies-api`](../../../examples/movies-api) folder.
+
+To build the application from scratch:
 
 ```bash
-mkdir my-prototype && cd my-prototype
+mkdir "movies-rest" && cd "movies-rest"
 ```
 
 Create the Maven project structure:
@@ -126,6 +129,9 @@ package com.example.movies;
 
 import com.sap.cloud.environment.servicebinding.api.DefaultServiceBindingAccessor;
 import com.sap.cloud.environment.servicebinding.api.ServiceBinding;
+import com.sap.cloud.environment.servicebinding.api.ServiceBindingAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -134,22 +140,41 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 @Configuration
 public class ObjectStoreConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(ObjectStoreConfig.class);
+
     @Bean
     public S3Client s3Client() {
-        ServiceBinding binding = new DefaultServiceBindingAccessor().getServiceBindings().stream()
-                .filter(b -> b.getTags().contains("objectstore"))
+        ServiceBindingAccessor accessor = DefaultServiceBindingAccessor.getInstance();
+        List<ServiceBinding> allBindings = accessor.getServiceBindings();
+
+        log.info("SERVICE_BINDING_ROOT = {}", System.getenv("SERVICE_BINDING_ROOT"));
+        log.info("Found {} service binding(s):", allBindings.size());
+        for (ServiceBinding b : allBindings) {
+            log.info("  - name={}, serviceName={}, servicePlan={}, tags={}, keys={}",
+                    b.getName().orElse("(none)"),
+                    b.getServiceName().orElse("(none)"),
+                    b.getServicePlan().orElse("(none)"),
+                    b.getTags(),
+                    b.getKeys());
+        }
+
+        ServiceBinding binding = allBindings.stream()
+                .filter(b -> "objectstore".equals(b.getServiceName().orElse(null)))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No Object Store binding found"));
+                .orElseThrow(() -> new IllegalStateException("No matching Object Store binding found"));
 
         Map<String, Object> creds = binding.getCredentials();
+        log.info("Credentials keys: {}", creds.keySet());
+
         return S3Client.builder()
                 .region(Region.of((String) creds.get("region")))
-                .endpointOverride(URI.create((String) creds.get("endpoint")))
+                .endpointOverride(URI.create("https://" + creds.get("host")))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(
                                 (String) creds.get("access_key_id"),
@@ -159,8 +184,9 @@ public class ObjectStoreConfig {
 
     @Bean
     public String bucketName() {
-        ServiceBinding binding = new DefaultServiceBindingAccessor().getServiceBindings().stream()
-                .filter(b -> b.getTags().contains("objectstore"))
+        ServiceBindingAccessor accessor = DefaultServiceBindingAccessor.getInstance();
+        ServiceBinding binding = accessor.getServiceBindings().stream()
+                .filter(b -> "objectstore".equals(b.getServiceName().orElse(null)))
                 .findFirst()
                 .orElseThrow();
         return (String) binding.getCredentials().get("bucket");
@@ -228,7 +254,11 @@ public class MovieController {
     @GetMapping
     @Operation(summary = "List all movies")
     public List<Movie> list() throws IOException {
-        ListObjectsV2Response response = s3.listObjectsV2(b -> b.bucket(bucket).prefix("movies/"));
+        ListObjectsV2Request request = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix("movies/")
+                .build();
+        ListObjectsV2Response response = s3.listObjectsV2(request);
         return response.contents().stream()
                 .map(obj -> getMovie(obj.key()))
                 .toList();
@@ -243,7 +273,7 @@ public class MovieController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new movie")
-    public Movie create(@RequestBody Movie movie) throws Exception {
+    public Movie create(@org.springframework.web.bind.annotation.RequestBody Movie movie) throws Exception {
         Movie saved = movie.withId(String.valueOf(System.currentTimeMillis()));
         putMovie(saved);
         return saved;
@@ -251,7 +281,7 @@ public class MovieController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing movie")
-    public Movie update(@PathVariable String id, @RequestBody Movie movie) throws Exception {
+    public Movie update(@PathVariable String id, @org.springframework.web.bind.annotation.RequestBody Movie movie) throws Exception {
         Movie saved = movie.withId(id);
         putMovie(saved);
         return saved;
@@ -261,18 +291,30 @@ public class MovieController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a movie")
     public void delete(@PathVariable String id) {
-        s3.deleteObject(b -> b.bucket(bucket).key("movies/" + id + ".json"));
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key("movies/" + id + ".json")
+                .build();
+        s3.deleteObject(request);
     }
 
     private void putMovie(Movie movie) throws Exception {
         byte[] json = mapper.writeValueAsBytes(movie);
-        s3.putObject(b -> b.bucket(bucket).key("movies/" + movie.id() + ".json")
-                .contentType("application/json"), RequestBody.fromBytes(json));
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key("movies/" + movie.id() + ".json")
+                .contentType("application/json")
+                .build();
+        s3.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromBytes(json));
     }
 
     private Movie getMovie(String key) {
         try {
-            byte[] data = s3.getObject(b -> b.bucket(bucket).key(key)).readAllBytes();
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+            byte[] data = s3.getObject(request).readAllBytes();
             return mapper.readValue(data, Movie.class);
         } catch (NoSuchKeyException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
@@ -299,7 +341,6 @@ apiVersion: services.cloud.sap.com/v1
 kind: ServiceInstance
 metadata:
   name: object-store-instance
-  namespace: default
 spec:
   serviceOfferingName: objectstore
   servicePlanName: standard
@@ -311,7 +352,6 @@ apiVersion: services.cloud.sap.com/v1
 kind: ServiceBinding
 metadata:
   name: object-store-binding
-  namespace: default
 spec:
   serviceInstanceName: object-store-instance
 ```
@@ -337,7 +377,7 @@ One command builds, pushes, and deploys your app — and exposes it externally:
 
 ```bash
 kyma app push \
-  --name my-prototype \
+  --name movies-rest \
   --code-path . \
   --container-port 8080 \
   --expose \
@@ -408,14 +448,22 @@ The secret is mounted at `/bindings/secret-<NAME>` (read-only), and `SERVICE_BIN
 
 Once your prototype stabilizes, automate deployments on every push using the [`kyma-project/setup-kyma-cli/app-push`](https://github.com/kyma-project/setup-kyma-cli/tree/main/app-push) GitHub Action.
 
-The action wraps the same `kyma app push` command you ran locally — same flags, same behavior:
+The action wraps the same `kyma app push` command you ran locally — same flags, same behavior. The workflow uses OIDC to obtain a kubeconfig at runtime — no long-lived credentials need to be stored as secrets:
 
 ```yaml
-# .github/workflows/deploy.yml
-name: Deploy to Kyma
+# .github/workflows/deploy-movies-api.yml
+name: Deploy movies-api example
+
+permissions:
+  id-token: write
+  contents: read
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+    paths:
+      - 'examples/movies-api/**'
 
 jobs:
   deploy:
@@ -423,18 +471,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: kyma-project/setup-kyma-cli/app-push@v1
+      - name: Setup Kyma CLI
+        uses: kyma-project/setup-kyma-cli@v1.0.1
+
+      - name: Get kubeconfig
+        run: kyma alpha kubeconfig generate --audience kyma-cli --output /tmp/kubeconfig.yaml
+
+      - uses: kyma-project/setup-kyma-cli/app-pushv1.0.1
         with:
-          name: my-prototype
-          code-path: "."
+          name: movies-rest
+          code-path: examples/movies-api
           container-port: "8080"
           expose: "true"
           istio-inject: "true"
           mount-service-binding-secret: object-store-binding
-          kubeconfig: ${{ secrets.KYMA_KUBECONFIG }}
+          kubeconfig: /tmp/kubeconfig.yaml
+          env-from-file: examples/movies-api/.env
 ```
 
-Store your Kyma kubeconfig (base64-encoded) as a GitHub repository secret named `KYMA_KUBECONFIG`. Every push to `main` now triggers a fresh build and deploy — no local tooling required.
+The workflow triggers only when files under `examples/movies-api/` change. Every matching push to `main` triggers a fresh build and deploy — no local tooling required.
 
 ## Summary
 
