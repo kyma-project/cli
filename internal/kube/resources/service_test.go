@@ -140,7 +140,7 @@ func Test_ApplyService(t *testing.T) {
 		// Verify the second apply carried the updated port
 		ports, _, _ := unstructured.NestedSlice(rdClient.ApplyObjs[1].Object, "spec", "ports")
 		require.Len(t, ports, 1)
-		port := ports[0].(map[string]interface{})
+		port := ports[0].(map[string]any)
 		require.Equal(t, int64(9090), port["port"])
 	})
 }
