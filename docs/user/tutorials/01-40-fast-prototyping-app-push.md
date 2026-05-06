@@ -2,9 +2,9 @@
 
 This tutorial shows how to deploy a single-container application to SAP BTP Kyma runtime in one CLI command using `kyma app push`, then evolve it into an automated GitHub Actions CD pipeline. No YAML hand-crafting, no container registry setup, no CI/CD pipeline to configure upfront — just code → deploy → iterate.
 
-It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET) and want a clear path from local development to automated CD — all without writing a Dockerfile.
+It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET) and want a clear path from local development to a working prototype in the SAP BTP context — all without writing a Dockerfile.
 
-> For lightweight event-driven workloads where you want zero container knowledge, see [Fast Prototyping With Serverless Functions](01-50-fast-prototyping-serverless-functions.md).
+> **Note:** For lightweight event-driven workloads where you want zero container knowledge, see [Fast Prototyping With Serverless Functions](01-50-fast-prototyping-serverless-functions.md).
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ It is a good fit when you have an app in any language supported by [Cloud Native
   - **API Gateway** (enabled by default) — external exposure via APIRule
   - **BTP Operator** (enabled by default) — manages BTP service instances and bindings
   - **Docker Registry** ([community module](https://kyma-project.io/external-content/community-modules/docs/user/README.html#quick-install)) — in-cluster container registry for building and storing images (no external registry needed)
-- Your SAP BTP subaccount must be **entitled to use the SAP Object Store service** (service plan `standard`). Add the entitlement in the BTP cockpit under *Entitlements* if not already assigned.
+- Your SAP BTP subaccount must be entitled to use the SAP Object Store service (service plan `standard`). Add the entitlement in the BTP cockpit under **Entitlements** if not already assigned.
 
 ## Step 1: Create Your App
 
@@ -315,7 +315,8 @@ server.port=8080
 
 ## Step 2: Create the BTP Object Store Service Instance and Binding
 
-Create the service instance and binding using the BTP Operator API (provided by the btp-manager module):
+The application needs an Object Store service instance secret mounted into the workload.
+Create the service instance and binding using the ServiceInstance and ServiceBinding custom resources:
 
 ```yaml
 # service-instance.yaml
@@ -351,7 +352,7 @@ Wait for the binding to become ready:
 kubectl get servicebindings object-store-binding -w
 ```
 
-Once the status shows `Ready: True`, a Kubernetes Secret named `object-store-binding` is created in the namespace with the Object Store credentials.
+Once the status shows `Ready: True`, a Kubernetes Secret named `object-store-binding` is created in the namespace with the Object Store credentials. This secret is mounted to the application workload as part of `kyma app push` command execution.
 
 ## Step 3: Deploy
 
@@ -376,65 +377,48 @@ JAVA_TOOL_OPTIONS=-XX:ReservedCodeCacheSize=40M -XX:MaxMetaspaceSize=80M -Xss512
 ```
 
 What happens under the hood:
-1. Source code is built into a container image using [Cloud Native Buildpacks](https://buildpacks.io/) (Paketo)
-2. Image is pushed to the in-cluster docker-registry
-3. A Deployment, Service, and APIRule are created
-4. The BTP Object Store binding secret is mounted at `/bindings/secret-object-store-binding`
-5. `SERVICE_BINDING_ROOT=/bindings` environment variable is set automatically
 
-> No Dockerfile required. Buildpacks detect `pom.xml` and automatically build a Java application with the correct JDK. The same approach works for Node.js, Go, Python, .NET, and more.
+1. Source code is built into a container image using [Cloud Native Buildpacks](https://buildpacks.io/) (Paketo).
+2. Image is pushed to the in-cluster docker-registry.
+3. A Deployment, Service, and APIRule are created.
+4. The BTP Object Store binding secret is mounted at `/bindings/secret-object-store-binding`.
+5. `SERVICE_BINDING_ROOT=/bindings` environment variable is set automatically.
+
+> **Note:** No Dockerfile required. Buildpacks detect `pom.xml` and automatically build a Java application with the correct JDK. The same approach works for Node.js, Go, Python, .NET, and more.
+>
+> If you need more control over the image build, `kyma app push` also supports:
+> - `--dockerfile <path>` — build the image from your own Dockerfile instead of using Buildpacks.
+> - `--image <image>` — skip the build entirely and deploy a pre-built image already pushed to a registry.
 
 ## Step 4: Verify
 
-The command outputs the external URL of your app. Test the CRUD operations:
-
-```bash
-# Health check
-curl https://<YOUR-APP-URL>/health
-# {"status":"UP"}
-
-# Create a movie
-curl -X POST https://<YOUR-APP-URL>/movies \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Blade Runner","year":1982,"director":"Ridley Scott"}'
-# {"id":"1714900000000","title":"Blade Runner","year":1982,"director":"Ridley Scott"}
-
-# List all movies
-curl https://<YOUR-APP-URL>/movies
-
-# Get a movie by ID
-curl https://<YOUR-APP-URL>/movies/<ID>
-
-# Update a movie
-curl -X PUT https://<YOUR-APP-URL>/movies/<ID> \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Blade Runner","year":1982,"director":"Ridley Scott","rating":8.1}'
-
-# Delete a movie
-curl -X DELETE https://<YOUR-APP-URL>/movies/<ID>
-```
-
 The OpenAPI specification is available at `https://<YOUR-APP-URL>/v3/api-docs` and the interactive Swagger UI at `https://<YOUR-APP-URL>/swagger-ui.html`.
+Use the Swagger UI to test the CRUD operations.
 
-## BTP Service Bindings
-
-The `--mount-service-binding-secret` flag mounts a BTP service instance secret into your workload following the [Service Binding Specification](https://servicebinding.io/):
-
-1. Create a BTP service instance (e.g., Object Store) via the BTP Operator module or SAP BTP cockpit
-2. Create a service binding — this produces a Kubernetes Secret with credentials
-3. Pass the secret name to `--mount-service-binding-secret`
-
-The secret is mounted at `/bindings/secret-<NAME>` (read-only), and `SERVICE_BINDING_ROOT=/bindings` is set automatically. Your application reads credentials from the mounted path.
 
 ## Evolution: Move to GitHub Actions CD
 
-Once your prototype stabilizes, automate deployments on every push using the [`kyma-project/setup-kyma-cli/app-push`](https://github.com/kyma-project/setup-kyma-cli/tree/main/app-push) GitHub Action.
+Once your prototype stabilizes, automate deployments.
+Push the code to a GitHub repository, for example `https://github.com/acme/movies-rest`, and authorize the repository's GitHub Actions workflows to apply changes in the target cluster.
 
-The action wraps the same `kyma app push` command you ran locally — same flags, same behavior. The workflow uses OIDC to obtain a kubeconfig at runtime — no long-lived credentials need to be stored as secrets:
+To authorize the repository, run:
+
+```bash
+kyma alpha authorize repository \
+  --client-id my-client-id-for-gh-action \
+  --cluster-wide \
+  --clusterrole edit \
+  --repository acme/movies-rest
+```
+
+> **Note:** Use the most restrictive ClusterRole that satisfies your workflow's needs — `edit` is used here for simplicity, but consider a narrower role. You can also limit authorization to a specific workflow, branch, or environment by passing additional required OIDC claims with `--require-claim`. Run `kyma alpha authorize repository --help` for details.
+
+Now you can automate deployments on every push to the main branch using the [`kyma-project/setup-kyma-cli/app-push`](https://github.com/kyma-project/setup-kyma-cli/tree/main/app-push) GitHub Action.
+
+The action wraps the same `kyma app push` command you ran locally — same flags, same behavior. The workflow obtains cluster access using a GitHub OIDC token — no long-lived credentials are involved. The only values stored as secrets are the API server URL and CA certificate, which are not sensitive credentials but rather connection details needed to reach the cluster.
 
 ```yaml
-# .github/workflows/deploy-movies-api.yml
-name: Deploy movies-api example
+name: Deploy
 
 permissions:
   id-token: write
@@ -444,8 +428,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'examples/movies-api/**'
 
 jobs:
   deploy:
@@ -454,24 +436,32 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Kyma CLI
-        uses: kyma-project/setup-kyma-cli@v1.0.1
+        uses: kyma-project/setup-kyma-cli@v1.1.0
 
-      - name: Get kubeconfig
-        run: kyma alpha kubeconfig generate --audience kyma-cli --output /tmp/kubeconfig.yaml
+      - name: "get kubeconfig"
+        id: oidc
+        uses: kyma-project/setup-kyma-cli/kubeconfig@v1.1.0
+        with:
+          audience: "my-client-id-for-gh-action"
+          api-server-url: "${{ secrets.SERVER }}" # fetch from secure secret store, i.e., Vault or GitHub secrets
+          ca-crt: "${{ secrets.CA_CRT }}" # fetch from secure secret store, i.e., Vault or GitHub secrets
+          id-token-auto-refresh: "true"
 
-      - uses: kyma-project/setup-kyma-cli/app-pushv1.0.1
+      - uses: kyma-project/setup-kyma-cli/app-push@v1.1.0
         with:
           name: movies-rest
-          code-path: examples/movies-api
+          code-path: . # relative path of the source code
           container-port: "8080"
           expose: "true"
           istio-inject: "true"
           mount-service-binding-secret: object-store-binding
-          kubeconfig: /tmp/kubeconfig.yaml
-          env-from-file: examples/movies-api/.env
+          kubeconfig: "${{ steps.oidc.outputs.kubeconfig }}"
+          env-from-file: .env # relative path of the .env file
+          append-output-path: /swagger-ui.html
+
 ```
 
-The workflow triggers only when files under `examples/movies-api/` change. Every matching push to `main` triggers a fresh build and deploy — no local tooling required.
+Every push to `main` triggers a fresh build and deploy — no local tooling required.
 
 ## Summary
 

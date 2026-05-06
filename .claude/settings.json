@@ -6,5 +6,11 @@
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
+  },
+
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ]
   }
 }
