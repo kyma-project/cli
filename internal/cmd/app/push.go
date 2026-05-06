@@ -222,7 +222,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		imagePullSecret = registryConfig.SecretName
 	}
 
-	out.Msgfln("\nCreating deployment %s/%s", cfg.namespace, cfg.name)
+	out.Msgfln("\nApplying deployment %s/%s", cfg.namespace, cfg.name)
 
 	clierr = createDeployment(cfg, client, image, imagePullSecret)
 	if clierr != nil {
@@ -230,10 +230,10 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.containerPort.Value != nil {
-		out.Msgfln("\nCreating service %s/%s", cfg.namespace, cfg.name)
-		err := resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
+		out.Msgfln("\nApplying service %s/%s", cfg.namespace, cfg.name)
+		err := resources.ApplyService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to create Service"))
+			return clierror.Wrap(err, clierror.New("failed to apply Service"))
 		}
 	}
 
@@ -294,7 +294,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 	envs = append(envs, fileEnvs...)
 	envs = append(envs, plainEnvs...)
 
-	err = resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
+	err = resources.ApplyDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
 		Name:                       cfg.name,
 		Namespace:                  cfg.namespace,
 		Image:                      image,
@@ -307,7 +307,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 		Insecure:                   cfg.insecure,
 	})
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Deployment"))
+		return clierror.Wrap(err, clierror.New("failed to apply Deployment"))
 	}
 
 	return nil
