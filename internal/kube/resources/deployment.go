@@ -10,6 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 )
 
@@ -35,6 +37,18 @@ func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploy
 	deployment := buildDeployment(&opts)
 	_, err := client.Static().AppsV1().Deployments(opts.Namespace).Create(ctx, deployment, metav1.CreateOptions{})
 	return err
+}
+
+func ApplyDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
+	deployment := buildDeployment(&opts)
+	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(deployment)
+	if err != nil {
+		return err
+	}
+	u := &unstructured.Unstructured{Object: unstrObj}
+	u.SetAPIVersion("apps/v1")
+	u.SetKind("Deployment")
+	return client.RootlessDynamic().Apply(ctx, u, false)
 }
 
 func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {

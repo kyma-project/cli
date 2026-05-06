@@ -151,6 +151,51 @@ func fixDeploymentCustomEnvs() []corev1.EnvVar {
 	}
 }
 
+func Test_ApplyDeployment(t *testing.T) {
+	t.Parallel()
+	t.Run("apply creates deployment when it does not exist", func(t *testing.T) {
+		rdClient := &kube_fake.RootlessDynamicClient{}
+		kubeClient := &kube_fake.KubeClient{
+			TestRootlessDynamicInterface: rdClient,
+		}
+
+		err := ApplyDeployment(context.Background(), kubeClient, CreateDeploymentOpts{
+			Name:      "test-app",
+			Namespace: "default",
+			Image:     "test:v1",
+		})
+		require.NoError(t, err)
+		require.Len(t, rdClient.ApplyObjs, 1)
+		require.Equal(t, "apps/v1", rdClient.ApplyObjs[0].GetAPIVersion())
+		require.Equal(t, "Deployment", rdClient.ApplyObjs[0].GetKind())
+		require.Equal(t, "test-app", rdClient.ApplyObjs[0].GetName())
+	})
+
+	t.Run("apply updates deployment when it already exists", func(t *testing.T) {
+		rdClient := &kube_fake.RootlessDynamicClient{}
+		kubeClient := &kube_fake.KubeClient{
+			TestRootlessDynamicInterface: rdClient,
+		}
+
+		// First apply
+		err := ApplyDeployment(context.Background(), kubeClient, CreateDeploymentOpts{
+			Name:      "test-app",
+			Namespace: "default",
+			Image:     "test:v1",
+		})
+		require.NoError(t, err)
+
+		// Second apply with different image — no error
+		err = ApplyDeployment(context.Background(), kubeClient, CreateDeploymentOpts{
+			Name:      "test-app",
+			Namespace: "default",
+			Image:     "test:v2",
+		})
+		require.NoError(t, err)
+		require.Len(t, rdClient.ApplyObjs, 2)
+	})
+}
+
 func fixDeployment() *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
