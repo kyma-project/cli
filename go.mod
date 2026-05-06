@@ -5,7 +5,7 @@ go 1.25.9
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/buildpacks/pack v0.40.3
+	github.com/buildpacks/pack v0.40.4
 	github.com/docker/cli v29.4.1+incompatible
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.7.0
