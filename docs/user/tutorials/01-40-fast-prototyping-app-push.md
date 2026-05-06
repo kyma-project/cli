@@ -463,6 +463,8 @@ jobs:
 
 Every push to `main` triggers a fresh build and deploy — no local tooling required.
 
+![GitHub Actions deploy workflow summary showing a successful deploy job and the application URL](../../assets/app-push-gh-action-summary.png)
+
 ## Summary
 
 With `kyma app push` you go from source code to a running, externally accessible application with BTP service bindings in a single command. The same deployment can then be moved into a GitHub Actions workflow with zero code changes — just copy the flags into the action inputs.
