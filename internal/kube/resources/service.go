@@ -16,12 +16,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func CreateService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
-	service := buildService(name, namespace, port)
-	_, err := client.Static().CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
-	return err
-}
-
 func ApplyService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
 	service := buildService(name, namespace, port)
 	service.TypeMeta = metav1.TypeMeta{

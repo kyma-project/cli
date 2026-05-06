@@ -33,12 +33,6 @@ type CreateDeploymentOpts struct {
 	Insecure                   bool
 }
 
-func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
-	deployment := buildDeployment(&opts)
-	_, err := client.Static().AppsV1().Deployments(opts.Namespace).Create(ctx, deployment, metav1.CreateOptions{})
-	return err
-}
-
 func ApplyDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
 	deployment := buildDeployment(&opts)
 	deployment.TypeMeta = metav1.TypeMeta{

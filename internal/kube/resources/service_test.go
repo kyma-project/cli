@@ -8,37 +8,8 @@ import (
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/istio"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	k8s_fake "k8s.io/client-go/kubernetes/fake"
 )
-
-func Test_CreateService(t *testing.T) {
-	t.Parallel()
-	t.Run("create service", func(t *testing.T) {
-		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
-		}
-
-		err := CreateService(context.Background(), kubeClient, "test-svc", "default", 8080)
-		require.NoError(t, err)
-
-		svc, err := kubeClient.Static().CoreV1().Services("default").Get(context.Background(), "test-svc", metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, fixService(), svc)
-	})
-
-	t.Run("service already exists error", func(t *testing.T) {
-		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixService()),
-		}
-
-		err := CreateService(context.Background(), kubeClient, "test-svc", "default", 8080)
-		require.ErrorContains(t, err, `services "test-svc" already exists`)
-	})
-}
 
 func Test_CreateAPIRule(t *testing.T) {
 	t.Run("create apiRule", func(t *testing.T) {
@@ -143,28 +114,4 @@ func Test_ApplyService(t *testing.T) {
 		port := ports[0].(map[string]any)
 		require.Equal(t, int64(9090), port["port"])
 	})
-}
-
-func fixService() *corev1.Service {
-	return &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-svc",
-			Namespace: "default",
-			Labels: map[string]string{
-				"app.kubernetes.io/name":       "test-svc",
-				"app.kubernetes.io/created-by": "kyma-cli",
-			},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{
-				"app": "test-svc",
-			},
-			Ports: []corev1.ServicePort{
-				{
-					Port:       8080,
-					TargetPort: intstr.FromInt32(8080),
-				},
-			},
-		},
-	}
 }
