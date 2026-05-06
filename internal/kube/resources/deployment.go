@@ -41,14 +41,15 @@ func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploy
 
 func ApplyDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
 	deployment := buildDeployment(&opts)
+	deployment.TypeMeta = metav1.TypeMeta{
+		APIVersion: "apps/v1",
+		Kind:       "Deployment",
+	}
 	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(deployment)
 	if err != nil {
 		return err
 	}
-	u := &unstructured.Unstructured{Object: unstrObj}
-	u.SetAPIVersion("apps/v1")
-	u.SetKind("Deployment")
-	return client.RootlessDynamic().Apply(ctx, u, false)
+	return client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: unstrObj}, false)
 }
 
 func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
@@ -91,7 +92,8 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: opts.Name,
+			Name:      opts.Name,
+			Namespace: opts.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       opts.Name,
 				"app.kubernetes.io/created-by": "kyma-cli",

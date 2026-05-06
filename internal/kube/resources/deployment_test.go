@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/utils/ptr"
 )
@@ -169,6 +170,7 @@ func Test_ApplyDeployment(t *testing.T) {
 		require.Equal(t, "apps/v1", rdClient.ApplyObjs[0].GetAPIVersion())
 		require.Equal(t, "Deployment", rdClient.ApplyObjs[0].GetKind())
 		require.Equal(t, "test-app", rdClient.ApplyObjs[0].GetName())
+		require.Equal(t, "default", rdClient.ApplyObjs[0].GetNamespace())
 	})
 
 	t.Run("apply updates deployment when it already exists", func(t *testing.T) {
@@ -193,6 +195,12 @@ func Test_ApplyDeployment(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, rdClient.ApplyObjs, 2)
+
+		// Verify the second apply carried the updated image
+		containers, _, _ := unstructured.NestedSlice(rdClient.ApplyObjs[1].Object, "spec", "template", "spec", "containers")
+		require.Len(t, containers, 1)
+		container := containers[0].(map[string]interface{})
+		require.Equal(t, "test:v2", container["image"])
 	})
 }
 
