@@ -43,6 +43,7 @@ type appPushConfig struct {
 	mountServiceBindingSecrets types.ServiceBindingSecretArray
 	quiet                      bool
 	insecure                   bool
+	imageTag                   string
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -110,6 +111,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 				flags.MarkExactlyOneRequired("image", "dockerfile", "code-path"),
 				flags.MarkExclusive("dockerfile-context", "image", "code-path"),
 				flags.MarkExclusive("dockerfile-build-arg", "image", "code-path"),
+				flags.MarkExclusive("image-tag", "image"),
 				flags.MarkPrerequisites("expose", "container-port"),
 				flags.MarkPrerequisites("image-pull-secret", "image"),
 			))
@@ -132,6 +134,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
 	cmd.Flags().StringVar(&config.imagePullSecretName, "image-pull-secret", "", "Name of the Kubernetes Secret with credentials to pull the image")
+	cmd.Flags().StringVar(&config.imageTag, "image-tag", "", "Custom tag for the built image (e.g. a Git commit SHA). Applies only to --code-path and --dockerfile builds.")
 
 	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the Dockerfile")
