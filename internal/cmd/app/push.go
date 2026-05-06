@@ -332,9 +332,9 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 
 func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig *registry.InternalRegistryConfig) (string, clierror.Error) {
 	out.Msgln("Building image\n")
-	imageName, err := buildImage(cfg, cfg.imageTag)
+	imageName, err := buildImage(cfg)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to build image from Dockerfile"))
+		return "", clierror.Wrap(err, clierror.New("failed to build image"))
 	}
 
 	pushFunc := registry.NewPushWithPortforwardFunc(
@@ -377,8 +377,8 @@ func resolveImageTag(imageTag string) string {
 	return time.Now().Format("2006-01-02_15-04-05")
 }
 
-func buildImage(cfg *appPushConfig, imageTag string) (string, error) {
-	imageName := fmt.Sprintf("%s:%s", cfg.name, resolveImageTag(imageTag))
+func buildImage(cfg *appPushConfig) (string, error) {
+	imageName := fmt.Sprintf("%s:%s", cfg.name, resolveImageTag(cfg.imageTag))
 
 	var err error
 	if cfg.packAppPath != "" {

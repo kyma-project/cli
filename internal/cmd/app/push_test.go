@@ -94,7 +94,7 @@ func Test_appPushConfig_complete_imageTag(t *testing.T) {
 	}
 }
 
-func Test_buildImage_tagSelection(t *testing.T) {
+func Test_resolveImageTag(t *testing.T) {
 	t.Run("provided tag is used in image name", func(t *testing.T) {
 		imageTag := "abc1234"
 		resolvedTag := resolveImageTag(imageTag)
