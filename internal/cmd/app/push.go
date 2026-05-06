@@ -222,7 +222,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		imagePullSecret = registryConfig.SecretName
 	}
 
-	out.Msgfln("\nApplying deployment %s/%s", cfg.namespace, cfg.name)
+	out.Msgfln("\nApplying Deployment %s/%s", cfg.namespace, cfg.name)
 
 	clierr = createDeployment(cfg, client, image, imagePullSecret)
 	if clierr != nil {
@@ -230,7 +230,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.containerPort.Value != nil {
-		out.Msgfln("\nApplying service %s/%s", cfg.namespace, cfg.name)
+		out.Msgfln("\nApplying Service %s/%s", cfg.namespace, cfg.name)
 		err := resources.ApplyService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to apply Service"))
