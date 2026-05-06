@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var imageTagRegexp = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$`)
+
 type appPushConfig struct {
 	*cmdcommon.KymaConfig
 
@@ -183,8 +185,7 @@ func (apc *appPushConfig) complete() clierror.Error {
 	}
 
 	if apc.imageTag != "" {
-		validTag := regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.\-]{0,127}$`)
-		if !validTag.MatchString(apc.imageTag) {
+		if !imageTagRegexp.MatchString(apc.imageTag) {
 			return clierror.New(
 				fmt.Sprintf("invalid image tag %q", apc.imageTag),
 				"tag must start with a letter, digit, or underscore",
