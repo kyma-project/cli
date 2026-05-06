@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -178,6 +179,18 @@ func (apc *appPushConfig) complete() clierror.Error {
 				return clierror.Wrap(err, clierror.New("failed to get current working directory",
 					"Provide the path to the Dockerfile context using --dockerfile-context flag"))
 			}
+		}
+	}
+
+	if apc.imageTag != "" {
+		validTag := regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.\-]{0,127}$`)
+		if !validTag.MatchString(apc.imageTag) {
+			return clierror.New(
+				fmt.Sprintf("invalid image tag %q", apc.imageTag),
+				"tag must start with a letter, digit, or underscore",
+				"tag may only contain letters, digits, underscores, dots, and hyphens",
+				"tag must be at most 128 characters",
+			)
 		}
 	}
 
