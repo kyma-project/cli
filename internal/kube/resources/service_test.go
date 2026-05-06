@@ -105,6 +105,46 @@ func fixAPIRule(apiRuleName, namespace, host string, port uint32) unstructured.U
 	}
 }
 
+func Test_ApplyService(t *testing.T) {
+	t.Parallel()
+	t.Run("apply creates service when it does not exist", func(t *testing.T) {
+		rdClient := &kube_fake.RootlessDynamicClient{}
+		kubeClient := &kube_fake.KubeClient{
+			TestRootlessDynamicInterface: rdClient,
+		}
+
+		err := ApplyService(context.Background(), kubeClient, "test-svc", "default", 8080)
+		require.NoError(t, err)
+		require.Len(t, rdClient.ApplyObjs, 1)
+		require.Equal(t, "v1", rdClient.ApplyObjs[0].GetAPIVersion())
+		require.Equal(t, "Service", rdClient.ApplyObjs[0].GetKind())
+		require.Equal(t, "test-svc", rdClient.ApplyObjs[0].GetName())
+		require.Equal(t, "default", rdClient.ApplyObjs[0].GetNamespace())
+	})
+
+	t.Run("apply updates service when it already exists", func(t *testing.T) {
+		rdClient := &kube_fake.RootlessDynamicClient{}
+		kubeClient := &kube_fake.KubeClient{
+			TestRootlessDynamicInterface: rdClient,
+		}
+
+		// First apply
+		err := ApplyService(context.Background(), kubeClient, "test-svc", "default", 8080)
+		require.NoError(t, err)
+
+		// Second apply with different port — no error
+		err = ApplyService(context.Background(), kubeClient, "test-svc", "default", 9090)
+		require.NoError(t, err)
+		require.Len(t, rdClient.ApplyObjs, 2)
+
+		// Verify the second apply carried the updated port
+		ports, _, _ := unstructured.NestedSlice(rdClient.ApplyObjs[1].Object, "spec", "ports")
+		require.Len(t, ports, 1)
+		port := ports[0].(map[string]interface{})
+		require.Equal(t, int64(9090), port["port"])
+	})
+}
+
 func fixService() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

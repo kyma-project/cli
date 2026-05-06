@@ -22,6 +22,19 @@ func CreateService(ctx context.Context, client kube.Client, name, namespace stri
 	return err
 }
 
+func ApplyService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
+	service := buildService(name, namespace, port)
+	service.TypeMeta = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "Service",
+	}
+	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(service)
+	if err != nil {
+		return err
+	}
+	return client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: unstrObj}, false)
+}
+
 func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, namespace, host string, port uint32) error {
 	apirule := buildAPIRule(name, namespace, host, port)
 	uAPIRule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&apirule)
