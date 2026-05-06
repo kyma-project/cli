@@ -27,6 +27,7 @@ type appPushConfig struct {
 	namespace                  string
 	image                      string
 	imagePullSecretName        string
+	imageTag                   string
 	dockerfilePath             string
 	dockerfileSrcContext       string
 	dockerfileArgs             types.Map
@@ -43,7 +44,6 @@ type appPushConfig struct {
 	mountServiceBindingSecrets types.ServiceBindingSecretArray
 	quiet                      bool
 	insecure                   bool
-	imageTag                   string
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
