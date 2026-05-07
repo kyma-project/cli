@@ -26,7 +26,6 @@ jobs:
         if: steps.download.outcome == 'failure'
         run: |
           echo "Artifact not found — workflow may have been cancelled. Skipping comment."
-          exit 0
         shell: bash
 
       - name: Read PR number
@@ -42,13 +41,12 @@ jobs:
         shell: bash
 
       - name: Post or edit PR comment
-        if: steps.download.outcome == 'success'
+        if: steps.download.outcome == 'success' && steps.pr.outcome == 'success'
         run: |
-          set +e
           FLAGS="--body-file comment-body.md"
 
           LAST_COMMENT_ID=$(gh pr view "${{ steps.pr.outputs.number }}" -R kyma-project/cli --json "comments" \
-            | jq --raw-output '.comments[] | select(.author.login=="github-actions") | .id' \
+            | jq --raw-output '.comments[] | select(.author.login=="github-actions") | .databaseId' \
             | tail -1)
 
           if [ -n "$LAST_COMMENT_ID" ]; then
