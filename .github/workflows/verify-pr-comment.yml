@@ -46,7 +46,7 @@ jobs:
           FLAGS="--body-file comment-body.md"
 
           LAST_COMMENT_ID=$(gh pr view "${{ steps.pr.outputs.number }}" -R kyma-project/cli --json "comments" \
-            | jq --raw-output '.comments[] | select(.author.login=="github-actions") | .databaseId' \
+            | jq --raw-output '.comments[] | select(.author.login=="github-actions[bot]") | .databaseId' \
             | tail -1)
 
           if [ -n "$LAST_COMMENT_ID" ]; then
