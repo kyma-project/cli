@@ -66,11 +66,26 @@ jobs:
 
           if [ -n "$FAIL_REASON" ]; then
             echo "Standards violation detected"
-            MSG_TMPL=$(cat .github/actions/verify-standards-violation/violation-message_tmpl.md)
-            eval "echo -e \"${MSG_TMPL}\"" > "${ARTIFACT_DIR}/comment-body.md"
+            cat > "${ARTIFACT_DIR}/comment-body.md" << EOF
+          # ⚠️ Proposed changes verification failed
+
+          This message means some of your changes may interrupt repository standards.
+
+          Follow these requirements:
+
+          ${FAIL_REASON}
+
+          Find more detailed information in the \`verify-pr-code / standards\` action.
+          EOF
           else
             echo "No standards violation detected"
-            cp .github/actions/verify-standards-violation/no-violation-message.md "${ARTIFACT_DIR}/comment-body.md"
+            cat > "${ARTIFACT_DIR}/comment-body.md" << 'EOF'
+          # ✅ Proposed changes verification passed
+
+          This pull request comes with up-to-date documentation and no illegal standard output usages.
+
+          Find more detailed information in the `verify-pr-code / standards` action.
+          EOF
           fi
 
           echo "${{ github.event.pull_request.number }}" > "${ARTIFACT_DIR}/pr_number.txt"
