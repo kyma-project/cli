@@ -6,4 +6,4 @@ Follow these requirements:
 
 ${FAIL_REASON}
 
-Find more detailed information in the \`verify / standards (pull_request_target)\` action.
+Find more detailed information in the `verify-pr-code / standards` action.
