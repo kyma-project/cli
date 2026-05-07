@@ -63,6 +63,10 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
   # The application will be built using Cloud Native Buildpacks:
   kyma app push --name my-app --code-path .
 
+  # Push with a custom image tag (e.g. a Git commit SHA for CI/CD traceability):
+  kyma app push --name my-app --code-path . --image-tag abc1234
+  kyma app push --name my-app --dockerfile ./Dockerfile --image-tag $GITHUB_SHA
+
   # Push an application based on a Dockerfile located in the current directory:
   kyma app push --name my-app --dockerfile ./Dockerfile --dockerfile-context .
 
