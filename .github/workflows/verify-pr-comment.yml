@@ -1,0 +1,62 @@
+name: verify-pr-comment
+
+on:
+  workflow_run:
+    workflows: ["verify-pr-code"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download artifact
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: standards-check-result
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Check artifact downloaded
+        if: steps.download.outcome == 'failure'
+        run: |
+          echo "Artifact not found — workflow may have been cancelled. Skipping comment."
+          exit 0
+        shell: bash
+
+      - name: Read PR number
+        if: steps.download.outcome == 'success'
+        id: pr
+        run: |
+          PR_NUMBER=$(cat pr_number.txt 2>/dev/null | tr -d '[:space:]')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "pr_number.txt is empty or missing"
+            exit 1
+          fi
+          echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Post or edit PR comment
+        if: steps.download.outcome == 'success'
+        run: |
+          set +e
+          FLAGS="--body-file comment-body.md"
+
+          LAST_COMMENT_ID=$(gh pr view "${{ steps.pr.outputs.number }}" -R kyma-project/cli --json "comments" \
+            | jq --raw-output '.comments[] | select(.author.login=="github-actions") | .id' \
+            | tail -1)
+
+          if [ -n "$LAST_COMMENT_ID" ]; then
+            echo "Editing last comment with ID: ${LAST_COMMENT_ID}"
+            FLAGS="${FLAGS} --edit-last"
+          fi
+
+          gh pr comment "${{ steps.pr.outputs.number }}" -R kyma-project/cli $FLAGS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
