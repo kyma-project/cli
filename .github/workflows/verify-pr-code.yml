@@ -42,7 +42,7 @@ jobs:
         run: |
           set +e
           echo "Verifying code standard output usage..."
-          CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
+          CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' --exclude-dir=out ./internal)
 
           if [ -n "$CODE_STD_OUT_USAGE" ]; then
             cat >> "${REASON_FILE}" << EOF
@@ -67,15 +67,16 @@ jobs:
           if [ -n "$FAIL_REASON" ]; then
             echo "Standards violation detected"
             MSG_TMPL=$(cat .github/actions/verify-standards-violation/violation-message_tmpl.md)
-            eval "echo -e \"${MSG_TMPL}\"" > "${RUNNER_TEMP}/comment-body.md"
+            eval "echo -e \"${MSG_TMPL}\"" > "${ARTIFACT_DIR}/comment-body.md"
           else
             echo "No standards violation detected"
-            cp .github/actions/verify-standards-violation/no-violation-message.md "${RUNNER_TEMP}/comment-body.md"
+            cp .github/actions/verify-standards-violation/no-violation-message.md "${ARTIFACT_DIR}/comment-body.md"
           fi
 
-          echo "${{ github.event.pull_request.number }}" > "${RUNNER_TEMP}/pr_number.txt"
+          echo "${{ github.event.pull_request.number }}" > "${ARTIFACT_DIR}/pr_number.txt"
         env:
           REASON_FILE: ${{ runner.temp }}/failed_reason.txt
+          ARTIFACT_DIR: ${{ runner.temp }}
         shell: bash
 
       - name: Upload artifact
