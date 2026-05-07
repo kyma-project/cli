@@ -6,75 +6,75 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_appPushConfig_complete_imageTag(t *testing.T) {
+func Test_appPushConfig_complete_buildTag(t *testing.T) {
 	tests := []struct {
 		name     string
-		imageTag string
+		buildTag string
 		wantErr  bool
 	}{
 		{
 			name:     "empty tag skips validation - no error",
-			imageTag: "",
+			buildTag: "",
 			wantErr:  false,
 		},
 		{
 			name:     "valid commit sha",
-			imageTag: "abc1234def5678",
+			buildTag: "abc1234def5678",
 			wantErr:  false,
 		},
 		{
 			name:     "valid semver",
-			imageTag: "1.0.0",
+			buildTag: "1.0.0",
 			wantErr:  false,
 		},
 		{
 			name:     "valid underscore prefix",
-			imageTag: "_build",
+			buildTag: "_build",
 			wantErr:  false,
 		},
 		{
 			name:     "valid single char",
-			imageTag: "1",
+			buildTag: "1",
 			wantErr:  false,
 		},
 		{
 			name:     "valid with dots and dashes",
-			imageTag: "v1.2.3-beta.1",
+			buildTag: "v1.2.3-beta.1",
 			wantErr:  false,
 		},
 		{
 			name:     "invalid: contains space",
-			imageTag: "my tag",
+			buildTag: "my tag",
 			wantErr:  true,
 		},
 		{
 			name:     "invalid: contains colon",
-			imageTag: "my:tag",
+			buildTag: "my:tag",
 			wantErr:  true,
 		},
 		{
 			name:     "invalid: contains slash",
-			imageTag: "my/tag",
+			buildTag: "my/tag",
 			wantErr:  true,
 		},
 		{
 			name:     "invalid: contains @",
-			imageTag: "my@tag",
+			buildTag: "my@tag",
 			wantErr:  true,
 		},
 		{
 			name:     "invalid: starts with dot",
-			imageTag: ".mytag",
+			buildTag: ".mytag",
 			wantErr:  true,
 		},
 		{
 			name:     "invalid: starts with dash",
-			imageTag: "-mytag",
+			buildTag: "-mytag",
 			wantErr:  true,
 		},
 		{
 			name:     "invalid: exceeds 128 chars",
-			imageTag: "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+			buildTag: "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
 			wantErr:  true,
 		},
 	}
@@ -82,13 +82,13 @@ func Test_appPushConfig_complete_imageTag(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &appPushConfig{
-				imageTag: tt.imageTag,
+				buildTag: tt.buildTag,
 			}
 			err := cfg.complete()
 			if tt.wantErr {
-				require.NotNil(t, err, "expected validation error for imageTag=%q", tt.imageTag)
+				require.NotNil(t, err, "expected validation error for buildTag=%q", tt.buildTag)
 			} else {
-				require.Nil(t, err, "expected no error for imageTag=%q", tt.imageTag)
+				require.Nil(t, err, "expected no error for buildTag=%q", tt.buildTag)
 			}
 		})
 	}
