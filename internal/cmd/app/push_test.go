@@ -8,9 +8,9 @@ import (
 
 func Test_appPushConfig_complete_imageTag(t *testing.T) {
 	tests := []struct {
-		name    string
+		name     string
 		imageTag string
-		wantErr bool
+		wantErr  bool
 	}{
 		{
 			name:     "empty tag skips validation - no error",
