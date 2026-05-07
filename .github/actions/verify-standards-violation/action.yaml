@@ -1,10 +1,5 @@
 name: 'Standards Violation Info'
-description: 'Action for verifying and adding comment to current PR about violated standards'
-
-inputs:
-  github_token:
-    description: 'GitHub token'
-    required: true
+description: 'Action for verifying PR code against repository standards'
 
 runs:
   using: 'composite'
@@ -13,15 +8,12 @@ runs:
       if: always()
       run: |
         set -e
-
-        FAIL_REASON=""
-
         echo "Verifying documentation..."
         make docs 1>/dev/null
         DOCS_CHANGES=$(git status --porcelain)
-        
+
         if [ -n "$DOCS_CHANGES" ]; then
-          cat >> ${REASON_FILE} << EOF
+          cat >> "${REASON_FILE}" << EOF
         * ❌ Documentation is out of date:
           \`\`\`bash
         $(echo -e "$DOCS_CHANGES" | sed 's/^/  /')
@@ -39,10 +31,10 @@ runs:
       run: |
         set +e
         echo "Verifying code standard output usage..."
-        CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
-        
+        CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' --exclude-dir=out ./internal)
+
         if [ -n "$CODE_STD_OUT_USAGE" ]; then
-          cat >> ${REASON_FILE} << EOF
+          cat >> "${REASON_FILE}" << EOF
         * ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:
           \`\`\`bash
         $(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')
@@ -52,38 +44,5 @@ runs:
           exit 1
         fi
       env:
-        REASON_FILE: ${{ runner.temp }}/failed_reason.txt
-      shell: bash
-
-    - name: Comment
-      if: always()
-      run: |
-        set +e
-        FLAGS=""
-
-        # Determine which message to post based on validation result
-        FAIL_REASON=$(cat ${REASON_FILE})
-        if [ -n "$FAIL_REASON" ]; then
-          echo "Standards violation detected"
-          TMP_FILE=$(mktemp)
-          MSG_TMPL=$(cat .github/actions/verify-standards-violation/violation-message_tmpl.md)
-          eval "echo -e \"${MSG_TMPL}\"" > $TMP_FILE
-          FLAGS="${FLAGS} --body-file ${TMP_FILE}"
-        else
-          echo "No standards violation detected"
-          FLAGS="${FLAGS} --body-file .github/actions/verify-standards-violation/no-violation-message.md"
-        fi
-
-        # Check for existing comment by github-actions and edit if found
-        LAST_COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} -R kyma-project/cli --json "comments" \
-          | jq --raw-output '.comments[] | select(.author.login=="github-actions") | .id')
-        if [ -n "$LAST_COMMENT_ID" ]; then
-          echo "Editing last comment with ID: $LAST_COMMENT_ID"
-          FLAGS="${FLAGS} --edit-last"
-        fi
-
-        gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli $FLAGS
-      env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
         REASON_FILE: ${{ runner.temp }}/failed_reason.txt
       shell: bash
