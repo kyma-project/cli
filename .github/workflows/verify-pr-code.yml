@@ -1,0 +1,104 @@
+name: verify-pr-code
+
+on:
+  pull_request:
+    types: [ opened, edited, synchronize, reopened, ready_for_review ]
+
+permissions:
+  contents: read
+
+jobs:
+  standards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-go
+
+      - name: Verify Docs
+        if: always()
+        run: |
+          set -e
+          echo "Verifying documentation..."
+          make docs 1>/dev/null
+          DOCS_CHANGES=$(git status --porcelain)
+
+          if [ -n "$DOCS_CHANGES" ]; then
+            cat >> "${REASON_FILE}" << EOF
+          * ❌ Documentation is out of date:
+            \`\`\`bash
+          $(echo -e "$DOCS_CHANGES" | sed 's/^/  /')
+            \`\`\`
+            Please run \`make docs\` and commit the changes.
+          EOF
+            exit 1
+          fi
+        env:
+          REASON_FILE: ${{ runner.temp }}/failed_reason.txt
+        shell: bash
+
+      - name: Verify Code Standards
+        if: always()
+        run: |
+          set +e
+          echo "Verifying code standard output usage..."
+          CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' --exclude-dir=out ./internal)
+
+          if [ -n "$CODE_STD_OUT_USAGE" ]; then
+            cat >> "${REASON_FILE}" << EOF
+          * ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:
+            \`\`\`bash
+          $(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')
+            \`\`\`
+            Please use the \`internal/out\` package for output handling instead.
+          EOF
+            exit 1
+          fi
+        env:
+          REASON_FILE: ${{ runner.temp }}/failed_reason.txt
+        shell: bash
+
+      - name: Prepare comment artifact
+        if: always()
+        run: |
+          set +e
+          FAIL_REASON=$(cat "${REASON_FILE}" 2>/dev/null || echo "")
+
+          if [ -n "$FAIL_REASON" ]; then
+            echo "Standards violation detected"
+            cat > "${ARTIFACT_DIR}/comment-body.md" << EOF
+          # ⚠️ Proposed changes verification failed
+
+          This message means some of your changes may interrupt repository standards.
+
+          Follow these requirements:
+
+          ${FAIL_REASON}
+
+          Find more detailed information in the \`verify-pr-code / standards\` action.
+          EOF
+          else
+            echo "No standards violation detected"
+            cat > "${ARTIFACT_DIR}/comment-body.md" << 'EOF'
+          # ✅ Proposed changes verification passed
+
+          This pull request comes with up-to-date documentation and no illegal standard output usages.
+
+          Find more detailed information in the `verify-pr-code / standards` action.
+          EOF
+          fi
+
+          echo "${{ github.event.pull_request.number }}" > "${ARTIFACT_DIR}/pr_number.txt"
+        env:
+          REASON_FILE: ${{ runner.temp }}/failed_reason.txt
+          ARTIFACT_DIR: ${{ runner.temp }}
+        shell: bash
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: standards-check-result
+          path: |
+            ${{ runner.temp }}/comment-body.md
+            ${{ runner.temp }}/pr_number.txt
