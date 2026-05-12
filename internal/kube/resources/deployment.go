@@ -209,16 +209,18 @@ func buildSecurityContext(insecure bool) (*corev1.PodSecurityContext, *corev1.Se
 		RunAsNonRoot:             ptr.To(true),
 		Capabilities: &corev1.Capabilities{
 			Drop: []corev1.Capability{
-				"All",
+				"ALL",
 			},
 		},
 		ReadOnlyRootFilesystem: ptr.To(true),
 	}
 
 	podSecCtx := &corev1.PodSecurityContext{
-		RunAsUser:    ptr.To(int64(1000)),
-		RunAsGroup:   ptr.To(int64(3000)),
-		RunAsNonRoot: ptr.To(true),
+		RunAsUser:           ptr.To(int64(1000)),
+		RunAsGroup:          ptr.To(int64(1000)),
+		FSGroup:             ptr.To(int64(1000)),
+		SupplementalGroups:  []int64{1000},
+		RunAsNonRoot:        ptr.To(true),
 		SeccompProfile: &corev1.SeccompProfile{
 			Type: corev1.SeccompProfileTypeRuntimeDefault,
 		},
