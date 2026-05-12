@@ -10,6 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 )
 
@@ -31,10 +33,13 @@ type CreateDeploymentOpts struct {
 	Insecure                   bool
 }
 
-func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
+func ApplyDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
 	deployment := buildDeployment(&opts)
-	_, err := client.Static().AppsV1().Deployments(opts.Namespace).Create(ctx, deployment, metav1.CreateOptions{})
-	return err
+	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(deployment)
+	if err != nil {
+		return err
+	}
+	return client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: unstrObj}, false)
 }
 
 func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
@@ -76,8 +81,13 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 	}
 
 	deployment := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: opts.Name,
+			Name:      opts.Name,
+			Namespace: opts.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       opts.Name,
 				"app.kubernetes.io/created-by": "kyma-cli",
