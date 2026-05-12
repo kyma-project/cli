@@ -17,6 +17,10 @@ kyma app push [flags]
   # The application will be built using Cloud Native Buildpacks:
   kyma app push --name my-app --code-path .
 
+  # Push with a custom image tag (e.g. a Git commit SHA for CI/CD traceability):
+  kyma app push --name my-app --code-path . --build-tag abc1234
+  kyma app push --name my-app --dockerfile ./Dockerfile --build-tag $GITHUB_SHA
+
   # Push an application based on a Dockerfile located in the current directory:
   kyma app push --name my-app --dockerfile ./Dockerfile --dockerfile-context .
 
@@ -65,6 +69,7 @@ kyma app push [flags]
 ## Flags
 
 ```text
+      --build-tag string                                      Custom tag for the built image (e.g. a Git commit SHA). Applies only to --code-path and --dockerfile builds.
       --code-path string                                      Path to the application source code directory
       --container-port int                                    Port on which the application is exposed
       --dockerfile string                                     Path to the Dockerfile
