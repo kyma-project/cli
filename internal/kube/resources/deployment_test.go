@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 )
 
 func Test_BuildDeployment(t *testing.T) {
@@ -52,6 +53,49 @@ func Test_BuildDeployment(t *testing.T) {
 				}
 			}
 			require.True(t, found, "SERVICE_BINDING_ROOT should be present when service binding secrets are used")
+		})
+	})
+
+	t.Run("security context", func(t *testing.T) {
+		t.Run("secure mode sets expected pod and container security context", func(t *testing.T) {
+			deployment := buildDeployment(&CreateDeploymentOpts{
+				Name:      "test-app",
+				Namespace: "default",
+				Image:     "test:image",
+				Insecure:  false,
+			})
+
+			podSec := deployment.Spec.Template.Spec.SecurityContext
+			require.NotNil(t, podSec)
+			require.Equal(t, ptr.To(int64(1000)), podSec.RunAsUser)
+			require.Equal(t, ptr.To(int64(1000)), podSec.RunAsGroup)
+			require.Equal(t, ptr.To(int64(1000)), podSec.FSGroup)
+			require.Equal(t, []int64{1000}, podSec.SupplementalGroups)
+			require.Equal(t, ptr.To(true), podSec.RunAsNonRoot)
+			require.NotNil(t, podSec.SeccompProfile)
+			require.Equal(t, corev1.SeccompProfileTypeRuntimeDefault, podSec.SeccompProfile.Type)
+			require.NotNil(t, podSec.AppArmorProfile)
+			require.Equal(t, corev1.AppArmorProfileTypeRuntimeDefault, podSec.AppArmorProfile.Type)
+
+			ctrSec := deployment.Spec.Template.Spec.Containers[0].SecurityContext
+			require.NotNil(t, ctrSec)
+			require.Equal(t, ptr.To(false), ctrSec.Privileged)
+			require.Equal(t, ptr.To(false), ctrSec.AllowPrivilegeEscalation)
+			require.Equal(t, ptr.To(true), ctrSec.RunAsNonRoot)
+			require.Equal(t, ptr.To(true), ctrSec.ReadOnlyRootFilesystem)
+			require.Equal(t, []corev1.Capability{"ALL"}, ctrSec.Capabilities.Drop)
+		})
+
+		t.Run("insecure mode sets no security context", func(t *testing.T) {
+			deployment := buildDeployment(&CreateDeploymentOpts{
+				Name:      "test-app",
+				Namespace: "default",
+				Image:     "test:image",
+				Insecure:  true,
+			})
+
+			require.Nil(t, deployment.Spec.Template.Spec.SecurityContext)
+			require.Nil(t, deployment.Spec.Template.Spec.Containers[0].SecurityContext)
 		})
 	})
 }
