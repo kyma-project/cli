@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -20,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var buildTagRegexp = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$`)
+
 type appPushConfig struct {
 	*cmdcommon.KymaConfig
 
@@ -27,6 +30,7 @@ type appPushConfig struct {
 	namespace                  string
 	image                      string
 	imagePullSecretName        string
+	buildTag                   string
 	dockerfilePath             string
 	dockerfileSrcContext       string
 	dockerfileArgs             types.Map
@@ -58,6 +62,10 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Example: `  ## Push an application based on its source code located in the current directory:
   # The application will be built using Cloud Native Buildpacks:
   kyma app push --name my-app --code-path .
+
+  # Push with a custom image tag (e.g. a Git commit SHA for CI/CD traceability):
+  kyma app push --name my-app --code-path . --build-tag abc1234
+  kyma app push --name my-app --dockerfile ./Dockerfile --build-tag $GITHUB_SHA
 
   # Push an application based on a Dockerfile located in the current directory:
   kyma app push --name my-app --dockerfile ./Dockerfile --dockerfile-context .
@@ -110,6 +118,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 				flags.MarkExactlyOneRequired("image", "dockerfile", "code-path"),
 				flags.MarkExclusive("dockerfile-context", "image", "code-path"),
 				flags.MarkExclusive("dockerfile-build-arg", "image", "code-path"),
+				flags.MarkExclusive("build-tag", "image"),
 				flags.MarkPrerequisites("expose", "container-port"),
 				flags.MarkPrerequisites("image-pull-secret", "image"),
 			))
@@ -132,6 +141,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
 	cmd.Flags().StringVar(&config.imagePullSecretName, "image-pull-secret", "", "Name of the Kubernetes Secret with credentials to pull the image")
+	cmd.Flags().StringVar(&config.buildTag, "build-tag", "", "Custom tag for the built image (e.g. a Git commit SHA). Applies only to --code-path and --dockerfile builds.")
 
 	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the Dockerfile")
@@ -192,6 +202,17 @@ func (apc *appPushConfig) validate() clierror.Error {
 	// 	)
 	// }
 
+	if apc.buildTag != "" {
+		if !buildTagRegexp.MatchString(apc.buildTag) {
+			return clierror.New(
+				fmt.Sprintf("invalid image tag %q", apc.buildTag),
+				"tag must start with a letter, digit, or underscore",
+				"tag may only contain letters, digits, underscores, dots, and hyphens",
+				"tag must be at most 128 characters",
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -222,7 +243,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		imagePullSecret = registryConfig.SecretName
 	}
 
-	out.Msgfln("\nCreating deployment %s/%s", cfg.namespace, cfg.name)
+	out.Msgfln("\nApplying Deployment %s/%s", cfg.namespace, cfg.name)
 
 	clierr = createDeployment(cfg, client, image, imagePullSecret)
 	if clierr != nil {
@@ -230,10 +251,10 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.containerPort.Value != nil {
-		out.Msgfln("\nCreating service %s/%s", cfg.namespace, cfg.name)
-		err := resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
+		out.Msgfln("\nApplying Service %s/%s", cfg.namespace, cfg.name)
+		err := resources.ApplyService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to create Service"))
+			return clierror.Wrap(err, clierror.New("failed to apply Service"))
 		}
 	}
 
@@ -294,7 +315,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 	envs = append(envs, fileEnvs...)
 	envs = append(envs, plainEnvs...)
 
-	err = resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
+	err = resources.ApplyDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
 		Name:                       cfg.name,
 		Namespace:                  cfg.namespace,
 		Image:                      image,
@@ -307,7 +328,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 		Insecure:                   cfg.insecure,
 	})
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Deployment"))
+		return clierror.Wrap(err, clierror.New("failed to apply Deployment"))
 	}
 
 	return nil
@@ -317,7 +338,7 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 	out.Msgln("Building image\n")
 	imageName, err := buildImage(cfg)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to build image from Dockerfile"))
+		return "", clierror.Wrap(err, clierror.New("failed to build image"))
 	}
 
 	pushFunc := registry.NewPushWithPortforwardFunc(
@@ -352,9 +373,16 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 	return pushedImage, nil
 }
 
+// resolveImageTag returns imageTag if non-empty, otherwise a timestamp-based tag.
+func resolveImageTag(imageTag string) string {
+	if imageTag != "" {
+		return imageTag
+	}
+	return time.Now().Format("2006-01-02_15-04-05")
+}
+
 func buildImage(cfg *appPushConfig) (string, error) {
-	imageTag := time.Now().Format("2006-01-02_15-04-05")
-	imageName := fmt.Sprintf("%s:%s", cfg.name, imageTag)
+	imageName := fmt.Sprintf("%s:%s", cfg.name, resolveImageTag(cfg.buildTag))
 
 	var err error
 	if cfg.packAppPath != "" {

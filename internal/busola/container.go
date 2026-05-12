@@ -133,7 +133,7 @@ func (c *ContainerRunner) containerOpts() docker.ContainerRunOpts {
 	mounts := []mount.Mount{
 		{
 			Type:     mount.TypeBind,
-			Source:   filepath.Join(os.TempDir(), "busola", c.id, "config.yaml"),
+			Source:   filepath.Join(os.TempDir(), "busola", c.id, "backendConfig.yaml"),
 			Target:   "/app/config/config.yaml",
 			ReadOnly: true,
 		},

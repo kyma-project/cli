@@ -16,10 +16,13 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func CreateService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
+func ApplyService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
 	service := buildService(name, namespace, port)
-	_, err := client.Static().CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
-	return err
+	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(service)
+	if err != nil {
+		return err
+	}
+	return client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: unstrObj}, false)
 }
 
 func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, namespace, host string, port uint32) error {
@@ -40,6 +43,10 @@ func buildService(name, namespace string, port int32) *corev1.Service {
 				"app.kubernetes.io/name":       name,
 				"app.kubernetes.io/created-by": "kyma-cli",
 			},
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
