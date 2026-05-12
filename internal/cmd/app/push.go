@@ -188,17 +188,6 @@ func (apc *appPushConfig) complete() clierror.Error {
 		}
 	}
 
-	if apc.buildTag != "" {
-		if !buildTagRegexp.MatchString(apc.buildTag) {
-			return clierror.New(
-				fmt.Sprintf("invalid image tag %q", apc.buildTag),
-				"tag must start with a letter, digit, or underscore",
-				"tag may only contain letters, digits, underscores, dots, and hyphens",
-				"tag must be at most 128 characters",
-			)
-		}
-	}
-
 	return nil
 }
 
@@ -212,6 +201,17 @@ func (apc *appPushConfig) validate() clierror.Error {
 	// 		"make sure api-gateway module is installed",
 	// 	)
 	// }
+
+	if apc.buildTag != "" {
+		if !buildTagRegexp.MatchString(apc.buildTag) {
+			return clierror.New(
+				fmt.Sprintf("invalid image tag %q", apc.buildTag),
+				"tag must start with a letter, digit, or underscore",
+				"tag may only contain letters, digits, underscores, dots, and hyphens",
+				"tag must be at most 128 characters",
+			)
+		}
+	}
 
 	return nil
 }

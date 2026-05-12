@@ -84,7 +84,7 @@ func Test_appPushConfig_complete_buildTag(t *testing.T) {
 			cfg := &appPushConfig{
 				buildTag: tt.buildTag,
 			}
-			err := cfg.complete()
+			err := cfg.validate()
 			if tt.wantErr {
 				require.NotNil(t, err, "expected validation error for buildTag=%q", tt.buildTag)
 			} else {
