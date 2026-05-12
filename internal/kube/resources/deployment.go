@@ -35,10 +35,6 @@ type CreateDeploymentOpts struct {
 
 func ApplyDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
 	deployment := buildDeployment(&opts)
-	deployment.TypeMeta = metav1.TypeMeta{
-		APIVersion: "apps/v1",
-		Kind:       "Deployment",
-	}
 	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(deployment)
 	if err != nil {
 		return err
@@ -85,6 +81,10 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 	}
 
 	deployment := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      opts.Name,
 			Namespace: opts.Namespace,

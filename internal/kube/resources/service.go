@@ -18,10 +18,6 @@ import (
 
 func ApplyService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
 	service := buildService(name, namespace, port)
-	service.TypeMeta = metav1.TypeMeta{
-		APIVersion: "v1",
-		Kind:       "Service",
-	}
 	unstrObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(service)
 	if err != nil {
 		return err
@@ -47,6 +43,10 @@ func buildService(name, namespace string, port int32) *corev1.Service {
 				"app.kubernetes.io/name":       name,
 				"app.kubernetes.io/created-by": "kyma-cli",
 			},
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
