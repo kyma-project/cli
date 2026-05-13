@@ -1,5 +1,9 @@
 # Fast Prototyping in SAP BTP, Kyma Runtime Using App Push
 
+This tutorial shows how to deploy a single-container application to SAP BTP Kyma runtime in one CLI command using `kyma app push`, then evolve it into an automated GitHub Actions CD pipeline. You don't need to hand-craft YAML, set up a container registry, or configure a CI/CD pipeline upfront — just code, deploy, and iterate.
+
+It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET) and want a clear path from local development to a working prototype in the SAP BTP context — all without writing a Dockerfile.
+
 ## Prerequisites
 
 - SAP BTP, Kyma runtime enabled
