@@ -15,10 +15,12 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
 ### Clone the Git Repository
 
-1. Go to the [kyma-runtime-samples](https://github.com/SAP-samples/kyma-runtime-samples) repository and use the green **Code** button to choose one of the options to download the code locally, or simply run the following command using your CLI at your desired folder location:
+1. Clone the `movies-rest` folder from the [kyma-runtime-samples](https://github.com/SAP-samples/kyma-runtime-samples) repository:
 
     ```Shell/Bash
-    git clone https://github.com/SAP-samples/kyma-runtime-samples
+    git clone --filter=blob:none --sparse https://github.com/SAP-samples/kyma-runtime-samples
+    cd kyma-runtime-samples
+    git sparse-checkout set movies-rest
     ```
 
 ### Create the Object Store ServiceInstance and ServiceBinding
@@ -27,7 +29,6 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
     ```Shell/Bash
     kubectl create namespace dev
-    kubectl label namespaces dev istio-injection=enabled
     ```
 
 2. Create the Object Store ServiceInstance and ServiceBinding:
@@ -61,7 +62,7 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
 ### Deploy the Application
 
-1. From the `examples/movies-api` directory, run the following command to build, push, and deploy the application:
+1. From the `movies-rest` directory, run the following command to build, push, and deploy the application:
 
     ```Shell/Bash
     kyma app push \
@@ -85,32 +86,23 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
 ### Verify the Deployment
 
-1. Get the domain name of your Kyma cluster:
-
-    ```Shell/Bash
-    kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway \
-        -o jsonpath='{.spec.servers[0].hosts[0]}'
-    ```
-
-    The result looks like this:
+1. Once `kyma app push` completes, it prints the app URL:
 
     ```
-    *.<xyz123>.kyma.ondemand.com
+    The movies-rest app is available under the
+    movies-rest.<CLUSTER_DOMAIN>.kyma.ondemand.com
     ```
 
-    Copy the result without the leading `*.`.
+    > **Tip:** In quiet mode, the app URL is the only output — useful for capturing it in scripts:
+    >
+    > ```Shell/Bash
+    > APP_URL=$(kyma app push ... --quiet)
+    > echo $APP_URL
+    > ```
 
-2. Open the interactive Swagger UI in your browser:
+2. Open the interactive Swagger UI in your browser at `https://<APP_URL>/swagger-ui.html` and test the CRUD operations on the movies endpoint.
 
-    ```
-    https://movies-rest.<CLUSTER_DOMAIN>/swagger-ui.html
-    ```
-
-    Replace `<CLUSTER_DOMAIN>` with the value copied in the previous step.
-
-3. Use the Swagger UI to test the CRUD operations on the movies endpoint.
-
-    The OpenAPI specification is also available at `https://movies-rest.<CLUSTER_DOMAIN>/v3/api-docs`.
+    The OpenAPI specification is also available at `https://<APP_URL>/v3/api-docs`.
 
 ### (Optional) Automate Deployments with GitHub Actions
 
