@@ -24,12 +24,12 @@ func NewModuleInstallationStateRepository(kubeClient kube.Client) ModuleInstalla
 }
 
 func (r *moduleInstallationStateRepository) GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
-	moduleTemplate, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, module.Template.Template.GetNamespace(), module.Template.Template.GetName())
+	moduleTemplate, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, module.TemplateNamespace, module.TemplateName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return "", nil
 		}
-		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", module.Template.Template.GetNamespace(), module.Template.Template.GetName())
+		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", module.TemplateNamespace, module.TemplateName)
 	}
 
 	return getResourceState(ctx, r.kubeClient, moduleTemplate.Spec.Manager)

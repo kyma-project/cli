@@ -69,3 +69,17 @@ func TestNewModuleInstallationFromRaw_MapsCustomResourcePolicy(t *testing.T) {
 
 	require.Equal(t, "CreateAndDelete", m.CustomResourcePolicy)
 }
+
+func TestNewModuleInstallationFromRaw_MapsTemplateNameAndNamespace(t *testing.T) {
+	template := kyma.ModuleStatus{
+		Name: "api-gateway",
+	}
+	template.Template.SetName("api-gateway-template")
+	template.Template.SetNamespace("kyma-system")
+	raw := kyma.KymaModuleInfo{Status: template}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.Equal(t, "api-gateway-template", m.TemplateName)
+	require.Equal(t, "kyma-system", m.TemplateNamespace)
+}

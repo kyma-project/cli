@@ -9,7 +9,8 @@ type ModuleInstallation struct {
 	ModuleState          string
 	Managed              *bool
 	CustomResourcePolicy string
-	Template             kyma.ModuleStatus
+	TemplateName         string
+	TemplateNamespace    string
 }
 
 func NewModuleInstallationFromRaw(raw kyma.KymaModuleInfo) *ModuleInstallation {
@@ -20,7 +21,8 @@ func NewModuleInstallationFromRaw(raw kyma.KymaModuleInfo) *ModuleInstallation {
 		ModuleState:          raw.Status.State,
 		Managed:              raw.Spec.Managed,
 		CustomResourcePolicy: raw.Spec.CustomResourcePolicy,
-		Template:             raw.Status,
+		TemplateName:         raw.Status.Template.GetName(),
+		TemplateNamespace:    raw.Status.Template.GetNamespace(),
 	}
 }
 
