@@ -13,7 +13,7 @@ For this example, use a Spring Boot application that exposes a REST API for mana
 - [kubectl configured to kubeconfig downloaded from SAP BTP, Kyma runtime](https://developers.sap.com/tutorials/cp-kyma-download-cli.html)
 - [Git](https://git-scm.com/downloads) installed
 - Check if the Istio, API Gateway, and BTP Operator Kyma modules are added on your runtime. If not, [add them](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US#adding-a-kyma-module).
-  - The Docker Registry community module ([added](https://kyma-project.io/external-content/community-modules/docs/user/README.html#quick-install))
+- The Docker Registry community module [added](https://kyma-project.io/external-content/community-modules/docs/user/README.html#quick-install)
 
 ### Clone the Git Repository
 
