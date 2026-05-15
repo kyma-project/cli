@@ -4,6 +4,8 @@ This tutorial shows how to deploy a single-container application to SAP BTP Kyma
 
 It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET) and want a clear path from local development to a working prototype in the SAP BTP context — all without writing a Dockerfile.
 
+For this example, use a Spring Boot application that exposes a REST API for managing movies, storing data in BTP Object Store.
+
 ## Prerequisites
 
 - SAP BTP, Kyma runtime enabled
@@ -27,7 +29,7 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
 ### Create the Object Store ServiceInstance and ServiceBinding
 
-1. Create the `dev` namespace and enable Istio:
+1. Create the `dev` namespace:
 
     ```Shell/Bash
     kubectl create namespace dev
@@ -64,7 +66,7 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 
 ### Deploy the Application
 
-1. From the `movies-rest` directory, run the following command to build, push, and deploy the application:
+1. From the `movies-rest` directory, run the following command to push the application:
 
     ```Shell/Bash
     kyma app push \
