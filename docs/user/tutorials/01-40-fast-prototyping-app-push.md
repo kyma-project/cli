@@ -18,9 +18,11 @@ It is a good fit when you have an app in any language supported by [Cloud Native
 1. Clone the `movies-rest` folder from the [kyma-runtime-samples](https://github.com/SAP-samples/kyma-runtime-samples) repository:
 
     ```Shell/Bash
-    git clone --filter=blob:none --sparse https://github.com/SAP-samples/kyma-runtime-samples
+    git clone --filter=blob:none --no-checkout https://github.com/SAP-samples/kyma-runtime-samples
     cd kyma-runtime-samples
-    git sparse-checkout set movies-rest
+    git sparse-checkout init --no-cone
+    git sparse-checkout set 'movies-rest/'
+    git checkout
     ```
 
 ### Create the Object Store ServiceInstance and ServiceBinding
