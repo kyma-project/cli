@@ -57,7 +57,7 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 		return fmt.Errorf("failed to create temp dir %q: %w", tmpDir, err)
 	}
 
-	if c.apiConfig != nil && c.apiConfig.CurrentContext != "" {
+	if c.apiConfig != nil {
 		config, err := clientcmd.Write(*c.apiConfig)
 		if err != nil {
 			return fmt.Errorf("failed to serialize kubeconfig: %w", err)
@@ -67,8 +67,6 @@ func (c *ContainerRunner) Start(apiConfig *api.Config) error {
 		if err := os.WriteFile(kubeconfigPath, config, 0700); err != nil {
 			return fmt.Errorf("failed to write kubeconfig at %q: %w", kubeconfigPath, err)
 		}
-	} else {
-		c.apiConfig = nil
 	}
 
 	backendConfigPath := filepath.Join(tmpDir, "backendConfig.yaml")

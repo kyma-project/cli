@@ -5,7 +5,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type dashboardStartConfig struct {
@@ -51,16 +50,12 @@ func runDashboardStart(cfg *dashboardStartConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to initialize docker client"))
 	}
 
-	var apiCfg *api.Config
-	if kubeconfigProvided() {
-		kubeClient, clierr := cfg.GetKubeClientWithClierr()
-		if clierr != nil {
-			return clierr
-		}
-		apiCfg = kubeClient.APIConfig()
+	kubeClient, clierr := cfg.GetKubeClientWithClierr()
+	if clierr != nil {
+		return clierr
 	}
 
-	if err = dash.Start(apiCfg); err != nil {
+	if err = dash.Start(kubeClient.APIConfig()); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to start kyma dashboard"))
 	}
 
