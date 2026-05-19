@@ -83,9 +83,6 @@ func convertListToRows(results []dtos.ListResult) [][]interface{} {
 }
 
 func installationStatus(r dtos.ListResult) string {
-	if r.InstallationState != "" && r.ModuleState != r.InstallationState {
-		return fmt.Sprintf("%s(%s)", r.ModuleState, r.InstallationState)
-	}
 	return r.InstallationState
 }
 
