@@ -48,6 +48,10 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 }
 
 func (s *ListService) resolveInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+	if module.IsBeingDeleted() {
+		return module.ModuleState, nil
+	}
+
 	if module.CustomResourcePolicy == "CreateAndDelete" {
 		return module.ModuleState, nil
 	}

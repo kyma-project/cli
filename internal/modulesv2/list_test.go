@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modulesv2/fake"
 	"github.com/stretchr/testify/require"
@@ -137,4 +138,23 @@ func TestListService_Run_ReturnsInstallationState(t *testing.T) {
 	require.NoError(t, err)
 	module := result[0]
 	require.Equal(t, "Ready", module.InstallationState)
+}
+
+func TestListService_Run_ReturnsModuleStateAsInstallationStateWhenModuleIsBeingDeleted(t *testing.T) {
+	deletingModule := entities.NewModuleInstallationFromRaw(kyma.KymaModuleInfo{
+		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Deleting"},
+	})
+	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+		ListInstalledModulesResult: []entities.ModuleInstallation{*deletingModule},
+	}
+	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{
+		GetInstallationStateResult: "Ready",
+	}
+	svc := NewListService(installedModulesRepo, installationStateRepo)
+
+	result, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.Equal(t, "Deleting", module.InstallationState)
 }

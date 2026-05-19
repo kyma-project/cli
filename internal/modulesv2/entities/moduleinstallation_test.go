@@ -93,3 +93,24 @@ func TestNewModuleInstallationFromRaw_UsesSpecNameWhenStatusNameIsEmpty(t *testi
 
 	require.Equal(t, "api-gateway", m.Name)
 }
+
+func TestModuleInstallation_IsBeingDeleted_TrueWhenOnlyInStatus(t *testing.T) {
+	raw := kyma.KymaModuleInfo{
+		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Deleting"},
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.True(t, m.IsBeingDeleted())
+}
+
+func TestModuleInstallation_IsBeingDeleted_FalseWhenSpecPresent(t *testing.T) {
+	raw := kyma.KymaModuleInfo{
+		Spec:   kyma.Module{Name: "api-gateway"},
+		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Ready"},
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.False(t, m.IsBeingDeleted())
+}
