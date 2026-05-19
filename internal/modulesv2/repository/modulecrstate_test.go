@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	kubefake "github.com/kyma-project/cli.v3/internal/kube/fake"
@@ -100,4 +101,34 @@ func TestModuleCRStateRepository_GetModuleCRState_UnmanagedModule_FindsTemplateB
 
 	require.NoError(t, err)
 	require.Equal(t, "Ready", state)
+}
+
+func TestModuleCRStateRepository_GetModuleCRState_ReturnsEmptyOnDiscoveryError(t *testing.T) {
+	moduleTemplate := kyma.ModuleTemplate{}
+	moduleTemplate.Spec.Data = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1alpha1",
+			"kind":       "Eventing",
+		},
+	}
+
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplate: moduleTemplate,
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnErr: fmt.Errorf("failed to discover API resource using discovery client: resource 'Eventing' in group 'operator.kyma-project.io', and version 'v1alpha1' not registered on cluster"),
+		},
+	}
+
+	module := entities.ModuleInstallation{
+		TemplateName:      "eventing-template",
+		TemplateNamespace: "kyma-system",
+	}
+	repo := repository.NewModuleCRStateRepository(kubeClient)
+
+	state, err := repo.GetModuleCRState(context.Background(), module)
+
+	require.NoError(t, err)
+	require.Equal(t, "", state)
 }

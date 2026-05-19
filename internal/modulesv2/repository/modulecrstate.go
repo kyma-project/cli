@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
+	"github.com/kyma-project/cli.v3/internal/out"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -44,7 +46,8 @@ func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module e
 		},
 	}, &rootlessdynamic.ListOptions{AllNamespaces: true})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) || isDiscoveryError(err) {
+			out.Debugfln("failed to get CR state for module %s: %v", module.Name, err)
 			return "", nil
 		}
 		return "", err
@@ -93,6 +96,10 @@ func highestStateFromList(items []unstructured.Unstructured) string {
 }
 
 var statesPrecedence = []string{"Ready", "Processing", "Deleting", "Error", "Warning"}
+
+func isDiscoveryError(err error) bool {
+	return strings.Contains(err.Error(), "failed to discover API resource using discovery client")
+}
 
 func highestState(a, b string) string {
 	for _, s := range statesPrecedence {
