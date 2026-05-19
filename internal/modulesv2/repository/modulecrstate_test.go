@@ -1,0 +1,55 @@
+package repository_test
+
+import (
+	"context"
+	"testing"
+
+	kubefake "github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+)
+
+func TestModuleCRStateRepository_GetModuleCRState_ReturnsStateFromCR(t *testing.T) {
+	moduleTemplate := kyma.ModuleTemplate{}
+	moduleTemplate.Spec.Data = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1alpha1",
+			"kind":       "APIGateway",
+		},
+	}
+
+	crList := &unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{
+			{
+				Object: map[string]interface{}{
+					"status": map[string]interface{}{
+						"state": "Warning",
+					},
+				},
+			},
+		},
+	}
+
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplate: moduleTemplate,
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnListObjs: crList,
+		},
+	}
+
+	module := entities.ModuleInstallation{
+		TemplateName:      "api-gateway-template",
+		TemplateNamespace: "kyma-system",
+	}
+	repo := repository.NewModuleCRStateRepository(kubeClient)
+
+	state, err := repo.GetModuleCRState(context.Background(), module)
+
+	require.NoError(t, err)
+	require.Equal(t, "Warning", state)
+}

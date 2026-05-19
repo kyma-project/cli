@@ -11,12 +11,14 @@ import (
 type ListService struct {
 	installedModulesRepository  repository.InstalledModulesRepository
 	installationStateRepository repository.ModuleInstallationStateRepository
+	moduleCRStateRepository     repository.ModuleCRStateRepository
 }
 
-func NewListService(installedModulesRepository repository.InstalledModulesRepository, installationStateRepository repository.ModuleInstallationStateRepository) *ListService {
+func NewListService(installedModulesRepository repository.InstalledModulesRepository, installationStateRepository repository.ModuleInstallationStateRepository, moduleCRStateRepository repository.ModuleCRStateRepository) *ListService {
 	return &ListService{
 		installedModulesRepository:  installedModulesRepository,
 		installationStateRepository: installationStateRepository,
+		moduleCRStateRepository:     moduleCRStateRepository,
 	}
 }
 
@@ -33,11 +35,16 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 			return nil, err
 		}
 
+		moduleState, err := s.moduleCRStateRepository.GetModuleCRState(ctx, module)
+		if err != nil {
+			return nil, err
+		}
+
 		results = append(results, dtos.ListResult{
 			Name:                 module.Name,
 			Version:              module.Version,
 			Channel:              module.Channel,
-			ModuleState:          module.ModuleState,
+			ModuleState:          moduleState,
 			Managed:              module.IsManaged(),
 			CustomResourcePolicy: module.CustomResourcePolicy,
 			InstallationState:    installationState,
