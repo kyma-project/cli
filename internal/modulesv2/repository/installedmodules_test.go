@@ -10,13 +10,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInstalledModulesRepository_ListInstalledModules(t *testing.T) {
+func TestInstalledModulesRepository_ListInstalledModules_NormalCase(t *testing.T) {
 	kymaClient := &kubefake.KymaClient{
 		ReturnDefaultKyma: kyma.Kyma{
+			Spec: kyma.KymaSpec{
+				Modules: []kyma.Module{
+					{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
+				},
+			},
 			Status: kyma.KymaStatus{
 				Modules: []kyma.ModuleStatus{
-					{Name: "api-gateway"},
-					{Name: "istio"},
+					{Name: "api-gateway", State: "Ready"},
 				},
 			},
 		},
@@ -26,7 +30,54 @@ func TestInstalledModulesRepository_ListInstalledModules(t *testing.T) {
 	result, err := repo.ListInstalledModules(context.Background())
 
 	require.NoError(t, err)
-	require.Len(t, result, 2)
-	require.Equal(t, "api-gateway", result[0].Name)
-	require.Equal(t, "istio", result[1].Name)
+	require.Len(t, result, 1)
+	module := result[0]
+	require.Equal(t, "api-gateway", module.Name)
+	require.Equal(t, "Ready", module.ModuleState)
+	require.Equal(t, "CreateAndDelete", module.CustomResourcePolicy)
+}
+
+func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingAdded(t *testing.T) {
+	kymaClient := &kubefake.KymaClient{
+		ReturnDefaultKyma: kyma.Kyma{
+			Spec: kyma.KymaSpec{
+				Modules: []kyma.Module{
+					{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
+				},
+			},
+			Status: kyma.KymaStatus{},
+		},
+	}
+	repo := repository.NewInstalledModulesRepository(kymaClient)
+
+	result, err := repo.ListInstalledModules(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	module := result[0]
+	require.Equal(t, "api-gateway", module.Name)
+	require.Equal(t, "", module.ModuleState)
+	require.Equal(t, "CreateAndDelete", module.CustomResourcePolicy)
+}
+
+func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingDeleted(t *testing.T) {
+	kymaClient := &kubefake.KymaClient{
+		ReturnDefaultKyma: kyma.Kyma{
+			Spec: kyma.KymaSpec{},
+			Status: kyma.KymaStatus{
+				Modules: []kyma.ModuleStatus{
+					{Name: "api-gateway", State: "Deleting"},
+				},
+			},
+		},
+	}
+	repo := repository.NewInstalledModulesRepository(kymaClient)
+
+	result, err := repo.ListInstalledModules(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	module := result[0]
+	require.Equal(t, "api-gateway", module.Name)
+	require.Equal(t, "Deleting", module.ModuleState)
 }

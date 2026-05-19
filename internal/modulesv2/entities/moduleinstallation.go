@@ -14,8 +14,12 @@ type ModuleInstallation struct {
 }
 
 func NewModuleInstallationFromRaw(raw kyma.KymaModuleInfo) *ModuleInstallation {
+	name := raw.Status.Name
+	if name == "" {
+		name = raw.Spec.Name
+	}
 	return &ModuleInstallation{
-		Name:                 raw.Status.Name,
+		Name:                 name,
 		Version:              raw.Status.Version,
 		Channel:              raw.Status.Channel,
 		ModuleState:          raw.Status.State,

@@ -83,3 +83,13 @@ func TestNewModuleInstallationFromRaw_MapsTemplateNameAndNamespace(t *testing.T)
 	require.Equal(t, "api-gateway-template", m.TemplateName)
 	require.Equal(t, "kyma-system", m.TemplateNamespace)
 }
+
+func TestNewModuleInstallationFromRaw_UsesSpecNameWhenStatusNameIsEmpty(t *testing.T) {
+	raw := kyma.KymaModuleInfo{
+		Spec: kyma.Module{Name: "api-gateway"},
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.Equal(t, "api-gateway", m.Name)
+}

@@ -25,16 +25,33 @@ func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) (
 		return nil, err
 	}
 
-	modules := make([]entities.ModuleInstallation, len(kymaCR.Status.Modules))
-	for i, status := range kymaCR.Status.Modules {
-		raw := kyma.KymaModuleInfo{Status: status}
-		for _, spec := range kymaCR.Spec.Modules {
-			if spec.Name == status.Name {
-				raw.Spec = spec
-				break
-			}
-		}
-		modules[i] = *entities.NewModuleInstallationFromRaw(raw)
+	statusByName := make(map[string]kyma.ModuleStatus, len(kymaCR.Status.Modules))
+	for _, status := range kymaCR.Status.Modules {
+		statusByName[status.Name] = status
 	}
+
+	specByName := make(map[string]kyma.Module, len(kymaCR.Spec.Modules))
+	for _, spec := range kymaCR.Spec.Modules {
+		specByName[spec.Name] = spec
+	}
+
+	var modules []entities.ModuleInstallation
+
+	for _, status := range kymaCR.Status.Modules {
+		raw := kyma.KymaModuleInfo{Status: status}
+		if spec, ok := specByName[status.Name]; ok {
+			raw.Spec = spec
+		}
+		modules = append(modules, *entities.NewModuleInstallationFromRaw(raw))
+	}
+
+	for _, spec := range kymaCR.Spec.Modules {
+		if _, inStatus := statusByName[spec.Name]; inStatus {
+			continue
+		}
+		raw := kyma.KymaModuleInfo{Spec: spec}
+		modules = append(modules, *entities.NewModuleInstallationFromRaw(raw))
+	}
+
 	return modules, nil
 }
