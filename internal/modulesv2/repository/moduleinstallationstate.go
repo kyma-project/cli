@@ -64,27 +64,31 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 		return "", err
 	}
 
-	statusRaw, ok := result.Object["status"]
+	return extractStateFromObject(result), nil
+}
+
+func extractStateFromObject(obj *unstructured.Unstructured) string {
+	statusRaw, ok := obj.Object["status"]
 	if !ok || statusRaw == nil {
-		return "", nil
+		return ""
 	}
 	status := statusRaw.(map[string]any)
 	if state, ok := status["state"]; ok {
-		return state.(string), nil
+		return state.(string)
 	}
 
 	if conditions, ok := status["conditions"]; ok {
-		return getStateFromConditions(conditions.([]any)), nil
+		return getStateFromConditions(conditions.([]any))
 	}
 
 	if readyReplicas, ok := status["readyReplicas"]; ok {
-		spec := result.Object["spec"].(map[string]any)
+		spec := obj.Object["spec"].(map[string]any)
 		if wantedReplicas, ok := spec["replicas"]; ok {
-			return resolveStateFromReplicas(readyReplicas.(int64), wantedReplicas.(int64)), nil
+			return resolveStateFromReplicas(readyReplicas.(int64), wantedReplicas.(int64))
 		}
 	}
 
-	return "", nil
+	return ""
 }
 
 func getStateFromConditions(conditions []interface{}) string {

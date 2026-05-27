@@ -82,15 +82,9 @@ func (r *moduleCRStateRepository) findModuleTemplate(ctx context.Context, module
 
 func highestStateFromList(items []unstructured.Unstructured) string {
 	state := ""
-	for _, item := range items {
-		statusRaw, ok := item.Object["status"]
-		if !ok || statusRaw == nil {
-			continue
-		}
-		status := statusRaw.(map[string]any)
-		if crState, ok := status["state"].(string); ok {
-			state = highestState(state, crState)
-		}
+	for i := range items {
+		crState := extractStateFromObject(&items[i])
+		state = highestState(state, crState)
 	}
 	return state
 }
