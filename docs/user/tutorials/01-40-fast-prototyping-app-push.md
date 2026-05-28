@@ -1,10 +1,10 @@
 # Fast Prototyping in SAP BTP, Kyma Runtime Using App Push
 
-This tutorial shows how to deploy a single-container application to SAP BTP Kyma runtime in one CLI command using `kyma app push`, then evolve it into an automated GitHub Actions CD pipeline. You don't need to hand-craft YAML, set up a container registry, or configure a CI/CD pipeline upfront — just code, deploy, and iterate.
+This tutorial shows how to deploy a single-container application in SAP BTP, Kyma runtime, using one CLI command `kyma app push`, then evolve it into an automated GitHub Actions CD pipeline. You don't need to hand-craft YAML, set up a container registry, or configure a CI/CD pipeline upfront — just code, deploy, and iterate.
 
 It is a good fit when you have an app in any language supported by [Cloud Native Buildpacks](https://buildpacks.io/) (Java, Node.js, Go, Python, .NET) and want a clear path from local development to a working prototype in the SAP BTP context — all without writing a Dockerfile.
 
-For this example, use a Spring Boot application that exposes a REST API for managing movies, storing data in BTP Object Store.
+For this example, use a Spring Boot application that exposes a REST API for managing movies and storing data in BTP Object Store.
 
 ## Prerequisites
 
@@ -86,7 +86,8 @@ For this example, use a Spring Boot application that exposes a REST API for mana
     - A Deployment, Service, and APIRule are created.
     - The Object Store binding secret is mounted at `/bindings/secret-object-store-binding`, and `SERVICE_BINDING_ROOT=/bindings` is set automatically.
 
-    > **Note:** The same approach works for any language supported by Cloud Native Buildpacks — Node.js, Go, Python, .NET, and more.
+> [!NOTE] 
+> The same approach works for any language supported by Cloud Native Buildpacks — Node.js, Go, Python, .NET, and more.
 
 ### Verify the Deployment
 
@@ -97,7 +98,8 @@ For this example, use a Spring Boot application that exposes a REST API for mana
     movies-rest.<CLUSTER_DOMAIN>.kyma.ondemand.com
     ```
 
-    > **Tip:** In quiet mode, the app URL is the only output — useful for capturing it in scripts:
+    > [!TIP] 
+    > In quiet mode, the app URL is the only output — useful for capturing it in scripts:
     >
     > ```Shell/Bash
     > APP_URL=$(kyma app push ... --quiet)
