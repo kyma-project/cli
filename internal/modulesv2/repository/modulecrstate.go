@@ -109,4 +109,3 @@ func highestState(a, b string) string {
 	}
 	return a
 }
-
