@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modulesv2/fake"
 	"github.com/stretchr/testify/require"
@@ -14,7 +13,7 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -29,7 +28,7 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 			{Name: "istio"},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -45,7 +44,7 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 			{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready"},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -65,7 +64,7 @@ func TestListService_Run_ReturnsManaged(t *testing.T) {
 			{Name: "api-gateway", Managed: &managed},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -82,7 +81,7 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 			{Name: "api-gateway", Managed: nil},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -98,7 +97,7 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 			{Name: "api-gateway", Managed: &managed},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -113,7 +112,7 @@ func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
 			{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -125,13 +124,10 @@ func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
 func TestListService_Run_ReturnsInstallationState(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway"},
+			{Name: "api-gateway", InstallationState: "Ready"},
 		},
 	}
-	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{
-		GetInstallationStateResult: "Ready",
-	}
-	svc := NewListService(installedModulesRepo, installationStateRepo)
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -140,32 +136,13 @@ func TestListService_Run_ReturnsInstallationState(t *testing.T) {
 	require.Equal(t, "Ready", module.InstallationState)
 }
 
-func TestListService_Run_ReturnsModuleStateAsInstallationStateWhenModuleIsBeingDeleted(t *testing.T) {
-	deletingModule := entities.NewModuleInstallationFromRaw(kyma.KymaModuleInfo{
-		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Deleting"},
-	})
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []entities.ModuleInstallation{*deletingModule},
-	}
-	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{
-		GetInstallationStateResult: "Ready",
-	}
-	svc := NewListService(installedModulesRepo, installationStateRepo)
-
-	result, err := svc.Run(context.Background())
-
-	require.NoError(t, err)
-	module := result[0]
-	require.Equal(t, "Deleting", module.InstallationState)
-}
-
 func TestListService_Run_ReturnsModuleStateFromCR(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
 			{Name: "api-gateway", ModuleState: "Warning"},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
+	svc := NewListService(installedModulesRepo)
 
 	result, err := svc.Run(context.Background())
 

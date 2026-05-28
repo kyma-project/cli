@@ -19,6 +19,14 @@ func (f *fixedCRStateRepo) GetModuleCRState(_ context.Context, _ entities.Module
 	return f.state, nil
 }
 
+type fixedInstallationStateRepo struct {
+	state string
+}
+
+func (f *fixedInstallationStateRepo) GetInstallationState(_ context.Context, _ entities.ModuleInstallation) (string, error) {
+	return f.state, nil
+}
+
 func TestInstalledModulesRepository_ListInstalledModules_NormalCase(t *testing.T) {
 	kymaClient := &kubefake.KymaClient{
 		ReturnDefaultKyma: kyma.Kyma{
@@ -34,7 +42,7 @@ func TestInstalledModulesRepository_ListInstalledModules_NormalCase(t *testing.T
 			},
 		},
 	}
-	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Ready"})
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Ready"}, &fixedInstallationStateRepo{})
 
 	result, err := repo.ListInstalledModules(context.Background())
 
@@ -57,7 +65,7 @@ func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingAdded(t *tes
 			Status: kyma.KymaStatus{},
 		},
 	}
-	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: ""})
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: ""}, &fixedInstallationStateRepo{})
 
 	result, err := repo.ListInstalledModules(context.Background())
 
@@ -80,7 +88,7 @@ func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingDeleted(t *t
 			},
 		},
 	}
-	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Deleting"})
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Deleting"}, &fixedInstallationStateRepo{})
 
 	result, err := repo.ListInstalledModules(context.Background())
 
@@ -88,5 +96,29 @@ func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingDeleted(t *t
 	require.Len(t, result, 1)
 	module := result[0]
 	require.Equal(t, "api-gateway", module.Name)
-	require.Equal(t, "Deleting", module.ModuleState)
+	require.Equal(t, "Deleting", module.KymaModuleState)
+}
+
+func TestInstalledModulesRepository_ListInstalledModules_SetsInstallationStateForCreateAndDelete(t *testing.T) {
+	kymaClient := &kubefake.KymaClient{
+		ReturnDefaultKyma: kyma.Kyma{
+			Spec: kyma.KymaSpec{
+				Modules: []kyma.Module{
+					{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
+				},
+			},
+			Status: kyma.KymaStatus{
+				Modules: []kyma.ModuleStatus{
+					{Name: "api-gateway", State: "Warning"},
+				},
+			},
+		},
+	}
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Warning"}, &fixedInstallationStateRepo{state: "Ready"})
+
+	result, err := repo.ListInstalledModules(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.Equal(t, "Warning", module.InstallationState)
 }

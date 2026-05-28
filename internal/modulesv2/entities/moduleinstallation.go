@@ -8,6 +8,7 @@ type ModuleInstallation struct {
 	Channel              string
 	KymaModuleState      string
 	ModuleState          string
+	InstallationState    string
 	Managed              *bool
 	CustomResourcePolicy string
 	TemplateName         string

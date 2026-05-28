@@ -12,12 +12,13 @@ type InstalledModulesRepository interface {
 }
 
 type installedModulesRepository struct {
-	kymaClient        kyma.Interface
-	moduleCRStateRepo ModuleCRStateRepository
+	kymaClient            kyma.Interface
+	moduleCRStateRepo     ModuleCRStateRepository
+	installationStateRepo ModuleInstallationStateRepository
 }
 
-func NewInstalledModulesRepository(kymaClient kyma.Interface, moduleCRStateRepo ModuleCRStateRepository) InstalledModulesRepository {
-	return &installedModulesRepository{kymaClient: kymaClient, moduleCRStateRepo: moduleCRStateRepo}
+func NewInstalledModulesRepository(kymaClient kyma.Interface, moduleCRStateRepo ModuleCRStateRepository, installationStateRepo ModuleInstallationStateRepository) InstalledModulesRepository {
+	return &installedModulesRepository{kymaClient: kymaClient, moduleCRStateRepo: moduleCRStateRepo, installationStateRepo: installationStateRepo}
 }
 
 func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) ([]entities.ModuleInstallation, error) {
@@ -25,32 +26,48 @@ func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) (
 	if err != nil {
 		return nil, err
 	}
+	return r.resolveInstalledModules(ctx, kymaCR.Spec.Modules, kymaCR.Status.Modules)
+}
 
-	statusByName := make(map[string]kyma.ModuleStatus, len(kymaCR.Status.Modules))
-	for _, status := range kymaCR.Status.Modules {
-		statusByName[status.Name] = status
+func (r *installedModulesRepository) resolveInstalledModules(ctx context.Context, specs []kyma.Module, statuses []kyma.ModuleStatus) ([]entities.ModuleInstallation, error) {
+	modules, err := r.buildModulesFromStatuses(ctx, statuses, specs)
+	if err != nil {
+		return nil, err
 	}
 
-	specByName := make(map[string]kyma.Module, len(kymaCR.Spec.Modules))
-	for _, spec := range kymaCR.Spec.Modules {
+	specOnly, err := r.buildModulesFromSpecsOnly(ctx, specs, statuses)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(modules, specOnly...), nil
+}
+
+func (r *installedModulesRepository) buildModulesFromStatuses(ctx context.Context, statuses []kyma.ModuleStatus, specs []kyma.Module) ([]entities.ModuleInstallation, error) {
+	specByName := make(map[string]kyma.Module, len(specs))
+	for _, spec := range specs {
 		specByName[spec.Name] = spec
 	}
 
 	var modules []entities.ModuleInstallation
-
-	for _, status := range kymaCR.Status.Modules {
-		raw := kyma.KymaModuleInfo{Status: status}
-		if spec, ok := specByName[status.Name]; ok {
-			raw.Spec = spec
-		}
-		module, err := r.buildModule(ctx, raw)
+	for _, status := range statuses {
+		module, err := r.buildModule(ctx, kyma.KymaModuleInfo{Status: status, Spec: specByName[status.Name]})
 		if err != nil {
 			return nil, err
 		}
 		modules = append(modules, module)
 	}
+	return modules, nil
+}
 
-	for _, spec := range kymaCR.Spec.Modules {
+func (r *installedModulesRepository) buildModulesFromSpecsOnly(ctx context.Context, specs []kyma.Module, statuses []kyma.ModuleStatus) ([]entities.ModuleInstallation, error) {
+	statusByName := make(map[string]kyma.ModuleStatus, len(statuses))
+	for _, status := range statuses {
+		statusByName[status.Name] = status
+	}
+
+	var modules []entities.ModuleInstallation
+	for _, spec := range specs {
 		if _, inStatus := statusByName[spec.Name]; inStatus {
 			continue
 		}
@@ -60,7 +77,6 @@ func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) (
 		}
 		modules = append(modules, module)
 	}
-
 	return modules, nil
 }
 
@@ -71,5 +87,26 @@ func (r *installedModulesRepository) buildModule(ctx context.Context, raw kyma.K
 		return entities.ModuleInstallation{}, err
 	}
 	module.ModuleState = moduleState
+	installationState, err := r.resolveInstallationState(ctx, *module)
+	if err != nil {
+		return entities.ModuleInstallation{}, err
+	}
+	module.InstallationState = installationState
 	return *module, nil
+}
+
+func (r *installedModulesRepository) resolveInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+	if module.IsBeingDeleted() {
+		return module.KymaModuleState, nil
+	}
+
+	if module.CustomResourcePolicy == "CreateAndDelete" {
+		return module.KymaModuleState, nil
+	}
+
+	if !module.IsManaged() {
+		return module.KymaModuleState, nil
+	}
+
+	return r.installationStateRepo.GetInstallationState(ctx, module)
 }
