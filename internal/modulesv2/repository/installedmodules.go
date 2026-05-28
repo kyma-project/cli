@@ -12,11 +12,12 @@ type InstalledModulesRepository interface {
 }
 
 type installedModulesRepository struct {
-	kymaClient kyma.Interface
+	kymaClient        kyma.Interface
+	moduleCRStateRepo ModuleCRStateRepository
 }
 
-func NewInstalledModulesRepository(kymaClient kyma.Interface) InstalledModulesRepository {
-	return &installedModulesRepository{kymaClient: kymaClient}
+func NewInstalledModulesRepository(kymaClient kyma.Interface, moduleCRStateRepo ModuleCRStateRepository) InstalledModulesRepository {
+	return &installedModulesRepository{kymaClient: kymaClient, moduleCRStateRepo: moduleCRStateRepo}
 }
 
 func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) ([]entities.ModuleInstallation, error) {
@@ -42,16 +43,33 @@ func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) (
 		if spec, ok := specByName[status.Name]; ok {
 			raw.Spec = spec
 		}
-		modules = append(modules, *entities.NewModuleInstallationFromRaw(raw))
+		module, err := r.buildModule(ctx, raw)
+		if err != nil {
+			return nil, err
+		}
+		modules = append(modules, module)
 	}
 
 	for _, spec := range kymaCR.Spec.Modules {
 		if _, inStatus := statusByName[spec.Name]; inStatus {
 			continue
 		}
-		raw := kyma.KymaModuleInfo{Spec: spec}
-		modules = append(modules, *entities.NewModuleInstallationFromRaw(raw))
+		module, err := r.buildModule(ctx, kyma.KymaModuleInfo{Spec: spec})
+		if err != nil {
+			return nil, err
+		}
+		modules = append(modules, module)
 	}
 
 	return modules, nil
+}
+
+func (r *installedModulesRepository) buildModule(ctx context.Context, raw kyma.KymaModuleInfo) (entities.ModuleInstallation, error) {
+	module := entities.NewModuleInstallationFromRaw(raw)
+	moduleState, err := r.moduleCRStateRepo.GetModuleCRState(ctx, *module)
+	if err != nil {
+		return entities.ModuleInstallation{}, err
+	}
+	module.ModuleState = moduleState
+	return *module, nil
 }

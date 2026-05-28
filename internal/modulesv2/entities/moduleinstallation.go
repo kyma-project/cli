@@ -6,6 +6,7 @@ type ModuleInstallation struct {
 	Name                 string
 	Version              string
 	Channel              string
+	KymaModuleState      string
 	ModuleState          string
 	Managed              *bool
 	CustomResourcePolicy string
@@ -24,7 +25,7 @@ func NewModuleInstallationFromRaw(raw kyma.KymaModuleInfo) *ModuleInstallation {
 		Name:                 name,
 		Version:              raw.Status.Version,
 		Channel:              raw.Status.Channel,
-		ModuleState:          raw.Status.State,
+		KymaModuleState:      raw.Status.State,
 		Managed:              raw.Spec.Managed,
 		CustomResourcePolicy: raw.Spec.CustomResourcePolicy,
 		TemplateName:         raw.Status.Template.GetName(),

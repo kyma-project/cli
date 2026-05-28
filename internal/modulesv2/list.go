@@ -11,14 +11,12 @@ import (
 type ListService struct {
 	installedModulesRepository  repository.InstalledModulesRepository
 	installationStateRepository repository.ModuleInstallationStateRepository
-	moduleCRStateRepository     repository.ModuleCRStateRepository
 }
 
-func NewListService(installedModulesRepository repository.InstalledModulesRepository, installationStateRepository repository.ModuleInstallationStateRepository, moduleCRStateRepository repository.ModuleCRStateRepository) *ListService {
+func NewListService(installedModulesRepository repository.InstalledModulesRepository, installationStateRepository repository.ModuleInstallationStateRepository) *ListService {
 	return &ListService{
 		installedModulesRepository:  installedModulesRepository,
 		installationStateRepository: installationStateRepository,
-		moduleCRStateRepository:     moduleCRStateRepository,
 	}
 }
 
@@ -35,16 +33,11 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 			return nil, err
 		}
 
-		moduleState, err := s.moduleCRStateRepository.GetModuleCRState(ctx, module)
-		if err != nil {
-			return nil, err
-		}
-
 		results = append(results, dtos.ListResult{
 			Name:                 module.Name,
 			Version:              module.Version,
 			Channel:              module.Channel,
-			ModuleState:          moduleState,
+			ModuleState:          module.ModuleState,
 			Managed:              module.IsManaged(),
 			CustomResourcePolicy: module.CustomResourcePolicy,
 			InstallationState:    installationState,
@@ -56,15 +49,15 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
 
 func (s *ListService) resolveInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
 	if module.IsBeingDeleted() {
-		return module.ModuleState, nil
+		return module.KymaModuleState, nil
 	}
 
 	if module.CustomResourcePolicy == "CreateAndDelete" {
-		return module.ModuleState, nil
+		return module.KymaModuleState, nil
 	}
 
 	if !module.IsManaged() {
-		return module.ModuleState, nil
+		return module.KymaModuleState, nil
 	}
 
 	return s.installationStateRepository.GetInstallationState(ctx, module)

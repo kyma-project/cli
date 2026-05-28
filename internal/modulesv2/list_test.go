@@ -14,7 +14,7 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -29,7 +29,7 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 			{Name: "istio"},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -42,11 +42,10 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", Version: "3.5.1", Channel: "regular"},
+			{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready"},
 		},
 	}
-	moduleCRStateRepo := &modulesfake.ModuleCRStateRepository{GetModuleCRStateResult: "Ready"}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, moduleCRStateRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -66,7 +65,7 @@ func TestListService_Run_ReturnsManaged(t *testing.T) {
 			{Name: "api-gateway", Managed: &managed},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -83,7 +82,7 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 			{Name: "api-gateway", Managed: nil},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -99,7 +98,7 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 			{Name: "api-gateway", Managed: &managed},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -114,7 +113,7 @@ func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
 			{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
 		},
 	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 
@@ -132,7 +131,7 @@ func TestListService_Run_ReturnsInstallationState(t *testing.T) {
 	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{
 		GetInstallationStateResult: "Ready",
 	}
-	svc := NewListService(installedModulesRepo, installationStateRepo, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, installationStateRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -151,7 +150,7 @@ func TestListService_Run_ReturnsModuleStateAsInstallationStateWhenModuleIsBeingD
 	installationStateRepo := &modulesfake.ModuleInstallationStateRepository{
 		GetInstallationStateResult: "Ready",
 	}
-	svc := NewListService(installedModulesRepo, installationStateRepo, &modulesfake.ModuleCRStateRepository{})
+	svc := NewListService(installedModulesRepo, installationStateRepo)
 
 	result, err := svc.Run(context.Background())
 
@@ -163,13 +162,10 @@ func TestListService_Run_ReturnsModuleStateAsInstallationStateWhenModuleIsBeingD
 func TestListService_Run_ReturnsModuleStateFromCR(t *testing.T) {
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", ModuleState: "Ready"},
+			{Name: "api-gateway", ModuleState: "Warning"},
 		},
 	}
-	moduleCRStateRepo := &modulesfake.ModuleCRStateRepository{
-		GetModuleCRStateResult: "Warning",
-	}
-	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{}, moduleCRStateRepo)
+	svc := NewListService(installedModulesRepo, &modulesfake.ModuleInstallationStateRepository{})
 
 	result, err := svc.Run(context.Background())
 

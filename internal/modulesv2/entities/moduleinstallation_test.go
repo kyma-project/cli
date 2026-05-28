@@ -43,7 +43,7 @@ func TestNewModuleInstallationFromRaw_MapsModuleState(t *testing.T) {
 
 	m := NewModuleInstallationFromRaw(raw)
 
-	require.Equal(t, "Ready", m.ModuleState)
+	require.Equal(t, "Ready", m.KymaModuleState)
 }
 
 func TestNewModuleInstallationFromRaw_MapsManaged(t *testing.T) {

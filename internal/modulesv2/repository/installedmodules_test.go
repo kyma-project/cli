@@ -6,9 +6,18 @@ import (
 
 	kubefake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
 	"github.com/stretchr/testify/require"
 )
+
+type fixedCRStateRepo struct {
+	state string
+}
+
+func (f *fixedCRStateRepo) GetModuleCRState(_ context.Context, _ entities.ModuleInstallation) (string, error) {
+	return f.state, nil
+}
 
 func TestInstalledModulesRepository_ListInstalledModules_NormalCase(t *testing.T) {
 	kymaClient := &kubefake.KymaClient{
@@ -25,7 +34,7 @@ func TestInstalledModulesRepository_ListInstalledModules_NormalCase(t *testing.T
 			},
 		},
 	}
-	repo := repository.NewInstalledModulesRepository(kymaClient)
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Ready"})
 
 	result, err := repo.ListInstalledModules(context.Background())
 
@@ -48,7 +57,7 @@ func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingAdded(t *tes
 			Status: kyma.KymaStatus{},
 		},
 	}
-	repo := repository.NewInstalledModulesRepository(kymaClient)
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: ""})
 
 	result, err := repo.ListInstalledModules(context.Background())
 
@@ -71,7 +80,7 @@ func TestInstalledModulesRepository_ListInstalledModules_ModuleBeingDeleted(t *t
 			},
 		},
 	}
-	repo := repository.NewInstalledModulesRepository(kymaClient)
+	repo := repository.NewInstalledModulesRepository(kymaClient, &fixedCRStateRepo{state: "Deleting"})
 
 	result, err := repo.ListInstalledModules(context.Background())
 
