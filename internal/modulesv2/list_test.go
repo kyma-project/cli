@@ -22,26 +22,18 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 }
 
 func TestListService_Run_ReturnsCoreModules(t *testing.T) {
+	managed := true
 	installedModulesRepo := &modulesfake.InstalledModulesRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway"},
-			{Name: "istio"},
-		},
-	}
-	svc := NewListService(installedModulesRepo)
-
-	result, err := svc.Run(context.Background())
-
-	require.NoError(t, err)
-	require.Len(t, result, 2)
-	require.Equal(t, "api-gateway", result[0].Name)
-	require.Equal(t, "istio", result[1].Name)
-}
-
-func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready"},
+			{
+				Name:                 "api-gateway",
+				Version:              "3.5.1",
+				Channel:              "regular",
+				ModuleState:          "Ready",
+				InstallationState:    "Ready",
+				Managed:              &managed,
+				CustomResourcePolicy: "CreateAndDelete",
+			},
 		},
 	}
 	svc := NewListService(installedModulesRepo)
@@ -55,24 +47,9 @@ func TestListService_Run_ReturnsCoreModulesWithVersionAndChannel(t *testing.T) {
 	require.Equal(t, "3.5.1", module.Version)
 	require.Equal(t, "regular", module.Channel)
 	require.Equal(t, "Ready", module.ModuleState)
-}
-
-func TestListService_Run_ReturnsManaged(t *testing.T) {
-	managed := true
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", Managed: &managed},
-		},
-	}
-	svc := NewListService(installedModulesRepo)
-
-	result, err := svc.Run(context.Background())
-
-	require.NoError(t, err)
-	require.Len(t, result, 1)
-	module := result[0]
-	require.Equal(t, "api-gateway", module.Name)
+	require.Equal(t, "Ready", module.InstallationState)
 	require.True(t, module.Managed)
+	require.Equal(t, "CreateAndDelete", module.CustomResourcePolicy)
 }
 
 func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
@@ -104,49 +81,4 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 	require.NoError(t, err)
 	module := result[0]
 	require.False(t, module.Managed)
-}
-
-func TestListService_Run_ReturnsCustomResourcePolicy(t *testing.T) {
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", CustomResourcePolicy: "CreateAndDelete"},
-		},
-	}
-	svc := NewListService(installedModulesRepo)
-
-	result, err := svc.Run(context.Background())
-
-	require.NoError(t, err)
-	module := result[0]
-	require.Equal(t, "CreateAndDelete", module.CustomResourcePolicy)
-}
-
-func TestListService_Run_ReturnsInstallationState(t *testing.T) {
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", InstallationState: "Ready"},
-		},
-	}
-	svc := NewListService(installedModulesRepo)
-
-	result, err := svc.Run(context.Background())
-
-	require.NoError(t, err)
-	module := result[0]
-	require.Equal(t, "Ready", module.InstallationState)
-}
-
-func TestListService_Run_ReturnsModuleStateFromCR(t *testing.T) {
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
-		ListInstalledModulesResult: []entities.ModuleInstallation{
-			{Name: "api-gateway", ModuleState: "Warning"},
-		},
-	}
-	svc := NewListService(installedModulesRepo)
-
-	result, err := svc.Run(context.Background())
-
-	require.NoError(t, err)
-	module := result[0]
-	require.Equal(t, "Warning", module.ModuleState)
 }

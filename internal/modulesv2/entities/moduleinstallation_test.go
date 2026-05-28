@@ -24,9 +24,23 @@ func TestModuleInstallation_IsManaged_FalseWhenManagedIsFalse(t *testing.T) {
 	require.False(t, m.IsManaged())
 }
 
-func TestNewModuleInstallationFromRaw_MapsNameVersionChannel(t *testing.T) {
+func TestNewModuleInstallationFromRaw_MapsAllFields(t *testing.T) {
+	managed := false
+	status := kyma.ModuleStatus{
+		Name:    "api-gateway",
+		Version: "3.5.1",
+		Channel: "regular",
+		State:   "Ready",
+	}
+	status.Template.SetName("api-gateway-template")
+	status.Template.SetNamespace("kyma-system")
 	raw := kyma.KymaModuleInfo{
-		Status: kyma.ModuleStatus{Name: "api-gateway", Version: "3.5.1", Channel: "regular"},
+		Spec: kyma.Module{
+			Name:                 "api-gateway",
+			Managed:              &managed,
+			CustomResourcePolicy: "CreateAndDelete",
+		},
+		Status: status,
 	}
 
 	m := NewModuleInstallationFromRaw(raw)
@@ -34,52 +48,10 @@ func TestNewModuleInstallationFromRaw_MapsNameVersionChannel(t *testing.T) {
 	require.Equal(t, "api-gateway", m.Name)
 	require.Equal(t, "3.5.1", m.Version)
 	require.Equal(t, "regular", m.Channel)
-}
-
-func TestNewModuleInstallationFromRaw_MapsModuleState(t *testing.T) {
-	raw := kyma.KymaModuleInfo{
-		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Ready"},
-	}
-
-	m := NewModuleInstallationFromRaw(raw)
-
 	require.Equal(t, "Ready", m.KymaModuleState)
-}
-
-func TestNewModuleInstallationFromRaw_MapsManaged(t *testing.T) {
-	managed := false
-	raw := kyma.KymaModuleInfo{
-		Spec:   kyma.Module{Managed: &managed},
-		Status: kyma.ModuleStatus{Name: "api-gateway"},
-	}
-
-	m := NewModuleInstallationFromRaw(raw)
-
 	require.NotNil(t, m.Managed)
 	require.False(t, *m.Managed)
-}
-
-func TestNewModuleInstallationFromRaw_MapsCustomResourcePolicy(t *testing.T) {
-	raw := kyma.KymaModuleInfo{
-		Spec:   kyma.Module{CustomResourcePolicy: "CreateAndDelete"},
-		Status: kyma.ModuleStatus{Name: "api-gateway"},
-	}
-
-	m := NewModuleInstallationFromRaw(raw)
-
 	require.Equal(t, "CreateAndDelete", m.CustomResourcePolicy)
-}
-
-func TestNewModuleInstallationFromRaw_MapsTemplateNameAndNamespace(t *testing.T) {
-	template := kyma.ModuleStatus{
-		Name: "api-gateway",
-	}
-	template.Template.SetName("api-gateway-template")
-	template.Template.SetNamespace("kyma-system")
-	raw := kyma.KymaModuleInfo{Status: template}
-
-	m := NewModuleInstallationFromRaw(raw)
-
 	require.Equal(t, "api-gateway-template", m.TemplateName)
 	require.Equal(t, "kyma-system", m.TemplateNamespace)
 }
