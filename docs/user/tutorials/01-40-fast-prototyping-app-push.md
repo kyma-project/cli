@@ -29,6 +29,9 @@ For this example, use a Spring Boot application that exposes a REST API for mana
 
 ### Create the Object Store ServiceInstance and ServiceBinding
 
+> [!NOTE]
+> Object Store is used here for simplicity. For applications with structured, relational data, use a proper database such as SAP HANA Cloud or PostgreSQL.
+
 1. Create the `dev` namespace:
 
     ```Shell/Bash
