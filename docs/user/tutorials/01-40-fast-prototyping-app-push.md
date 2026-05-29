@@ -131,7 +131,8 @@ Once your prototype stabilizes, you can automate deployments on every push to yo
 
     This command configures your Kyma cluster to trust GitHub OIDC tokens issued for the specified repository. The workflow obtains cluster access using a short-lived GitHub OIDC token — no long-lived credentials are stored. The only values you need to keep as secrets are the API server URL and CA certificate, which are connection details rather than credentials.
 
-    > **Note:** The `--clusterrole edit` flag is used here for simplicity. In production, choose the most restrictive ClusterRole that satisfies your workflow's needs. You can also limit authorization to a specific workflow, branch, or environment using `--require-claim`. Run `kyma alpha authorize repository --help` for details.
+    > [!NOTE] 
+    > The `--clusterrole edit` flag is used here for simplicity. In production, choose the most restrictive ClusterRole that satisfies your workflow's needs. You can also limit authorization to a specific workflow, branch, or environment using `--require-claim`. Run `kyma alpha authorize repository --help` for details.
 
 3. Add the cluster connection details as GitHub Actions secrets. Run the following commands locally to get the values:
 
