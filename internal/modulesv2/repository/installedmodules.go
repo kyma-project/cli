@@ -7,7 +7,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 )
 
-type InstalledModulesRepository interface {
+type ModuleInstallationsRepository interface {
 	ListInstalledModules(ctx context.Context) ([]entities.ModuleInstallation, error)
 }
 
@@ -17,7 +17,7 @@ type installedModulesRepository struct {
 	installationStateRepo ModuleInstallationStateRepository
 }
 
-func NewInstalledModulesRepository(kymaClient kyma.Interface, moduleCRStateRepo ModuleCRStateRepository, installationStateRepo ModuleInstallationStateRepository) InstalledModulesRepository {
+func NewModuleInstallationsRepository(kymaClient kyma.Interface, moduleCRStateRepo ModuleCRStateRepository, installationStateRepo ModuleInstallationStateRepository) ModuleInstallationsRepository {
 	return &installedModulesRepository{kymaClient: kymaClient, moduleCRStateRepo: moduleCRStateRepo, installationStateRepo: installationStateRepo}
 }
 

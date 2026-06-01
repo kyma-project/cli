@@ -90,7 +90,7 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 		return repository.NewClusterMetadataRepository(kubeClient), nil
 	})
 
-	di.RegisterTyped(container, func(c *di.Container) (repository.InstalledModulesRepository, error) {
+	di.RegisterTyped(container, func(c *di.Container) (repository.ModuleInstallationsRepository, error) {
 		kubeClient, err := di.GetTyped[kube.Client](c)
 		if err != nil {
 			return nil, err
@@ -106,7 +106,7 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 			return nil, err
 		}
 
-		return repository.NewInstalledModulesRepository(kubeClient.Kyma(), moduleCRStateRepo, installationStateRepo), nil
+		return repository.NewModuleInstallationsRepository(kubeClient.Kyma(), moduleCRStateRepo, installationStateRepo), nil
 	})
 
 	di.RegisterTyped(container, func(c *di.Container) (repository.ModuleInstallationStateRepository, error) {
@@ -153,7 +153,7 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 	})
 
 	di.RegisterTyped(container, func(c *di.Container) (*ListService, error) {
-		installedModulesRepo, err := di.GetTyped[repository.InstalledModulesRepository](c)
+		installedModulesRepo, err := di.GetTyped[repository.ModuleInstallationsRepository](c)
 		if err != nil {
 			return nil, err
 		}

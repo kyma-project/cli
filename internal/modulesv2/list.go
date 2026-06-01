@@ -8,10 +8,10 @@ import (
 )
 
 type ListService struct {
-	installedModulesRepository repository.InstalledModulesRepository
+	installedModulesRepository repository.ModuleInstallationsRepository
 }
 
-func NewListService(installedModulesRepository repository.InstalledModulesRepository) *ListService {
+func NewListService(installedModulesRepository repository.ModuleInstallationsRepository) *ListService {
 	return &ListService{
 		installedModulesRepository: installedModulesRepository,
 	}

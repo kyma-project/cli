@@ -10,7 +10,7 @@ import (
 )
 
 func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{},
 	}
 	svc := NewListService(installedModulesRepo)
@@ -23,7 +23,7 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 
 func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 	managed := true
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
 			{
 				Name:                 "api-gateway",
@@ -53,7 +53,7 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 }
 
 func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
 			{Name: "api-gateway", Managed: nil},
 		},
@@ -69,7 +69,7 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 
 func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 	managed := false
-	installedModulesRepo := &modulesfake.InstalledModulesRepository{
+	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{
 			{Name: "api-gateway", Managed: &managed},
 		},
