@@ -13,16 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type ModuleCRStateRepository interface {
-	GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error)
-}
-
 type moduleCRStateRepository struct {
 	kubeClient kube.Client
-}
-
-func NewModuleCRStateRepository(kubeClient kube.Client) ModuleCRStateRepository {
-	return &moduleCRStateRepository{kubeClient: kubeClient}
 }
 
 func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error) {

@@ -11,16 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type ModuleInstallationStateRepository interface {
-	GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error)
-}
-
 type moduleInstallationStateRepository struct {
 	kubeClient kube.Client
-}
-
-func NewModuleInstallationStateRepository(kubeClient kube.Client) ModuleInstallationStateRepository {
-	return &moduleInstallationStateRepository{kubeClient: kubeClient}
 }
 
 func (r *moduleInstallationStateRepository) GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {

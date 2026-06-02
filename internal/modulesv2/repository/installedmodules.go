@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 )
@@ -13,12 +14,16 @@ type ModuleInstallationsRepository interface {
 
 type installedModulesRepository struct {
 	kymaClient            kyma.Interface
-	moduleCRStateRepo     ModuleCRStateRepository
-	installationStateRepo ModuleInstallationStateRepository
+	moduleCRStateRepo     *moduleCRStateRepository
+	installationStateRepo *moduleInstallationStateRepository
 }
 
-func NewModuleInstallationsRepository(kymaClient kyma.Interface, moduleCRStateRepo ModuleCRStateRepository, installationStateRepo ModuleInstallationStateRepository) ModuleInstallationsRepository {
-	return &installedModulesRepository{kymaClient: kymaClient, moduleCRStateRepo: moduleCRStateRepo, installationStateRepo: installationStateRepo}
+func NewModuleInstallationsRepository(kubeClient kube.Client) ModuleInstallationsRepository {
+	return &installedModulesRepository{
+		kymaClient:            kubeClient.Kyma(),
+		moduleCRStateRepo:     &moduleCRStateRepository{kubeClient: kubeClient},
+		installationStateRepo: &moduleInstallationStateRepository{kubeClient: kubeClient},
+	}
 }
 
 func (r *installedModulesRepository) ListInstalledModules(ctx context.Context) ([]entities.ModuleInstallation, error) {
