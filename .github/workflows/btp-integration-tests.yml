@@ -7,11 +7,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'release-*'
+      - "release-*"
 
 jobs:
   e2e-test-btp:
     runs-on: ubuntu-latest
+    environment: push
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,15 +29,15 @@ jobs:
         id: create-btp-resources
         with:
           btp_subaccount_name: cli-test-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
-          btp_backend_url: '${{ vars.BTP_BACKEND_URL}}'
-          btp_user: '${{ vars.BTP_BOT_USER}}'
-          btp_password: '${{ secrets.BTP_BOT_PASSWORD}}'
-          btp_global_account: '${{ vars.BTP_GLOBAL_ACCOUNT }}'
-          btp_idp_tenant: '${{ vars.BTP_CUSTOM_IAS_TENANT }}'
-          btp_subaccount_region: '${{ vars.BTP_SUBACCOUNT_REGION }}'
-          btp_kyma_region: '${{ vars.BTP_KYMA_REGION }}'
-          btp_kyma_plan: '${{ vars.BTP_KYMA_PLAN }}'
-          btp_kyma_autoscaler_min: '${{ vars.BTP_KYMA_AUTOSCALER_MIN }}'
+          btp_backend_url: "${{ vars.BTP_BACKEND_URL}}"
+          btp_user: "${{ vars.BTP_BOT_USER}}"
+          btp_password: "${{ secrets.BTP_BOT_PASSWORD}}"
+          btp_global_account: "${{ vars.BTP_GLOBAL_ACCOUNT }}"
+          btp_idp_tenant: "${{ vars.BTP_CUSTOM_IAS_TENANT }}"
+          btp_subaccount_region: "${{ vars.BTP_SUBACCOUNT_REGION }}"
+          btp_kyma_region: "${{ vars.BTP_KYMA_REGION }}"
+          btp_kyma_plan: "${{ vars.BTP_KYMA_PLAN }}"
+          btp_kyma_autoscaler_min: "${{ vars.BTP_KYMA_AUTOSCALER_MIN }}"
       - name: test gh oidc trust
         run: |
           echo -e "Testing access generated for github as trusted OIDC using alpha authorize repository command \n"
@@ -46,12 +47,12 @@ jobs:
 
           # WHEN - Use the new alpha authorize repository command to establish trust
           bin/kyma alpha authorize repository --repository $REPOSITORY --client-id $AUDIENCE --cluster-wide --clusterrole cluster-admin
-          
+
           # THEN - Generate kubeconfig and test access
           bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
           kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
           kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
-      - name: ensure btp prerequisites 
+      - name: ensure btp prerequisites
         run: |
           echo -e "BTP_GLOBAL_ACCOUNT = \"$BTP_GLOBAL_ACCOUNT\"" >> tests/btp/tf/.tfvars
           echo -e "BTP_BOT_USER = \"$BTP_BOT_USER\"" >> tests/btp/tf/.tfvars
@@ -63,15 +64,15 @@ jobs:
           echo -e "BTP_HANA_SUBACCOUNT_ID = \"$BTP_HANA_SUBACCOUNT_ID\"" >> tests/btp/tf/.tfvars
           make -C tests/btp prerequisites
         env:
-          BTP_BACKEND_URL: '${{ vars.BTP_BACKEND_URL}}'
-          BTP_BOT_USER: '${{ vars.BTP_BOT_USER}}'
-          BTP_BOT_PASSWORD: '${{ secrets.BTP_BOT_PASSWORD}}'
-          BTP_CUSTOM_IAS_TENANT: '${{ vars.BTP_CUSTOM_IAS_TENANT }}'
-          BTP_GLOBAL_ACCOUNT: '${{ vars.BTP_GLOBAL_ACCOUNT }}'
-          BTP_KYMA_SUBACCOUNT_ID: '${{ steps.create-btp-resources.outputs.subaccount_id }}'
-          BTP_OBJECTSTORE_SUBACCOUNT_ID: '${{ vars.BTP_OBJECTSTORE_SUBACCOUNT_ID }}'
-          BTP_HANA_SUBACCOUNT_ID: '${{ vars.BTP_HANA_SUBACCOUNT_ID }}'
-      - name: test 
+          BTP_BACKEND_URL: "${{ vars.BTP_BACKEND_URL}}"
+          BTP_BOT_USER: "${{ vars.BTP_BOT_USER}}"
+          BTP_BOT_PASSWORD: "${{ secrets.BTP_BOT_PASSWORD}}"
+          BTP_CUSTOM_IAS_TENANT: "${{ vars.BTP_CUSTOM_IAS_TENANT }}"
+          BTP_GLOBAL_ACCOUNT: "${{ vars.BTP_GLOBAL_ACCOUNT }}"
+          BTP_KYMA_SUBACCOUNT_ID: "${{ steps.create-btp-resources.outputs.subaccount_id }}"
+          BTP_OBJECTSTORE_SUBACCOUNT_ID: "${{ vars.BTP_OBJECTSTORE_SUBACCOUNT_ID }}"
+          BTP_HANA_SUBACCOUNT_ID: "${{ vars.BTP_HANA_SUBACCOUNT_ID }}"
+      - name: test
         run: |
           make -C tests/btp e2e-test
       - name: cleanup
