@@ -24,8 +24,7 @@ func NewListV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Lists installed modules",
 		Long: `Use this command to list the installed Kyma modules.
 
-NOTE: functionality under construction
-  - community modules not yet supported`,
+WARNING: This functionality is still under construction. Community modules are not yet supported.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModulesV2(&cfg))
 		},

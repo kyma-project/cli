@@ -6,8 +6,7 @@ Lists installed modules.
 
 Use this command to list the installed Kyma modules.
 
-NOTE: functionality under construction
-  - community modules not yet supported
+WARNING: This functionality is still under construction. Community modules are not yet supported.
 
 ```bash
 kyma alpha module list [flags]
