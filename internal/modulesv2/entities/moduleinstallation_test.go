@@ -1,0 +1,88 @@
+package entities
+
+import (
+	"testing"
+
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/stretchr/testify/require"
+)
+
+func TestModuleInstallation_IsManaged_TrueWhenManagedIsNil(t *testing.T) {
+	m := ModuleInstallation{Managed: nil}
+	require.True(t, m.IsManaged())
+}
+
+func TestModuleInstallation_IsManaged_TrueWhenManagedIsTrue(t *testing.T) {
+	managed := true
+	m := ModuleInstallation{Managed: &managed}
+	require.True(t, m.IsManaged())
+}
+
+func TestModuleInstallation_IsManaged_FalseWhenManagedIsFalse(t *testing.T) {
+	managed := false
+	m := ModuleInstallation{Managed: &managed}
+	require.False(t, m.IsManaged())
+}
+
+func TestNewModuleInstallationFromRaw_MapsAllFields(t *testing.T) {
+	managed := false
+	status := kyma.ModuleStatus{
+		Name:    "api-gateway",
+		Version: "3.5.1",
+		Channel: "regular",
+		State:   "Ready",
+	}
+	status.Template.SetName("api-gateway-template")
+	status.Template.SetNamespace("kyma-system")
+	raw := kyma.KymaModuleInfo{
+		Spec: kyma.Module{
+			Name:                 "api-gateway",
+			Managed:              &managed,
+			CustomResourcePolicy: "CreateAndDelete",
+		},
+		Status: status,
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.Equal(t, "api-gateway", m.Name)
+	require.Equal(t, "3.5.1", m.Version)
+	require.Equal(t, "regular", m.Channel)
+	require.Equal(t, "Ready", m.KymaModuleState)
+	require.NotNil(t, m.Managed)
+	require.False(t, *m.Managed)
+	require.Equal(t, "CreateAndDelete", m.CustomResourcePolicy)
+	require.Equal(t, "api-gateway-template", m.TemplateName)
+	require.Equal(t, "kyma-system", m.TemplateNamespace)
+}
+
+func TestNewModuleInstallationFromRaw_UsesSpecNameWhenStatusNameIsEmpty(t *testing.T) {
+	raw := kyma.KymaModuleInfo{
+		Spec: kyma.Module{Name: "api-gateway"},
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.Equal(t, "api-gateway", m.Name)
+}
+
+func TestModuleInstallation_IsBeingDeleted_TrueWhenOnlyInStatus(t *testing.T) {
+	raw := kyma.KymaModuleInfo{
+		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Deleting"},
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.True(t, m.IsBeingDeleted())
+}
+
+func TestModuleInstallation_IsBeingDeleted_FalseWhenSpecPresent(t *testing.T) {
+	raw := kyma.KymaModuleInfo{
+		Spec:   kyma.Module{Name: "api-gateway"},
+		Status: kyma.ModuleStatus{Name: "api-gateway", State: "Ready"},
+	}
+
+	m := NewModuleInstallationFromRaw(raw)
+
+	require.False(t, m.IsBeingDeleted())
+}
