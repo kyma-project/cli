@@ -14,15 +14,15 @@ type ModuleInstallationsRepository interface {
 
 type installedModulesRepository struct {
 	kymaClient            kyma.Interface
-	moduleCRStateRepo     *moduleCRStateRepository
-	installationStateRepo *moduleInstallationStateRepository
+	moduleCRStateFetcher     *moduleCRStateFetcher
+	installationStateFetcher *moduleInstallationStateFetcher
 }
 
 func NewModuleInstallationsRepository(kubeClient kube.Client) ModuleInstallationsRepository {
 	return &installedModulesRepository{
 		kymaClient:            kubeClient.Kyma(),
-		moduleCRStateRepo:     &moduleCRStateRepository{kubeClient: kubeClient},
-		installationStateRepo: &moduleInstallationStateRepository{kubeClient: kubeClient},
+		moduleCRStateFetcher:     &moduleCRStateFetcher{kubeClient: kubeClient},
+		installationStateFetcher: &moduleInstallationStateFetcher{kubeClient: kubeClient},
 	}
 }
 
@@ -87,7 +87,7 @@ func (r *installedModulesRepository) buildModulesFromSpecsOnly(ctx context.Conte
 
 func (r *installedModulesRepository) buildModule(ctx context.Context, raw kyma.KymaModuleInfo) (entities.ModuleInstallation, error) {
 	module := entities.NewModuleInstallationFromRaw(raw)
-	moduleState, err := r.moduleCRStateRepo.GetModuleCRState(ctx, *module)
+	moduleState, err := r.moduleCRStateFetcher.GetModuleCRState(ctx, *module)
 	if err != nil {
 		return entities.ModuleInstallation{}, err
 	}
@@ -113,5 +113,5 @@ func (r *installedModulesRepository) resolveInstallationState(ctx context.Contex
 		return module.KymaModuleState, nil
 	}
 
-	return r.installationStateRepo.GetInstallationState(ctx, module)
+	return r.installationStateFetcher.GetInstallationState(ctx, module)
 }

@@ -11,11 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type moduleInstallationStateRepository struct {
+type moduleInstallationStateFetcher struct {
 	kubeClient kube.Client
 }
 
-func (r *moduleInstallationStateRepository) GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+func (r *moduleInstallationStateFetcher) GetInstallationState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
 	moduleTemplate, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, module.TemplateNamespace, module.TemplateName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {

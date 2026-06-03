@@ -13,11 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type moduleCRStateRepository struct {
+type moduleCRStateFetcher struct {
 	kubeClient kube.Client
 }
 
-func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+func (r *moduleCRStateFetcher) GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
 	moduleTemplate, err := r.findModuleTemplate(ctx, module)
 	if err != nil {
 		return "", err
@@ -48,7 +48,7 @@ func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module e
 	return highestStateFromList(crList.Items), nil
 }
 
-func (r *moduleCRStateRepository) findModuleTemplate(ctx context.Context, module entities.ModuleInstallation) (*kyma.ModuleTemplate, error) {
+func (r *moduleCRStateFetcher) findModuleTemplate(ctx context.Context, module entities.ModuleInstallation) (*kyma.ModuleTemplate, error) {
 	if module.TemplateName != "" {
 		mt, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, module.TemplateNamespace, module.TemplateName)
 		if err != nil {
