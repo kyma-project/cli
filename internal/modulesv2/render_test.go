@@ -11,13 +11,27 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func TestRenderList_Table_ShowsCommunityModulesSection(t *testing.T) {
+	results := []dtos.ListResult{}
+	communityResults := []dtos.CommunityListResult{
+		{Name: "default/docker-registry", Version: "0.10.0", ModuleState: "Ready", InstallationState: "Ready"},
+	}
+
+	var buf bytes.Buffer
+	err := RenderList(results, communityResults, types.DefaultFormat, out.NewToWriter(&buf))
+
+	require.NoError(t, err)
+	require.Regexp(t, `COMMUNITY MODULE.*VERSION.*MODULE STATUS.*INSTALLATION STATUS`, buf.String())
+	require.Regexp(t, `default/docker-registry.*0\.10\.0.*Ready.*Ready`, buf.String())
+}
+
 func TestRenderList_Table(t *testing.T) {
 	results := []dtos.ListResult{
 		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.Regexp(t, `MODULE.*VERSION.*CR POLICY.*MANAGED.*MODULE STATUS.*INSTALLATION STATUS`, buf.String())
@@ -30,7 +44,7 @@ func TestRenderList_JSON(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.JSONFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.JSONFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular","moduleStatus":"Ready","managed":true,"crPolicy":"CreateAndDelete","installationStatus":"Ready"}]`, buf.String())
@@ -43,7 +57,7 @@ func TestRenderList_Table_SortedByName(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.Regexp(t, `(?s)api-gateway.*istio`, buf.String())
@@ -55,7 +69,7 @@ func TestRenderList_Table_ShowsInstallationStateDirectly(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.NotRegexp(t, `Warning\(Deleting\)`, buf.String())
@@ -68,7 +82,7 @@ func TestRenderList_YAML(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.YAMLFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.YAMLFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	var parsed []map[string]interface{}

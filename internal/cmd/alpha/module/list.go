@@ -48,7 +48,7 @@ func listModulesV2(cfg *listConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules"))
 	}
 
-	err = modulesv2.RenderList(results, cfg.outputFormat, out.Default)
+	err = modulesv2.RenderList(results, nil, cfg.outputFormat, out.Default)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render module list"))
 	}
