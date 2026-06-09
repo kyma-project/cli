@@ -12,9 +12,7 @@ on:
 jobs:
   e2e-test-btp:
     runs-on: ubuntu-latest
-    environment:
-      name: push
-      deployment: false
+    environment: secrets
     steps:
       - uses: actions/checkout@v4
         with:
