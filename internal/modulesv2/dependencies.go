@@ -130,7 +130,7 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
 			return nil, err
 		}
 
-		return NewListService(installedModulesRepo), nil
+		return NewListService(installedModulesRepo, nil), nil
 	})
 
 	return container

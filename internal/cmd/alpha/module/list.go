@@ -43,12 +43,12 @@ func listModulesV2(cfg *listConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to execute the list command"))
 	}
 
-	results, err := listService.Run(cfg.Ctx)
+	results, communityResults, err := listService.Run(cfg.Ctx)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules"))
 	}
 
-	err = modulesv2.RenderList(results, nil, cfg.outputFormat, out.Default)
+	err = modulesv2.RenderList(results, communityResults, cfg.outputFormat, out.Default)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render module list"))
 	}

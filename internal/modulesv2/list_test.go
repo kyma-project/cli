@@ -13,9 +13,9 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, nil)
 
-	result, err := svc.Run(context.Background())
+	result, _, err := svc.Run(context.Background())
 
 	require.NoError(t, err)
 	require.Empty(t, result)
@@ -36,9 +36,9 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 			},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, nil)
 
-	result, err := svc.Run(context.Background())
+	result, _, err := svc.Run(context.Background())
 
 	require.NoError(t, err)
 	require.Len(t, result, 1)
@@ -58,13 +58,32 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 			{Name: "api-gateway", Managed: nil},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, nil)
 
-	result, err := svc.Run(context.Background())
+	result, _, err := svc.Run(context.Background())
 
 	require.NoError(t, err)
 	module := result[0]
 	require.True(t, module.Managed)
+}
+
+func TestListService_Run_ReturnsCommunityModules(t *testing.T) {
+	communityModulesRepo := &modulesfake.CommunityModuleInstallationsRepository{
+		ListInstalledCommunityModulesResult: []entities.CommunityModuleInstallation{
+			{Name: "docker-registry", Namespace: "default", Version: "0.10.0", ModuleState: "Ready", InstallationState: "Ready"},
+		},
+	}
+	svc := NewListService(nil, communityModulesRepo)
+
+	_, communityResult, err := svc.Run(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, communityResult, 1)
+	module := communityResult[0]
+	require.Equal(t, "default/docker-registry", module.Name)
+	require.Equal(t, "0.10.0", module.Version)
+	require.Equal(t, "Ready", module.ModuleState)
+	require.Equal(t, "Ready", module.InstallationState)
 }
 
 func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
@@ -74,9 +93,9 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 			{Name: "api-gateway", Managed: &managed},
 		},
 	}
-	svc := NewListService(installedModulesRepo)
+	svc := NewListService(installedModulesRepo, nil)
 
-	result, err := svc.Run(context.Background())
+	result, _, err := svc.Run(context.Background())
 
 	require.NoError(t, err)
 	module := result[0]
