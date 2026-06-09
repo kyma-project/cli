@@ -344,3 +344,29 @@ func TestModuleInstallationsRepository_ListInstalledModules_InstallationState_Ma
 func managerGVK(group, version, kind string) metav1.GroupVersionKind {
 	return metav1.GroupVersionKind{Group: group, Version: version, Kind: kind}
 }
+
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_ReturnsModuleFromCommunityTemplate(t *testing.T) {
+	communityTemplate := kyma.ModuleTemplate{}
+	communityTemplate.SetName("docker-registry")
+	communityTemplate.SetNamespace("default")
+	communityTemplate.Spec.ModuleName = "docker-registry"
+	communityTemplate.Spec.Version = "0.10.0"
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{communityTemplate},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	module := result[0]
+	require.Equal(t, "docker-registry", module.Name)
+	require.Equal(t, "default", module.Namespace)
+	require.Equal(t, "0.10.0", module.Version)
+}

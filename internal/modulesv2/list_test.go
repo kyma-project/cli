@@ -13,7 +13,7 @@ func TestListService_Run_ReturnsEmptyWhenNoInstalledModules(t *testing.T) {
 	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledModulesResult: []entities.ModuleInstallation{},
 	}
-	svc := NewListService(installedModulesRepo, nil)
+	svc := NewListService(installedModulesRepo)
 
 	result, _, err := svc.Run(context.Background())
 
@@ -36,7 +36,7 @@ func TestListService_Run_ReturnsCoreModules(t *testing.T) {
 			},
 		},
 	}
-	svc := NewListService(installedModulesRepo, nil)
+	svc := NewListService(installedModulesRepo)
 
 	result, _, err := svc.Run(context.Background())
 
@@ -58,7 +58,7 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 			{Name: "api-gateway", Managed: nil},
 		},
 	}
-	svc := NewListService(installedModulesRepo, nil)
+	svc := NewListService(installedModulesRepo)
 
 	result, _, err := svc.Run(context.Background())
 
@@ -68,12 +68,12 @@ func TestListService_Run_ReturnsManagedTrueWhenManagedIsNil(t *testing.T) {
 }
 
 func TestListService_Run_ReturnsCommunityModules(t *testing.T) {
-	communityModulesRepo := &modulesfake.CommunityModuleInstallationsRepository{
+	installedModulesRepo := &modulesfake.ModuleInstallationsRepository{
 		ListInstalledCommunityModulesResult: []entities.CommunityModuleInstallation{
 			{Name: "docker-registry", Namespace: "default", Version: "0.10.0", ModuleState: "Ready", InstallationState: "Ready"},
 		},
 	}
-	svc := NewListService(nil, communityModulesRepo)
+	svc := NewListService(installedModulesRepo)
 
 	_, communityResult, err := svc.Run(context.Background())
 
@@ -93,7 +93,7 @@ func TestListService_Run_ReturnsManagedFalseWhenUnmanaged(t *testing.T) {
 			{Name: "api-gateway", Managed: &managed},
 		},
 	}
-	svc := NewListService(installedModulesRepo, nil)
+	svc := NewListService(installedModulesRepo)
 
 	result, _, err := svc.Run(context.Background())
 

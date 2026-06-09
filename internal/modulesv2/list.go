@@ -8,19 +8,13 @@ import (
 	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
 )
 
-type CommunityModuleInstallationsRepository interface {
-	ListInstalledCommunityModules(ctx context.Context) ([]entities.CommunityModuleInstallation, error)
-}
-
 type ListService struct {
 	installedModulesRepository repository.ModuleInstallationsRepository
-	communityModulesRepository CommunityModuleInstallationsRepository
 }
 
-func NewListService(installedModulesRepository repository.ModuleInstallationsRepository, communityModulesRepository CommunityModuleInstallationsRepository) *ListService {
+func NewListService(installedModulesRepository repository.ModuleInstallationsRepository) *ListService {
 	return &ListService{
 		installedModulesRepository: installedModulesRepository,
-		communityModulesRepository: communityModulesRepository,
 	}
 }
 
@@ -47,11 +41,11 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, []dtos.Commun
 		})
 	}
 
-	if s.communityModulesRepository == nil {
+	if s.installedModulesRepository == nil {
 		return results, nil, nil
 	}
 
-	communityModules, err := s.communityModulesRepository.ListInstalledCommunityModules(ctx)
+	communityModules, err := s.installedModulesRepository.ListInstalledCommunityModules(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

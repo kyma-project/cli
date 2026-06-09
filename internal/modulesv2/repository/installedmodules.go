@@ -10,6 +10,7 @@ import (
 
 type ModuleInstallationsRepository interface {
 	ListInstalledModules(ctx context.Context) ([]entities.ModuleInstallation, error)
+	ListInstalledCommunityModules(ctx context.Context) ([]entities.CommunityModuleInstallation, error)
 }
 
 type installedModulesRepository struct {
@@ -114,4 +115,24 @@ func (r *installedModulesRepository) resolveInstallationState(ctx context.Contex
 	}
 
 	return r.installationStateFetcher.GetInstallationState(ctx, module)
+}
+
+func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.Context) ([]entities.CommunityModuleInstallation, error) {
+	allTemplates, err := r.kymaClient.ListModuleTemplate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []entities.CommunityModuleInstallation
+	for _, mt := range allTemplates.Items {
+		if !isCommunityModule(&mt) {
+			continue
+		}
+		result = append(result, entities.CommunityModuleInstallation{
+			Name:      mt.Spec.ModuleName,
+			Namespace: mt.GetNamespace(),
+			Version:   mt.Spec.Version,
+		})
+	}
+	return result, nil
 }
