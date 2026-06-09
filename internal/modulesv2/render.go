@@ -16,16 +16,16 @@ import (
 func RenderList(results []dtos.ListResult, communityResults []dtos.CommunityListResult, format types.Format, printer *out.Printer) error {
 	switch format {
 	case types.JSONFormat:
-		return renderListJSON(results, printer)
+		return renderListJSON(results, communityResults, printer)
 	case types.YAMLFormat:
-		return renderListYAML(results, printer)
+		return renderListYAML(results, communityResults, printer)
 	default:
 		return renderListTable(results, communityResults, printer)
 	}
 }
 
-func renderListJSON(results []dtos.ListResult, printer *out.Printer) error {
-	output := convertListToOutputFormat(results)
+func renderListJSON(results []dtos.ListResult, communityResults []dtos.CommunityListResult, printer *out.Printer) error {
+	output := convertToListOutputFormat(results, communityResults)
 	obj, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		return err
@@ -34,8 +34,8 @@ func renderListJSON(results []dtos.ListResult, printer *out.Printer) error {
 	return nil
 }
 
-func renderListYAML(results []dtos.ListResult, printer *out.Printer) error {
-	output := convertListToOutputFormat(results)
+func renderListYAML(results []dtos.ListResult, communityResults []dtos.CommunityListResult, printer *out.Printer) error {
+	output := convertToListOutputFormat(results, communityResults)
 	obj, err := yaml.Marshal(output)
 	if err != nil {
 		return err
@@ -44,7 +44,14 @@ func renderListYAML(results []dtos.ListResult, printer *out.Printer) error {
 	return nil
 }
 
-func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface{} {
+func convertToListOutputFormat(results []dtos.ListResult, communityResults []dtos.CommunityListResult) map[string]interface{} {
+	return map[string]interface{}{
+		"modules":          convertModulesToOutputFormat(results),
+		"communityModules": convertCommunityModulesToOutputFormat(communityResults),
+	}
+}
+
+func convertModulesToOutputFormat(results []dtos.ListResult) []map[string]interface{} {
 	output := make([]map[string]interface{}, len(results))
 	for i, r := range results {
 		output[i] = map[string]interface{}{
@@ -54,6 +61,19 @@ func convertListToOutputFormat(results []dtos.ListResult) []map[string]interface
 			"moduleStatus":       r.ModuleState,
 			"managed":            r.Managed,
 			"crPolicy":           r.CustomResourcePolicy,
+			"installationStatus": r.InstallationState,
+		}
+	}
+	return output
+}
+
+func convertCommunityModulesToOutputFormat(results []dtos.CommunityListResult) []map[string]interface{} {
+	output := make([]map[string]interface{}, len(results))
+	for i, r := range results {
+		output[i] = map[string]interface{}{
+			"name":               r.Name,
+			"version":            r.Version,
+			"moduleStatus":       r.ModuleState,
 			"installationStatus": r.InstallationState,
 		}
 	}
