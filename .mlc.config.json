@@ -4,6 +4,12 @@
   "_comment": "Configuration and maintenance of the Markdown link check tool is the responsibility of a repository owner.",
   "_comment": "See the following configuration example.",
   "_comment": "For more details read the [repository guidelines](https://github.com/kyma-project/community/blob/main/docs/guidelines/repository-guidelines/01-new-repository-settings.md).",
+  "ignorePatterns": [
+    {
+      "_comment": "developers.sap.com blocks CI bots with 403; links are manually verified",
+      "pattern": "^https://developers\\.sap\\.com/"
+    }
+  ],
   "replacementPatterns": [
     {
       "_comment": "a replacement rule for all the in-repository references",
