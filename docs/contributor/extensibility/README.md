@@ -45,7 +45,7 @@ data:
       name: my-command
 ```
 
-For the example of the Serverless module extension ConfigMap, see [cli-extension.yaml](https://github.com/kyma-project/serverless/blob/main/config/serverless/templates/cli-extension.yaml).
+For the example of the Serverless module extension ConfigMap, see [cli-extension.yaml](https://github.com/kyma-project/serverless/blob/main/config/buildless-serverless/templates/cli-extension.yaml).
 
 ## kyma-commands.yaml
 
@@ -71,7 +71,7 @@ subCommands: [...]
 | **flags** | no | array | Command flags definition used to overwrite values in the configuration under the `with` field |
 | **subCommands** | no | array | List of sub-commands. Every sub-command has the same schema as its parent |
 
-For the example of the Serverless module extension, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/main/config/serverless/files/kyma-commands.yaml).
+For the example of the Serverless module extension, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/main/config/buildless-serverless/files/kyma-commands.yaml).
 For the in-code definition of types, see [types.go](https://github.com/kyma-project/cli/blob/main/internal/extensions/types/types.go).
 
 ### metadata
