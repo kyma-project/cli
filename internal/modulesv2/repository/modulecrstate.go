@@ -17,6 +17,29 @@ type moduleCRStateFetcher struct {
 	kubeClient kube.Client
 }
 
+func (r *moduleCRStateFetcher) GetModuleCRStateFromTemplate(ctx context.Context, moduleTemplate *kyma.ModuleTemplate) (string, error) {
+	data := moduleTemplate.Spec.Data
+	if len(data.Object) == 0 {
+		return "", nil
+	}
+
+	crList, err := r.kubeClient.RootlessDynamic().List(ctx, &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": data.GetAPIVersion(),
+			"kind":       data.GetKind(),
+		},
+	}, &rootlessdynamic.ListOptions{AllNamespaces: true})
+	if err != nil {
+		if apierrors.IsNotFound(err) || isDiscoveryError(err) {
+			out.Debugfln("failed to get CR state for module %s: %v", moduleTemplate.Spec.ModuleName, err)
+			return "", nil
+		}
+		return "", err
+	}
+
+	return highestStateFromList(crList.Items), nil
+}
+
 func (r *moduleCRStateFetcher) GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
 	moduleTemplate, err := r.findModuleTemplate(ctx, module)
 	if err != nil {

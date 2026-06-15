@@ -128,10 +128,23 @@ func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.C
 		if !isCommunityModule(&mt) {
 			continue
 		}
+
+		moduleState, err := r.moduleCRStateFetcher.GetModuleCRStateFromTemplate(ctx, &mt)
+		if err != nil {
+			return nil, err
+		}
+
+		installationState, err := getResourceState(ctx, r.moduleCRStateFetcher.kubeClient, mt.Spec.Manager)
+		if err != nil {
+			return nil, err
+		}
+
 		result = append(result, entities.CommunityModuleInstallation{
-			Name:      mt.Spec.ModuleName,
-			Namespace: mt.GetNamespace(),
-			Version:   mt.Spec.Version,
+			Name:              mt.Spec.ModuleName,
+			Namespace:         mt.GetNamespace(),
+			Version:           mt.Spec.Version,
+			ModuleState:       moduleState,
+			InstallationState: installationState,
 		})
 	}
 	return result, nil
