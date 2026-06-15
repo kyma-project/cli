@@ -351,6 +351,11 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_ReturnsModu
 	communityTemplate.SetNamespace("default")
 	communityTemplate.Spec.ModuleName = "docker-registry"
 	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
 	kubeClient := &kubefake.KubeClient{
 		TestKymaInterface: &kubefake.KymaClient{
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
@@ -411,12 +416,40 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsInstall
 	require.Equal(t, "Ready", module.InstallationState)
 }
 
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_SkipsTemplateWithoutManager(t *testing.T) {
+	templateWithoutManager := kyma.ModuleTemplate{}
+	templateWithoutManager.SetName("docker-registry")
+	templateWithoutManager.SetNamespace("default")
+	templateWithoutManager.Spec.ModuleName = "docker-registry"
+	templateWithoutManager.Spec.Version = "0.10.0"
+	// no Spec.Manager
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{templateWithoutManager},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	require.Empty(t, result)
+}
+
 func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsModuleStateFromCR(t *testing.T) {
 	communityTemplate := kyma.ModuleTemplate{}
 	communityTemplate.SetName("docker-registry")
 	communityTemplate.SetNamespace("default")
 	communityTemplate.Spec.ModuleName = "docker-registry"
 	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
 	communityTemplate.Spec.Data = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1alpha1",

@@ -129,6 +129,10 @@ func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.C
 			continue
 		}
 
+		if mt.Spec.Manager == nil {
+			continue
+		}
+
 		moduleState, err := r.moduleCRStateFetcher.GetModuleCRStateFromTemplate(ctx, &mt)
 		if err != nil {
 			return nil, err
