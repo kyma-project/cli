@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func newKubeClient(defaultKyma kyma.Kyma, moduleTemplate kyma.ModuleTemplate, crList *unstructured.UnstructuredList) *kubefake.KubeClient {
@@ -362,7 +364,14 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_ReturnsModu
 				Items: []kyma.ModuleTemplate{communityTemplate},
 			},
 		},
-		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetObj: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"status": map[string]interface{}{"readyReplicas": int64(1)},
+					"spec":   map[string]interface{}{"replicas": int64(1)},
+				},
+			},
+		},
 	}
 	repo := repository.NewModuleInstallationsRepository(kubeClient)
 
@@ -461,6 +470,12 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsModuleS
 			{Object: map[string]interface{}{"status": map[string]interface{}{"state": "Ready"}}},
 		},
 	}
+	managerObj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"status": map[string]interface{}{"readyReplicas": int64(1)},
+			"spec":   map[string]interface{}{"replicas": int64(1)},
+		},
+	}
 	kubeClient := &kubefake.KubeClient{
 		TestKymaInterface: &kubefake.KymaClient{
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
@@ -468,6 +483,7 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsModuleS
 			},
 		},
 		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetObj:   managerObj,
 			ReturnListObjs: crList,
 		},
 	}
@@ -478,4 +494,33 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsModuleS
 	require.NoError(t, err)
 	module := result[0]
 	require.Equal(t, "Ready", module.ModuleState)
+}
+
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_SkipsWhenManagerNotInstalled(t *testing.T) {
+	communityTemplate := kyma.ModuleTemplate{}
+	communityTemplate.SetName("docker-registry")
+	communityTemplate.SetNamespace("default")
+	communityTemplate.Spec.ModuleName = "docker-registry"
+	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{communityTemplate},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetErr: apierrors.NewNotFound(schema.GroupResource{}, "docker-registry-manager"),
+		},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	require.Empty(t, result)
 }

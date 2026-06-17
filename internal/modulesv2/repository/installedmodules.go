@@ -143,6 +143,10 @@ func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.C
 			return nil, err
 		}
 
+		if installationState == "" {
+			continue
+		}
+
 		result = append(result, entities.CommunityModuleInstallation{
 			Name:              mt.Spec.ModuleName,
 			Namespace:         mt.GetNamespace(),
