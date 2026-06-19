@@ -34,4 +34,3 @@ func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, []dtos.Commun
 
 	return dtos.ListResultsFromModuleInstallations(installedModules), dtos.CommunityListResultsFromInstallations(communityModules), nil
 }
-

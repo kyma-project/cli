@@ -9,9 +9,9 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -309,7 +309,7 @@ func TestModuleInstallationsRepository_ListInstalledModules_InstallationState_Ma
 	moduleTemplate := kyma.ModuleTemplate{
 		Spec: kyma.ModuleTemplateSpec{
 			Manager: &kyma.Manager{
-				GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+				GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 				Name:             "api-gateway-manager",
 				Namespace:        "kyma-system",
 			},
@@ -343,10 +343,6 @@ func TestModuleInstallationsRepository_ListInstalledModules_InstallationState_Ma
 	require.Equal(t, "Ready", module.InstallationState)
 }
 
-func managerGVK(group, version, kind string) metav1.GroupVersionKind {
-	return metav1.GroupVersionKind{Group: group, Version: version, Kind: kind}
-}
-
 func TestModuleInstallationsRepository_ListInstalledCommunityModules_ReturnsModuleFromCommunityTemplate(t *testing.T) {
 	communityTemplate := kyma.ModuleTemplate{}
 	communityTemplate.SetName("docker-registry")
@@ -354,7 +350,7 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_ReturnsModu
 	communityTemplate.Spec.ModuleName = "docker-registry"
 	communityTemplate.Spec.Version = "0.10.0"
 	communityTemplate.Spec.Manager = &kyma.Manager{
-		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 		Name:             "docker-registry-manager",
 		Namespace:        "default",
 	}
@@ -392,7 +388,7 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsInstall
 	communityTemplate.Spec.ModuleName = "docker-registry"
 	communityTemplate.Spec.Version = "0.10.0"
 	communityTemplate.Spec.Manager = &kyma.Manager{
-		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 		Name:             "docker-registry-manager",
 		Namespace:        "default",
 	}
@@ -455,7 +451,7 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsModuleS
 	communityTemplate.Spec.ModuleName = "docker-registry"
 	communityTemplate.Spec.Version = "0.10.0"
 	communityTemplate.Spec.Manager = &kyma.Manager{
-		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 		Name:             "docker-registry-manager",
 		Namespace:        "default",
 	}
@@ -503,7 +499,7 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SkipsWhenMa
 	communityTemplate.Spec.ModuleName = "docker-registry"
 	communityTemplate.Spec.Version = "0.10.0"
 	communityTemplate.Spec.Manager = &kyma.Manager{
-		GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 		Name:             "docker-registry-manager",
 		Namespace:        "default",
 	}

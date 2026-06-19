@@ -14,14 +14,14 @@ type ModuleInstallationsRepository interface {
 }
 
 type installedModulesRepository struct {
-	kymaClient            kyma.Interface
+	kymaClient               kyma.Interface
 	moduleCRStateFetcher     *moduleCRStateFetcher
 	installationStateFetcher *moduleInstallationStateFetcher
 }
 
 func NewModuleInstallationsRepository(kubeClient kube.Client) ModuleInstallationsRepository {
 	return &installedModulesRepository{
-		kymaClient:            kubeClient.Kyma(),
+		kymaClient:               kubeClient.Kyma(),
 		moduleCRStateFetcher:     &moduleCRStateFetcher{kubeClient: kubeClient},
 		installationStateFetcher: &moduleInstallationStateFetcher{kubeClient: kubeClient},
 	}
