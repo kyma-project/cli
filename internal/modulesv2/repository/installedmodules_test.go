@@ -427,7 +427,7 @@ func TestModuleInstallationsRepository_ListInstalledCommunityModules_SkipsTempla
 	templateWithoutManager.SetNamespace("default")
 	templateWithoutManager.Spec.ModuleName = "docker-registry"
 	templateWithoutManager.Spec.Version = "0.10.0"
-	// no Spec.Manager
+	// no Spec.Manager — getResourceState returns "" → module is skipped
 	kubeClient := &kubefake.KubeClient{
 		TestKymaInterface: &kubefake.KymaClient{
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{

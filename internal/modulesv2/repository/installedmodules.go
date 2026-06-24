@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 type ModuleInstallationsRepository interface {
@@ -130,6 +131,7 @@ func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.C
 		}
 
 		if mt.Spec.Manager == nil {
+			out.Debugfln("skipping community module %s/%s: missing manager in module template", mt.GetNamespace(), mt.Spec.ModuleName)
 			continue
 		}
 
@@ -144,6 +146,7 @@ func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.C
 		}
 
 		if installationState == "" {
+			out.Debugfln("skipping community module %s/%s: manager not installed", mt.GetNamespace(), mt.Spec.ModuleName)
 			continue
 		}
 
