@@ -22,9 +22,7 @@ func NewListV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list [flags]",
 		Short: "Lists installed modules",
-		Long: `Use this command to list the installed Kyma modules.
-
-WARNING: This functionality is still under construction. Community modules are not yet supported.`,
+		Long:  `Use this command to list the installed Kyma modules.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModulesV2(&cfg))
 		},
@@ -43,12 +41,12 @@ func listModulesV2(cfg *listConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to execute the list command"))
 	}
 
-	results, err := listService.Run(cfg.Ctx)
+	results, communityResults, err := listService.Run(cfg.Ctx)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules"))
 	}
 
-	err = modulesv2.RenderList(results, cfg.outputFormat, out.Default)
+	err = modulesv2.RenderList(results, communityResults, cfg.outputFormat, out.Default)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render module list"))
 	}

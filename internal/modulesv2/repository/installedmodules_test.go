@@ -9,8 +9,10 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func newKubeClient(defaultKyma kyma.Kyma, moduleTemplate kyma.ModuleTemplate, crList *unstructured.UnstructuredList) *kubefake.KubeClient {
@@ -307,7 +309,7 @@ func TestModuleInstallationsRepository_ListInstalledModules_InstallationState_Ma
 	moduleTemplate := kyma.ModuleTemplate{
 		Spec: kyma.ModuleTemplateSpec{
 			Manager: &kyma.Manager{
-				GroupVersionKind: managerGVK("apps", "v1", "Deployment"),
+				GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
 				Name:             "api-gateway-manager",
 				Namespace:        "kyma-system",
 			},
@@ -341,6 +343,180 @@ func TestModuleInstallationsRepository_ListInstalledModules_InstallationState_Ma
 	require.Equal(t, "Ready", module.InstallationState)
 }
 
-func managerGVK(group, version, kind string) metav1.GroupVersionKind {
-	return metav1.GroupVersionKind{Group: group, Version: version, Kind: kind}
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_ReturnsModuleFromCommunityTemplate(t *testing.T) {
+	communityTemplate := kyma.ModuleTemplate{}
+	communityTemplate.SetName("docker-registry")
+	communityTemplate.SetNamespace("default")
+	communityTemplate.Spec.ModuleName = "docker-registry"
+	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{communityTemplate},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetObj: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"status": map[string]interface{}{"readyReplicas": int64(1)},
+					"spec":   map[string]interface{}{"replicas": int64(1)},
+				},
+			},
+		},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	module := result[0]
+	require.Equal(t, "docker-registry", module.Name)
+	require.Equal(t, "default", module.Namespace)
+	require.Equal(t, "0.10.0", module.Version)
+}
+
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsInstallationStateFromManager(t *testing.T) {
+	communityTemplate := kyma.ModuleTemplate{}
+	communityTemplate.SetName("docker-registry")
+	communityTemplate.SetNamespace("default")
+	communityTemplate.Spec.ModuleName = "docker-registry"
+	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
+	managerObj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"status": map[string]interface{}{
+				"readyReplicas": int64(1),
+			},
+			"spec": map[string]interface{}{
+				"replicas": int64(1),
+			},
+		},
+	}
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{communityTemplate},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetObj: managerObj,
+		},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.Equal(t, "Ready", module.InstallationState)
+}
+
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_SkipsTemplateWithoutManager(t *testing.T) {
+	templateWithoutManager := kyma.ModuleTemplate{}
+	templateWithoutManager.SetName("docker-registry")
+	templateWithoutManager.SetNamespace("default")
+	templateWithoutManager.Spec.ModuleName = "docker-registry"
+	templateWithoutManager.Spec.Version = "0.10.0"
+	// no Spec.Manager — getResourceState returns "" → module is skipped
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{templateWithoutManager},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	require.Empty(t, result)
+}
+
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_SetsModuleStateFromCR(t *testing.T) {
+	communityTemplate := kyma.ModuleTemplate{}
+	communityTemplate.SetName("docker-registry")
+	communityTemplate.SetNamespace("default")
+	communityTemplate.Spec.ModuleName = "docker-registry"
+	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
+	communityTemplate.Spec.Data = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1alpha1",
+			"kind":       "DockerRegistry",
+		},
+	}
+	crList := &unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{
+			{Object: map[string]interface{}{"status": map[string]interface{}{"state": "Ready"}}},
+		},
+	}
+	managerObj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"status": map[string]interface{}{"readyReplicas": int64(1)},
+			"spec":   map[string]interface{}{"replicas": int64(1)},
+		},
+	}
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{communityTemplate},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetObj:   managerObj,
+			ReturnListObjs: crList,
+		},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	module := result[0]
+	require.Equal(t, "Ready", module.ModuleState)
+}
+
+func TestModuleInstallationsRepository_ListInstalledCommunityModules_SkipsWhenManagerNotInstalled(t *testing.T) {
+	communityTemplate := kyma.ModuleTemplate{}
+	communityTemplate.SetName("docker-registry")
+	communityTemplate.SetNamespace("default")
+	communityTemplate.Spec.ModuleName = "docker-registry"
+	communityTemplate.Spec.Version = "0.10.0"
+	communityTemplate.Spec.Manager = &kyma.Manager{
+		GroupVersionKind: metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+		Name:             "docker-registry-manager",
+		Namespace:        "default",
+	}
+	kubeClient := &kubefake.KubeClient{
+		TestKymaInterface: &kubefake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{communityTemplate},
+			},
+		},
+		TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{
+			ReturnGetErr: apierrors.NewNotFound(schema.GroupResource{}, "docker-registry-manager"),
+		},
+	}
+	repo := repository.NewModuleInstallationsRepository(kubeClient)
+
+	result, err := repo.ListInstalledCommunityModules(context.Background())
+
+	require.NoError(t, err)
+	require.Empty(t, result)
 }

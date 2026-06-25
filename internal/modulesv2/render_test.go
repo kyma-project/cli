@@ -11,13 +11,27 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func TestRenderList_Table_ShowsCommunityModulesSection(t *testing.T) {
+	results := []dtos.ListResult{}
+	communityResults := []dtos.CommunityListResult{
+		{Name: "default/docker-registry", Version: "0.10.0", ModuleState: "Ready", InstallationState: "Ready"},
+	}
+
+	var buf bytes.Buffer
+	err := RenderList(results, communityResults, types.DefaultFormat, out.NewToWriter(&buf))
+
+	require.NoError(t, err)
+	require.Regexp(t, `COMMUNITY MODULE.*VERSION.*MODULE STATUS.*INSTALLATION STATUS`, buf.String())
+	require.Regexp(t, `default/docker-registry.*0\.10\.0.*Ready.*Ready`, buf.String())
+}
+
 func TestRenderList_Table(t *testing.T) {
 	results := []dtos.ListResult{
 		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.Regexp(t, `MODULE.*VERSION.*CR POLICY.*MANAGED.*MODULE STATUS.*INSTALLATION STATUS`, buf.String())
@@ -28,12 +42,18 @@ func TestRenderList_JSON(t *testing.T) {
 	results := []dtos.ListResult{
 		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
+	communityResults := []dtos.CommunityListResult{
+		{Name: "default/docker-registry", Version: "0.10.0", ModuleState: "Ready", InstallationState: "Ready"},
+	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.JSONFormat, out.NewToWriter(&buf))
+	err := RenderList(results, communityResults, types.JSONFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
-	require.JSONEq(t, `[{"name":"api-gateway","version":"3.5.1","channel":"regular","moduleStatus":"Ready","managed":true,"crPolicy":"CreateAndDelete","installationStatus":"Ready"}]`, buf.String())
+	require.JSONEq(t, `{
+		"modules": [{"name":"api-gateway","version":"3.5.1","channel":"regular","moduleStatus":"Ready","managed":true,"crPolicy":"CreateAndDelete","installationStatus":"Ready"}],
+		"communityModules": [{"name":"default/docker-registry","version":"0.10.0","moduleStatus":"Ready","installationStatus":"Ready"}]
+	}`, buf.String())
 }
 
 func TestRenderList_Table_SortedByName(t *testing.T) {
@@ -43,7 +63,7 @@ func TestRenderList_Table_SortedByName(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.Regexp(t, `(?s)api-gateway.*istio`, buf.String())
@@ -55,7 +75,7 @@ func TestRenderList_Table_ShowsInstallationStateDirectly(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.DefaultFormat, out.NewToWriter(&buf))
+	err := RenderList(results, nil, types.DefaultFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
 	require.NotRegexp(t, `Warning\(Deleting\)`, buf.String())
@@ -66,15 +86,19 @@ func TestRenderList_YAML(t *testing.T) {
 	results := []dtos.ListResult{
 		{Name: "api-gateway", Version: "3.5.1", Channel: "regular", ModuleState: "Ready", Managed: true, CustomResourcePolicy: "CreateAndDelete", InstallationState: "Ready"},
 	}
+	communityResults := []dtos.CommunityListResult{
+		{Name: "default/docker-registry", Version: "0.10.0", ModuleState: "Ready", InstallationState: "Ready"},
+	}
 
 	var buf bytes.Buffer
-	err := RenderList(results, types.YAMLFormat, out.NewToWriter(&buf))
+	err := RenderList(results, communityResults, types.YAMLFormat, out.NewToWriter(&buf))
 
 	require.NoError(t, err)
-	var parsed []map[string]interface{}
+	var parsed map[string]interface{}
 	require.NoError(t, yaml.Unmarshal(buf.Bytes(), &parsed))
-	require.Len(t, parsed, 1)
-	module := parsed[0]
+	modules := parsed["modules"].([]interface{})
+	require.Len(t, modules, 1)
+	module := modules[0].(map[string]interface{})
 	require.Equal(t, "api-gateway", module["name"])
 	require.Equal(t, "3.5.1", module["version"])
 	require.Equal(t, "regular", module["channel"])
@@ -82,4 +106,11 @@ func TestRenderList_YAML(t *testing.T) {
 	require.Equal(t, "CreateAndDelete", module["crPolicy"])
 	require.Equal(t, "Ready", module["moduleStatus"])
 	require.Equal(t, "Ready", module["installationStatus"])
+	communityModules := parsed["communityModules"].([]interface{})
+	require.Len(t, communityModules, 1)
+	communityModule := communityModules[0].(map[string]interface{})
+	require.Equal(t, "default/docker-registry", communityModule["name"])
+	require.Equal(t, "0.10.0", communityModule["version"])
+	require.Equal(t, "Ready", communityModule["moduleStatus"])
+	require.Equal(t, "Ready", communityModule["installationStatus"])
 }

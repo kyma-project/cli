@@ -13,19 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type moduleCRStateRepository struct {
+type moduleCRStateFetcher struct {
 	kubeClient kube.Client
 }
 
-func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
-	moduleTemplate, err := r.findModuleTemplate(ctx, module)
-	if err != nil {
-		return "", err
-	}
-	if moduleTemplate == nil {
-		return "", nil
-	}
-
+func (r *moduleCRStateFetcher) GetModuleCRStateFromTemplate(ctx context.Context, moduleTemplate *kyma.ModuleTemplate) (string, error) {
 	data := moduleTemplate.Spec.Data
 	if len(data.Object) == 0 {
 		return "", nil
@@ -39,7 +31,7 @@ func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module e
 	}, &rootlessdynamic.ListOptions{AllNamespaces: true})
 	if err != nil {
 		if apierrors.IsNotFound(err) || isDiscoveryError(err) {
-			out.Debugfln("failed to get CR state for module %s: %v", module.Name, err)
+			out.Debugfln("failed to get CR state for module %s: %v", moduleTemplate.Spec.ModuleName, err)
 			return "", nil
 		}
 		return "", err
@@ -48,7 +40,19 @@ func (r *moduleCRStateRepository) GetModuleCRState(ctx context.Context, module e
 	return highestStateFromList(crList.Items), nil
 }
 
-func (r *moduleCRStateRepository) findModuleTemplate(ctx context.Context, module entities.ModuleInstallation) (*kyma.ModuleTemplate, error) {
+func (r *moduleCRStateFetcher) GetModuleCRState(ctx context.Context, module entities.ModuleInstallation) (string, error) {
+	moduleTemplate, err := r.findModuleTemplate(ctx, module)
+	if err != nil {
+		return "", err
+	}
+	if moduleTemplate == nil {
+		return "", nil
+	}
+
+	return r.GetModuleCRStateFromTemplate(ctx, moduleTemplate)
+}
+
+func (r *moduleCRStateFetcher) findModuleTemplate(ctx context.Context, module entities.ModuleInstallation) (*kyma.ModuleTemplate, error) {
 	if module.TemplateName != "" {
 		mt, err := r.kubeClient.Kyma().GetModuleTemplate(ctx, module.TemplateNamespace, module.TemplateName)
 		if err != nil {

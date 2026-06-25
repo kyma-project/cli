@@ -17,24 +17,20 @@ func NewListService(installedModulesRepository repository.ModuleInstallationsRep
 	}
 }
 
-func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, error) {
+func (s *ListService) Run(ctx context.Context) ([]dtos.ListResult, []dtos.CommunityListResult, error) {
+	if s.installedModulesRepository == nil {
+		return nil, nil, nil
+	}
+
 	installedModules, err := s.installedModulesRepository.ListInstalledModules(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	results := make([]dtos.ListResult, 0, len(installedModules))
-	for _, module := range installedModules {
-		results = append(results, dtos.ListResult{
-			Name:                 module.Name,
-			Version:              module.Version,
-			Channel:              module.Channel,
-			ModuleState:          module.ModuleState,
-			Managed:              module.IsManaged(),
-			CustomResourcePolicy: module.CustomResourcePolicy,
-			InstallationState:    module.InstallationState,
-		})
+	communityModules, err := s.installedModulesRepository.ListInstalledCommunityModules(ctx)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return results, nil
+	return dtos.ListResultsFromModuleInstallations(installedModules), dtos.CommunityListResultsFromInstallations(communityModules), nil
 }

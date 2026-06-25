@@ -6,23 +6,25 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 type ModuleInstallationsRepository interface {
 	ListInstalledModules(ctx context.Context) ([]entities.ModuleInstallation, error)
+	ListInstalledCommunityModules(ctx context.Context) ([]entities.CommunityModuleInstallation, error)
 }
 
 type installedModulesRepository struct {
-	kymaClient            kyma.Interface
-	moduleCRStateRepo     *moduleCRStateRepository
-	installationStateRepo *moduleInstallationStateRepository
+	kymaClient               kyma.Interface
+	moduleCRStateFetcher     *moduleCRStateFetcher
+	installationStateFetcher *moduleInstallationStateFetcher
 }
 
 func NewModuleInstallationsRepository(kubeClient kube.Client) ModuleInstallationsRepository {
 	return &installedModulesRepository{
-		kymaClient:            kubeClient.Kyma(),
-		moduleCRStateRepo:     &moduleCRStateRepository{kubeClient: kubeClient},
-		installationStateRepo: &moduleInstallationStateRepository{kubeClient: kubeClient},
+		kymaClient:               kubeClient.Kyma(),
+		moduleCRStateFetcher:     &moduleCRStateFetcher{kubeClient: kubeClient},
+		installationStateFetcher: &moduleInstallationStateFetcher{kubeClient: kubeClient},
 	}
 }
 
@@ -87,7 +89,7 @@ func (r *installedModulesRepository) buildModulesFromSpecsOnly(ctx context.Conte
 
 func (r *installedModulesRepository) buildModule(ctx context.Context, raw kyma.KymaModuleInfo) (entities.ModuleInstallation, error) {
 	module := entities.NewModuleInstallationFromRaw(raw)
-	moduleState, err := r.moduleCRStateRepo.GetModuleCRState(ctx, *module)
+	moduleState, err := r.moduleCRStateFetcher.GetModuleCRState(ctx, *module)
 	if err != nil {
 		return entities.ModuleInstallation{}, err
 	}
@@ -113,5 +115,48 @@ func (r *installedModulesRepository) resolveInstallationState(ctx context.Contex
 		return module.KymaModuleState, nil
 	}
 
-	return r.installationStateRepo.GetInstallationState(ctx, module)
+	return r.installationStateFetcher.GetInstallationState(ctx, module)
+}
+
+func (r *installedModulesRepository) ListInstalledCommunityModules(ctx context.Context) ([]entities.CommunityModuleInstallation, error) {
+	allTemplates, err := r.kymaClient.ListModuleTemplate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []entities.CommunityModuleInstallation
+	for _, mt := range allTemplates.Items {
+		if !isCommunityModule(&mt) {
+			continue
+		}
+
+		if mt.Spec.Manager == nil {
+			out.Debugfln("skipping community module %s/%s: missing manager in module template", mt.GetNamespace(), mt.Spec.ModuleName)
+			continue
+		}
+
+		moduleState, err := r.moduleCRStateFetcher.GetModuleCRStateFromTemplate(ctx, &mt)
+		if err != nil {
+			return nil, err
+		}
+
+		installationState, err := getResourceState(ctx, r.moduleCRStateFetcher.kubeClient, mt.Spec.Manager)
+		if err != nil {
+			return nil, err
+		}
+
+		if installationState == "" {
+			out.Debugfln("skipping community module %s/%s: manager not installed", mt.GetNamespace(), mt.Spec.ModuleName)
+			continue
+		}
+
+		result = append(result, entities.CommunityModuleInstallation{
+			Name:              mt.Spec.ModuleName,
+			Namespace:         mt.GetNamespace(),
+			Version:           mt.Spec.Version,
+			ModuleState:       moduleState,
+			InstallationState: installationState,
+		})
+	}
+	return result, nil
 }
