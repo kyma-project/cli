@@ -46,7 +46,7 @@ func mockMetricsHandler(nodeNames []string) http.HandlerFunc {
 }
 
 func createMockKubeClientWithRESTClient(nodeNames []string) *fake.KubeClient {
-	fakeKubeClient := kubefake.NewSimpleClientset()
+	fakeKubeClient := kubefake.NewClientset()
 
 	server := httptest.NewServer(mockMetricsHandler(nodeNames))
 
@@ -81,7 +81,7 @@ func setupMockClient(nodes []corev1.Node) *fake.KubeClient {
 		}
 		mockClient = createMockKubeClientWithRESTClient(nodeNames)
 	} else {
-		fakeKubeClient := kubefake.NewSimpleClientset()
+		fakeKubeClient := kubefake.NewClientset()
 		mockClient = &fake.KubeClient{
 			TestKubernetesInterface: fakeKubeClient,
 		}
@@ -99,7 +99,7 @@ func setupMockClient(nodes []corev1.Node) *fake.KubeClient {
 
 func TestNewNodeResourceInfoCollector(t *testing.T) {
 	// Given
-	fakeKubeClient := kubefake.NewSimpleClientset()
+	fakeKubeClient := kubefake.NewClientset()
 	fakeClient := &fake.KubeClient{
 		TestKubernetesInterface: fakeKubeClient,
 	}
@@ -245,7 +245,7 @@ func TestRunWithMetricsUnavailable(t *testing.T) {
 	var writer bytes.Buffer
 	node := createTestNode("node-metrics-test", "amd64", "5.4.0-generic", "Ubuntu 20.04.3 LTS", "containerd://1.5.9", "v1.26.0")
 
-	fakeKubeClient := kubefake.NewSimpleClientset()
+	fakeKubeClient := kubefake.NewClientset()
 	mockClient := &fake.KubeClient{
 		TestKubernetesInterface: fakeKubeClient,
 	}

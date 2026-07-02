@@ -91,7 +91,7 @@ func TestModuleCustomResourceStateCollector_HandleInvalidData(t *testing.T) {
 				},
 			}
 
-			fakeKubeClient := k8sfake.NewSimpleClientset()
+			fakeKubeClient := k8sfake.NewClientset()
 			fakeClient := &fake.KubeClient{
 				TestKubernetesInterface: fakeKubeClient,
 				TestRootlessDynamicInterface: &fake.RootlessDynamicClient{
@@ -247,7 +247,7 @@ func TestModuleCustomResourceStateCollector_Run(t *testing.T) {
 			var writer bytes.Buffer
 
 			// Create a fake Kubernetes client
-			fakeKubeClient := k8sfake.NewSimpleClientset()
+			fakeKubeClient := k8sfake.NewClientset()
 
 			// Register API resources if needed
 			if tc.shouldRegisterAPIResources {

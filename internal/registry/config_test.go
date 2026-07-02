@@ -20,7 +20,7 @@ func TestGetExternalConfig(t *testing.T) {
 		// given
 		testDockerRegistry := fixTestDockerRegistry()
 		testRegistrySecret := fixTestRegistrySecret()
-		client := k8s_fake.NewSimpleClientset(testRegistrySecret)
+		client := k8s_fake.NewClientset(testRegistrySecret)
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(DockerRegistryGVR.GroupVersion(), testDockerRegistry)
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, testDockerRegistry)
@@ -58,7 +58,7 @@ func TestGetInternalConfig(t *testing.T) {
 		testRegistrySecret := fixTestRegistrySecret()
 		testDockerRegistry := fixTestDockerRegistry()
 
-		client := k8s_fake.NewSimpleClientset(testRegistrySvc, testRegistryPod, testRegistrySecret)
+		client := k8s_fake.NewClientset(testRegistrySvc, testRegistryPod, testRegistrySecret)
 
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(DockerRegistryGVR.GroupVersion(), testDockerRegistry)
@@ -98,7 +98,7 @@ func Test_getRegistrySecretConfig(t *testing.T) {
 	t.Run("Should return the InternalRegistryConfig", func(t *testing.T) {
 		// given
 		testRegistrySecret := fixTestRegistrySecret()
-		client := k8s_fake.NewSimpleClientset(testRegistrySecret)
+		client := k8s_fake.NewClientset(testRegistrySecret)
 		expectedRegistryConfig := &SecretData{
 			DockerConfigJSON: string(testRegistrySecret.Data[".dockerconfigjson"]),
 			Username:         string(testRegistrySecret.Data["username"]),
@@ -117,7 +117,7 @@ func Test_getRegistrySecretConfig(t *testing.T) {
 
 	t.Run("Should return an error when the secret does not exist", func(t *testing.T) {
 		// given
-		client := k8s_fake.NewSimpleClientset()
+		client := k8s_fake.NewClientset()
 		expectedErrorMsg := "secrets \"test-secret\" not found"
 
 		// when
@@ -133,7 +133,7 @@ func Test_getRegistrySecretConfig(t *testing.T) {
 func Test_getWorkloadMeta(t *testing.T) {
 	t.Run("Should return the RegistryPodMeta", func(t *testing.T) {
 		// given
-		client := k8s_fake.NewSimpleClientset(fixTestRegistrySvc(), fixTestRegistryPod())
+		client := k8s_fake.NewClientset(fixTestRegistrySvc(), fixTestRegistryPod())
 		config := &SecretData{
 			PushRegAddr: "serverless-docker-registry.test-namespace.svc.cluster.local:5000",
 		}
@@ -152,7 +152,7 @@ func Test_getWorkloadMeta(t *testing.T) {
 	})
 	t.Run("Should return an error when no pods exist", func(t *testing.T) {
 		// given
-		client := k8s_fake.NewSimpleClientset(fixTestRegistrySvc())
+		client := k8s_fake.NewClientset(fixTestRegistrySvc())
 		config := &SecretData{
 			PushRegAddr: "serverless-docker-registry.test-namespace.svc.cluster.local:5000",
 		}

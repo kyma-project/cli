@@ -19,7 +19,7 @@ import (
 func TestNewMetadataCollector(t *testing.T) {
 	// Given
 	kubeClient := &kube_fake.KubeClient{
-		TestKubernetesInterface: fake.NewSimpleClientset(),
+		TestKubernetesInterface: fake.NewClientset(),
 	}
 
 	// When
@@ -68,7 +68,7 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			fakeClient := fake.NewSimpleClientset()
+			fakeClient := fake.NewClientset()
 			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: fakeClient,
 			}
@@ -142,7 +142,7 @@ func TestEnrichMetadataWithKymaInfo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			fakeClient := fake.NewSimpleClientset()
+			fakeClient := fake.NewClientset()
 			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: fakeClient,
 			}
@@ -226,7 +226,7 @@ func TestEnrichMetadataWithKymaProvisioningInfo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			fakeClient := fake.NewSimpleClientset()
+			fakeClient := fake.NewClientset()
 			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: fakeClient,
 			}
@@ -336,7 +336,7 @@ func TestEnrichMetadataWithSapBtpManagerSecret(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			fakeClient := fake.NewSimpleClientset()
+			fakeClient := fake.NewClientset()
 			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: fakeClient,
 			}
