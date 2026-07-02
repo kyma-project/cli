@@ -127,7 +127,7 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 			var writer bytes.Buffer
 
 			// Create fake Kubernetes client with test events
-			fakeK8sClient := k8sfake.NewSimpleClientset()
+			fakeK8sClient := k8sfake.NewClientset()
 			if len(tc.mockEvents) > 0 {
 				for _, event := range tc.mockEvents {
 					_, err := fakeK8sClient.CoreV1().Events("kyma-system").Create(

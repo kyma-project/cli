@@ -17,7 +17,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 	t.Parallel()
 	t.Run("create ClusterRoleBinding", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixClusterRole()),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
@@ -29,7 +29,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("create RoleBinding to ClusterRole", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixClusterRole()),
 		}
 		err := CreateRoleBindingToClusterRole(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
@@ -41,7 +41,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("create RoleBinding to Role", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixRole()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixRole()),
 		}
 		err := CreateRoleBindingToRole(context.Background(), kubeClient, "test-name", "default", "role")
 		require.NoError(t, err)
@@ -53,7 +53,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("ClusterRole not found error for ClusterRoleBinding creation", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.ErrorContains(t, err, `clusterroles.rbac.authorization.k8s.io "clusterRole" not found`)
@@ -61,7 +61,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("ClusterRole not found error for RoleBinding creation", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := CreateRoleBindingToClusterRole(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.ErrorContains(t, err, `clusterroles.rbac.authorization.k8s.io "clusterRole" not found`)
@@ -72,7 +72,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole(), fixRoleBinding("clusterRole", ClusterRoleKind)),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixClusterRole(), fixRoleBinding("clusterRole", ClusterRoleKind)),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
@@ -83,7 +83,7 @@ func Test_EnsureServiceAccountToken(t *testing.T) {
 	t.Parallel()
 	t.Run("create Secret with token", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := CreateServiceAccountToken(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
@@ -95,7 +95,7 @@ func Test_EnsureServiceAccountToken(t *testing.T) {
 
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixTokenSecret()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixTokenSecret()),
 		}
 		err := CreateServiceAccountToken(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
@@ -105,7 +105,7 @@ func Test_EnsureServiceAccountToken(t *testing.T) {
 func Test_CreateServiceAccount(t *testing.T) {
 	t.Run("create ServiceAccount", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := EnsureServiceAccount(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
@@ -117,7 +117,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixServiceAccount()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixServiceAccount()),
 		}
 		err := EnsureServiceAccount(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)

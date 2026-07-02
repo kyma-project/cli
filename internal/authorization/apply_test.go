@@ -183,7 +183,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(clusterrole),
+					TestKubernetesInterface:      k8sfake.NewClientset(clusterrole),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -205,7 +205,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(role),
+					TestKubernetesInterface:      k8sfake.NewClientset(role),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -226,7 +226,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(),
+					TestKubernetesInterface:      k8sfake.NewClientset(),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -248,7 +248,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(),
+					TestKubernetesInterface:      k8sfake.NewClientset(),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -270,7 +270,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(),
+					TestKubernetesInterface:      k8sfake.NewClientset(),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -292,7 +292,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(),
+					TestKubernetesInterface:      k8sfake.NewClientset(),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -314,7 +314,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: nil},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(),
+					TestKubernetesInterface:      k8sfake.NewClientset(),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{
@@ -332,7 +332,7 @@ func TestResourceApplier_ApplyRBAC(t *testing.T) {
 				return &kubefake.KubeClient{
 					TestDynamicInterface:         dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
 					TestRootlessDynamicInterface: &kubefake.RootlessDynamicClient{ReturnErr: errors.New("apply failed")},
-					TestKubernetesInterface:      k8sfake.NewSimpleClientset(clusterrole),
+					TestKubernetesInterface:      k8sfake.NewClientset(clusterrole),
 				}
 			},
 			rbacResource: &unstructured.Unstructured{Object: map[string]any{

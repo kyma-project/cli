@@ -288,7 +288,7 @@ func Test_Prepare(t *testing.T) {
 				CurrentContext: "cluster",
 			}
 
-			staticClient := k8s_fake.NewSimpleClientset(
+			staticClient := k8s_fake.NewClientset(
 				&serviceAccount,
 				&secret,
 			)
@@ -354,7 +354,7 @@ func Test_getServiceAccountToken(t *testing.T) {
 					Namespace: "default",
 				},
 			}
-			staticClient := k8s_fake.NewSimpleClientset(
+			staticClient := k8s_fake.NewClientset(
 				&serviceAccount,
 			)
 			kubeClient := &kube_fake.KubeClient{
