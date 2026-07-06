@@ -24,6 +24,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 		binding, err := kubeClient.Static().RbacV1().ClusterRoleBindings().Get(context.Background(), "test-name-clusterrole-clusterRole-binding", metav1.GetOptions{})
 		require.NoError(t, err)
+		binding.ManagedFields = nil
 		require.Equal(t, fixClusterRoleBinding(), binding)
 	})
 
@@ -36,6 +37,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 		binding, err := kubeClient.Static().RbacV1().RoleBindings("default").Get(context.Background(), "test-name-clusterrole-clusterRole-binding", metav1.GetOptions{})
 		require.NoError(t, err)
+		binding.ManagedFields = nil
 		require.Equal(t, fixRoleBinding("clusterRole", ClusterRoleKind), binding)
 	})
 
@@ -48,6 +50,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 		binding, err := kubeClient.Static().RbacV1().RoleBindings("default").Get(context.Background(), "test-name-role-role-binding", metav1.GetOptions{})
 		require.NoError(t, err)
+		binding.ManagedFields = nil
 		require.Equal(t, fixRoleBinding("role", RoleKind), binding)
 	})
 
@@ -90,6 +93,7 @@ func Test_EnsureServiceAccountToken(t *testing.T) {
 
 		secret, err := kubeClient.Static().CoreV1().Secrets("default").Get(context.Background(), "test-name", metav1.GetOptions{})
 		require.NoError(t, err)
+		secret.ManagedFields = nil
 		require.Equal(t, fixTokenSecret(), secret)
 	})
 
@@ -126,6 +130,10 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 func fixTokenSecret() *corev1.Secret {
 	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name",
 			Namespace: "default",
@@ -139,6 +147,10 @@ func fixTokenSecret() *corev1.Secret {
 
 func fixClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-name-clusterrole-clusterRole-binding",
 		},
@@ -158,6 +170,10 @@ func fixClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 
 func fixRoleBinding(role, roleKind string) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "RoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name-" + strings.ToLower(roleKind) + "-" + role + "-binding",
 			Namespace: "default",
@@ -178,6 +194,10 @@ func fixRoleBinding(role, roleKind string) *rbacv1.RoleBinding {
 
 func fixServiceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ServiceAccount",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name",
 			Namespace: "default",
