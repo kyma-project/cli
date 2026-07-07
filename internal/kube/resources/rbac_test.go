@@ -17,43 +17,46 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 	t.Parallel()
 	t.Run("create ClusterRoleBinding", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixClusterRole()),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
 
 		binding, err := kubeClient.Static().RbacV1().ClusterRoleBindings().Get(context.Background(), "test-name-clusterrole-clusterRole-binding", metav1.GetOptions{})
 		require.NoError(t, err)
+		binding.ManagedFields = nil
 		require.Equal(t, fixClusterRoleBinding(), binding)
 	})
 
 	t.Run("create RoleBinding to ClusterRole", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixClusterRole()),
 		}
 		err := CreateRoleBindingToClusterRole(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
 
 		binding, err := kubeClient.Static().RbacV1().RoleBindings("default").Get(context.Background(), "test-name-clusterrole-clusterRole-binding", metav1.GetOptions{})
 		require.NoError(t, err)
+		binding.ManagedFields = nil
 		require.Equal(t, fixRoleBinding("clusterRole", ClusterRoleKind), binding)
 	})
 
 	t.Run("create RoleBinding to Role", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixRole()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixRole()),
 		}
 		err := CreateRoleBindingToRole(context.Background(), kubeClient, "test-name", "default", "role")
 		require.NoError(t, err)
 
 		binding, err := kubeClient.Static().RbacV1().RoleBindings("default").Get(context.Background(), "test-name-role-role-binding", metav1.GetOptions{})
 		require.NoError(t, err)
+		binding.ManagedFields = nil
 		require.Equal(t, fixRoleBinding("role", RoleKind), binding)
 	})
 
 	t.Run("ClusterRole not found error for ClusterRoleBinding creation", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.ErrorContains(t, err, `clusterroles.rbac.authorization.k8s.io "clusterRole" not found`)
@@ -61,7 +64,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("ClusterRole not found error for RoleBinding creation", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := CreateRoleBindingToClusterRole(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.ErrorContains(t, err, `clusterroles.rbac.authorization.k8s.io "clusterRole" not found`)
@@ -72,7 +75,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole(), fixRoleBinding("clusterRole", ClusterRoleKind)),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixClusterRole(), fixRoleBinding("clusterRole", ClusterRoleKind)),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
@@ -83,19 +86,20 @@ func Test_EnsureServiceAccountToken(t *testing.T) {
 	t.Parallel()
 	t.Run("create Secret with token", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := CreateServiceAccountToken(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
 
 		secret, err := kubeClient.Static().CoreV1().Secrets("default").Get(context.Background(), "test-name", metav1.GetOptions{})
 		require.NoError(t, err)
+		secret.ManagedFields = nil
 		require.Equal(t, fixTokenSecret(), secret)
 	})
 
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixTokenSecret()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixTokenSecret()),
 		}
 		err := CreateServiceAccountToken(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
@@ -105,7 +109,7 @@ func Test_EnsureServiceAccountToken(t *testing.T) {
 func Test_CreateServiceAccount(t *testing.T) {
 	t.Run("create ServiceAccount", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+			TestKubernetesInterface: k8s_fake.NewClientset(),
 		}
 		err := EnsureServiceAccount(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
@@ -117,7 +121,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixServiceAccount()),
+			TestKubernetesInterface: k8s_fake.NewClientset(fixServiceAccount()),
 		}
 		err := EnsureServiceAccount(context.Background(), kubeClient, "test-name", "default")
 		require.NoError(t, err)
@@ -126,6 +130,10 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 func fixTokenSecret() *corev1.Secret {
 	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name",
 			Namespace: "default",
@@ -139,6 +147,10 @@ func fixTokenSecret() *corev1.Secret {
 
 func fixClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-name-clusterrole-clusterRole-binding",
 		},
@@ -158,6 +170,10 @@ func fixClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 
 func fixRoleBinding(role, roleKind string) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "RoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name-" + strings.ToLower(roleKind) + "-" + role + "-binding",
 			Namespace: "default",
@@ -178,6 +194,10 @@ func fixRoleBinding(role, roleKind string) *rbacv1.RoleBinding {
 
 func fixServiceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ServiceAccount",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-name",
 			Namespace: "default",

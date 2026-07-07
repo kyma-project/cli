@@ -19,13 +19,13 @@ import (
 )
 
 func TestNewModuleLogsCollector(t *testing.T) {
-	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewSimpleClientset()}
+	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewClientset()}
 	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{})
 	assert.NotNil(t, collector)
 }
 
 func TestRun_EmptyModules(t *testing.T) {
-	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewSimpleClientset()}
+	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewClientset()}
 	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Since: 10 * time.Minute})
 	result := collector.Run(context.Background())
 	assert.NotNil(t, result)
@@ -33,7 +33,7 @@ func TestRun_EmptyModules(t *testing.T) {
 }
 
 func TestRun_EmptyModulesLines(t *testing.T) {
-	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewSimpleClientset()}
+	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewClientset()}
 	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Lines: 100})
 	result := collector.Run(context.Background())
 	assert.NotNil(t, result)
@@ -189,6 +189,6 @@ func createTestDeployment(name, namespace, module string) *appsv1.Deployment {
 
 func createMockKubeClient(objects []runtime.Object) *kube_fake.KubeClient {
 	return &kube_fake.KubeClient{
-		TestKubernetesInterface: fake.NewSimpleClientset(objects...),
+		TestKubernetesInterface: fake.NewClientset(objects...),
 	}
 }
