@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["gomod"],
+  "labels": ["area/dependency", "kind/chore"],
+  "schedule": ["before 5am on Monday"],
+  "commitMessagePrefix": "gomod(deps):",
+  "commitMessageAction": "bump",
+  "packageRules": [
+    {
+      "matchPackagePrefixes": ["k8s.io/", "sigs.k8s.io/"],
+      "matchUpdateTypes": ["minor"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["helm.sh/helm/v3"],
+      "matchUpdateTypes": ["minor"],
+      "enabled": false
+    },
+    {
+      "matchPackagePrefixes": ["k8s.io/"],
+      "groupName": "k8s-io"
+    },
+    {
+      "matchPackagePrefixes": ["github.com/docker/"],
+      "groupName": "docker"
+    }
+  ]
+}
