@@ -31,6 +31,10 @@ verify: ## Run all verification checks.
 build: ## Build the kyma CLI binary.
 	GOFIPS140=v1.0.0 go build -ldflags="-X github.com/kyma-project/cli.v3/internal/cmd/version.version=local-$(shell git rev-parse --short HEAD)" -o bin/kyma main.go
 
+.PHONY: build-for-codeql
+build-for-codeql: ## Build all binaries for CodeQL analysis.
+	go build -o /dev/null ./...
+
 .PHONY: docs
 docs: ## Generate CLI documentation.
 	go mod tidy
