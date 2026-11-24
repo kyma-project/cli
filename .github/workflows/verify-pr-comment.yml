@@ -31,10 +31,27 @@ jobs:
       - name: Read PR number
         if: steps.download.outcome == 'success'
         id: pr
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=$(cat pr_number.txt 2>/dev/null | tr -d '[:space:]')
           if [ -z "$PR_NUMBER" ]; then
             echo "pr_number.txt is empty or missing"
+            exit 1
+          fi
+          # pr_number.txt comes from the untrusted fork build, so reject
+          # anything that is not a plain positive integer.
+          if ! printf '%s' "$PR_NUMBER" | grep -Eq '^[1-9][0-9]*$'; then
+            echo "pr_number.txt does not contain a valid PR number: '$PR_NUMBER'"
+            exit 1
+          fi
+          # Verify the claimed PR actually belongs to the commit that
+          # triggered this run, so a fork cannot steer the comment at an
+          # arbitrary PR by writing a different number into the artifact.
+          PR_HEAD_SHA=$(gh pr view "$PR_NUMBER" -R kyma-project/cli --json headRefOid --jq '.headRefOid' 2>/dev/null || true)
+          if [ "$PR_HEAD_SHA" != "$HEAD_SHA" ]; then
+            echo "PR #$PR_NUMBER head ($PR_HEAD_SHA) does not match workflow_run head ($HEAD_SHA); refusing to comment"
             exit 1
           fi
           echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
